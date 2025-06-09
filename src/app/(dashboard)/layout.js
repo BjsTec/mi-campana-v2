@@ -18,28 +18,51 @@ export default function DashboardLayout({ children }) {
       <body>
         <div style={{ display: 'flex', minHeight: '100vh' }}>
           {/* Barra lateral o navegación del dashboard */}
-          <aside style={{
-            width: '200px',
-            backgroundColor: '#f0f0f0',
-            padding: '20px',
-            borderRight: '1px solid #ddd',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            gap: '10px'
-          }}>
+          <aside
+            style={{
+              width: '200px',
+              backgroundColor: '#f0f0f0',
+              padding: '20px',
+              borderRight: '1px solid #ddd',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '10px',
+            }}
+          >
             <h2 style={{ fontSize: '1.2rem', marginBottom: '15px' }}>Menú</h2>
-            <a href="/dashboard" style={{ textDecoration: 'none', color: '#333', padding: '5px 0' }}>Inicio Dashboard</a>
-            <a href="/dashboard/candidato" style={{ textDecoration: 'none', color: '#333', padding: '5px 0' }}>Candidatos</a>
+            <a
+              href="/dashboard"
+              style={{
+                textDecoration: 'none',
+                color: '#333',
+                padding: '5px 0',
+              }}
+            >
+              Inicio Dashboard
+            </a>
+            <a
+              href="/dashboard/candidato"
+              style={{
+                textDecoration: 'none',
+                color: '#333',
+                padding: '5px 0',
+              }}
+            >
+              Candidatos
+            </a>
             {/* Agrega más enlaces de navegación aquí */}
           </aside>
 
           {/* Contenido principal del dashboard */}
-          <main style={{ flexGrow: 1, padding: '20px', backgroundColor: '#fff' }}>
-            {children} {/* Aquí se renderizarán las páginas anidadas (como page.js o candidato/page.js) */}
+          <main
+            style={{ flexGrow: 1, padding: '20px', backgroundColor: '#fff' }}
+          >
+            {children}{' '}
+            {/* Aquí se renderizarán las páginas anidadas (como page.js o candidato/page.js) */}
           </main>
         </div>
       </body>
     </html>
-  );
+  )
 }
