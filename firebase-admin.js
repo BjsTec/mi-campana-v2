@@ -1,38 +1,54 @@
-// src/lib/auth/serverAuth.js
-// Archivo para inicializar el SDK de Firebase Admin en el servidor.
+// firebase-admin.js (o el nombre de tu archivo de inicialización del Admin SDK)
+// Este archivo inicializa el SDK de Firebase Admin en el servidor.
+// Asegúrate de que este archivo esté en la ruta correcta para tus imports.
 
 import * as admin from 'firebase-admin'
 
-// Importaciones de firebase-admin/app (si usas la sintaxis modular)
-// o simplemente 'firebase-admin' si usas la sintaxis de espacio de nombres.
-// Asumo que tu importación de firebase-admin viene de firebase-admin.
-// Si tu archivo .json se llama micampanav2-firebase-adminsdk-fbsvc-e9d4a4f70f.json
-// y lo estás cargando como una variable de entorno, así se vería:
-
-// Asegúrate de que esta variable de entorno contenga el contenido JSON completo
-// de tu archivo Firebase Admin SDK Service Account Key.
-// Por ejemplo, en tu .env.local:
-// FIREBASE_ADMIN_SDK_KEY='{"type": "service_account", "project_id": "...", "private_key_id": "...", "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n", "client_email": "...", "client_id": "...", "auth_uri": "...", "token_uri": "...", "auth_provider_x509_cert_url": "...", "client_x509_cert_url": "...", "universe_domain": "..."}'
-
-// ¡Importante! Firebase Admin SDK debe inicializarse solo una vez.
+// ¡Importante! El SDK de Firebase Admin debe inicializarse solo una vez.
 if (!admin.apps.length) {
   try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_SDK_KEY)
+    // === VERIFICACIÓN DE VARIABLES DE ENTORNO INDIVIDUALES ===
+    // Asegúrate de que estas tres variables estén configuradas en Vercel
+    // para los scopes de 'Production' y 'Preview'.
+    if (
+      !process.env.FIREBASE_ADMIN_PROJECT_ID ||
+      !process.env.FIREBASE_ADMIN_PRIVATE_KEY ||
+      !process.env.FIREBASE_ADMIN_CLIENT_EMAIL
+    ) {
+      throw new Error(
+        'Faltan variables de entorno para Firebase Admin SDK. ' +
+          'Asegúrate de configurar FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_PRIVATE_KEY y FIREBASE_ADMIN_CLIENT_EMAIL ' +
+          'en Vercel para los entornos de Production y Preview.',
+      )
+    }
+
+    // === INICIALIZACIÓN CON VARIABLES INDIVIDUALES ===
+    // Construimos el objeto serviceAccount con las variables de entorno individuales.
+    // CRÍTICO: Reemplazamos '\\n' por '\n' en la clave privada, ya que las variables de entorno
+    // a menudo escapan los saltos de línea al ser configuradas.
+    const serviceAccount = {
+      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+    }
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      // Si usas Realtime Database, podrías añadir:
+      // Opcional: Si usas Realtime Database y tienes una URL específica
       // databaseURL: "https://<TU_PROYECTO>.firebaseio.com",
     })
   } catch (error) {
     console.error('Error inicializando Firebase Admin SDK:', error)
-    // En un entorno de producción, podrías querer manejar este error
-    // de forma más robusta, por ejemplo, saliendo del proceso
-    // si las credenciales son vitales para la aplicación.
+    // Mensaje adicional para depuración:
+    console.error(
+      'Asegúrate de que las variables de entorno estén bien configuradas en Vercel ' +
+        'y que el contenido de FIREBASE_ADMIN_PRIVATE_KEY sea el correcto y válido.',
+    )
+    // Dependiendo de la severidad, en producción podrías querer
+    // que la aplicación falle rápidamente si no puede inicializar el Admin SDK.
   }
 }
 
 // Exporta las instancias de Auth y Firestore una vez inicializadas
 export const adminAuth = admin.auth()
 export const adminDb = admin.firestore()
-
