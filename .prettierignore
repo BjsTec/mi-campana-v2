@@ -1,0 +1,4 @@
+# .prettierignore
+.eslintrc.js
+.eslintrc.json
+eslint.config.mjs

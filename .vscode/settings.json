@@ -1,0 +1,17 @@
+// .vscode/settings.json
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.formatOnSave": true, // Opcional, pero muy útil
+  "eslint.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.codeActionsOnSave.rules": null,
+  // Puedes añadir esto si sigue sin detectar ESLint
+  // "eslint.nodePath": "node_modules"
+}
