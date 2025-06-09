@@ -1,8 +1,9 @@
 // src/app/api/auth/login/route.js
 // Endpoint para manejar el login de usuarios.
 
-import { NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '../../../../../firebase-admin'; // ¡Aquí importamos adminAuth!
+import { NextResponse } from 'next/server'
+
+import { adminAuth, adminDb } from '../../../../../firebase-admin' // ¡Aquí importamos adminAuth!
 
 /**
  * Maneja las solicitudes POST para el login de usuarios.
@@ -15,25 +16,25 @@ import { adminAuth, adminDb } from '../../../../../firebase-admin'; // ¡Aquí i
  */
 export async function POST(request) {
   try {
-    const { idToken } = await request.json();
+    const { idToken } = await request.json()
 
     if (!idToken) {
-      return NextResponse.json({ message: 'ID Token es requerido.' }, { status: 400 });
+      return NextResponse.json({ message: 'ID Token es requerido.' }, { status: 400 })
     }
 
-    const decodedToken = await adminAuth.verifyIdToken(idToken); // Aquí se usa adminAuth
+    const decodedToken = await adminAuth.verifyIdToken(idToken) // Aquí se usa adminAuth
 
-    const userDocRef = adminDb.collection('users').doc(decodedToken.uid);
-    const userDoc = await userDocRef.get();
+    const userDocRef = adminDb.collection('users').doc(decodedToken.uid)
+    const userDoc = await userDocRef.get()
 
-    let userData = {};
-    let userRole = 'default';
+    let userData = {}
+    let userRole = 'default'
 
     if (userDoc.exists) {
-      userData = userDoc.data();
-      userRole = userData.role || 'default';
+      userData = userDoc.data()
+      userRole = userData.role || 'default'
     } else {
-      console.warn(`Documento de usuario con UID ${decodedToken.uid} no encontrado en Firestore durante el login. Creando documento base.`);
+      console.warn(`Documento de usuario con UID ${decodedToken.uid} no encontrado en Firestore durante el login. Creando documento base.`)
       const defaultUserData = {
         id: decodedToken.uid,
         email: decodedToken.email,
@@ -41,9 +42,9 @@ export async function POST(request) {
         role: userRole,
         status: 'active',
         created_at: new Date().toISOString(),
-      };
-      await userDocRef.set(defaultUserData);
-      userData = defaultUserData;
+      }
+      await userDocRef.set(defaultUserData)
+      userData = defaultUserData
     }
 
     const responseUser = {
@@ -51,22 +52,21 @@ export async function POST(request) {
       email: decodedToken.email,
       role: userRole,
       nombre: userData.nombre,
-    };
-
-    return NextResponse.json({ message: 'Login exitoso.', user: responseUser }, { status: 200 });
-
-  } catch (error) {
-    console.error('Error en el login:', error);
-
-    let errorMessage = 'Login fallido. Por favor, intente de nuevo.';
-    if (error.code === 'auth/id-token-expired') {
-      errorMessage = 'Su sesión ha expirado. Por favor, inicie sesión de nuevo.';
-    } else if (error.code === 'auth/invalid-id-token') {
-      errorMessage = 'Token de autenticación inválido.';
-    } else if (error.code === 'auth/argument-error') {
-      errorMessage = 'Token de autenticación faltante o inválido.';
     }
 
-    return NextResponse.json({ message: errorMessage, error: error.message }, { status: 401 });
+    return NextResponse.json({ message: 'Login exitoso.', user: responseUser }, { status: 200 })
+  } catch (error) {
+    console.error('Error en el login:', error)
+
+    let errorMessage = 'Login fallido. Por favor, intente de nuevo.'
+    if (error.code === 'auth/id-token-expired') {
+      errorMessage = 'Su sesión ha expirado. Por favor, inicie sesión de nuevo.'
+    } else if (error.code === 'auth/invalid-id-token') {
+      errorMessage = 'Token de autenticación inválido.'
+    } else if (error.code === 'auth/argument-error') {
+      errorMessage = 'Token de autenticación faltante o inválido.'
+    }
+
+    return NextResponse.json({ message: errorMessage, error: error.message }, { status: 401 })
   }
 }
