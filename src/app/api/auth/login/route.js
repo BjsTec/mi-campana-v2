@@ -3,7 +3,7 @@
 
 import { NextResponse } from 'next/server'
 
-import { adminAuth, adminDb } from '../../../../../firebase-admin' // ¡Aquí importamos adminAuth!
+import { adminAuth, adminDb } from '../../../../../firebase-admin'
 
 /**
  * Maneja las solicitudes POST para el login de usuarios.
@@ -19,10 +19,13 @@ export async function POST(request) {
     const { idToken } = await request.json()
 
     if (!idToken) {
-      return NextResponse.json({ message: 'ID Token es requerido.' }, { status: 400 })
+      return NextResponse.json(
+        { message: 'ID Token es requerido.' },
+        { status: 400 },
+      )
     }
 
-    const decodedToken = await adminAuth.verifyIdToken(idToken) // Aquí se usa adminAuth
+    const decodedToken = await adminAuth.verifyIdToken(idToken)
 
     const userDocRef = adminDb.collection('users').doc(decodedToken.uid)
     const userDoc = await userDocRef.get()
@@ -34,7 +37,9 @@ export async function POST(request) {
       userData = userDoc.data()
       userRole = userData.role || 'default'
     } else {
-      console.warn(`Documento de usuario con UID ${decodedToken.uid} no encontrado en Firestore durante el login. Creando documento base.`)
+      console.warn(
+        `Documento de usuario con UID ${decodedToken.uid} no encontrado en Firestore durante el login. Creando documento base.`,
+      )
       const defaultUserData = {
         id: decodedToken.uid,
         email: decodedToken.email,
@@ -54,7 +59,10 @@ export async function POST(request) {
       nombre: userData.nombre,
     }
 
-    return NextResponse.json({ message: 'Login exitoso.', user: responseUser }, { status: 200 })
+    return NextResponse.json(
+      { message: 'Login exitoso.', user: responseUser },
+      { status: 200 },
+    )
   } catch (error) {
     console.error('Error en el login:', error)
 
@@ -67,6 +75,9 @@ export async function POST(request) {
       errorMessage = 'Token de autenticación faltante o inválido.'
     }
 
-    return NextResponse.json({ message: errorMessage, error: error.message }, { status: 401 })
+    return NextResponse.json(
+      { message: errorMessage, error: error.message },
+      { status: 401 },
+    )
   }
 }

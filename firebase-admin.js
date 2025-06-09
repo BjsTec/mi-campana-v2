@@ -1,26 +1,38 @@
-// firebase-admin.js
-// Configuración del SDK de Firebase Admin.
-// ¡Este archivo DEBE usarse SOLO en el lado del servidor (API Routes de Next.js)!
-// NUNCA expongas tus credenciales de servicio de Firebase Admin al cliente.
+// src/lib/auth/serverAuth.js
+// Archivo para inicializar el SDK de Firebase Admin en el servidor.
 
-import { initializeApp, getApps, getApp, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth'; // Importa getAuth para Firebase Admin Auth
+import * as admin from 'firebase-admin'
 
-let adminApp;
-if (!getApps().length) {
-  adminApp = initializeApp({
-    credential: cert({
-      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-      privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'), // Importante: Asegúrate de que las nuevas líneas sean correctas
-      clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL
+// Importaciones de firebase-admin/app (si usas la sintaxis modular)
+// o simplemente 'firebase-admin' si usas la sintaxis de espacio de nombres.
+// Asumo que tu importación de firebase-admin viene de firebase-admin.
+// Si tu archivo .json se llama micampanav2-firebase-adminsdk-fbsvc-e9d4a4f70f.json
+// y lo estás cargando como una variable de entorno, así se vería:
+
+// Asegúrate de que esta variable de entorno contenga el contenido JSON completo
+// de tu archivo Firebase Admin SDK Service Account Key.
+// Por ejemplo, en tu .env.local:
+// FIREBASE_ADMIN_SDK_KEY='{"type": "service_account", "project_id": "...", "private_key_id": "...", "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n", "client_email": "...", "client_id": "...", "auth_uri": "...", "token_uri": "...", "auth_provider_x509_cert_url": "...", "client_x509_cert_url": "...", "universe_domain": "..."}'
+
+// ¡Importante! Firebase Admin SDK debe inicializarse solo una vez.
+if (!admin.apps.length) {
+  try {
+    const serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_SDK_KEY)
+
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      // Si usas Realtime Database, podrías añadir:
+      // databaseURL: "https://<TU_PROYECTO>.firebaseio.com",
     })
-  });
-} else {
-  adminApp = getApp();
+  } catch (error) {
+    console.error('Error inicializando Firebase Admin SDK:', error)
+    // En un entorno de producción, podrías querer manejar este error
+    // de forma más robusta, por ejemplo, saliendo del proceso
+    // si las credenciales son vitales para la aplicación.
+  }
 }
 
-const adminDb = getFirestore(adminApp);
-const adminAuth = getAuth(adminApp); // Inicializa y exporta adminAuth también
+// Exporta las instancias de Auth y Firestore una vez inicializadas
+export const adminAuth = admin.auth()
+export const adminDb = admin.firestore()
 
-export { adminDb, adminAuth }; // Asegúrate de exportar ambos

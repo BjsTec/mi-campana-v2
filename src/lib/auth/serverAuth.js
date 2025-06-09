@@ -1,8 +1,9 @@
 // src/lib/auth/serverAuth.js
 // Funciones de utilidad para la verificación de autenticación en el lado del servidor.
 
-import { headers } from 'next/headers';
-import { adminAuth, adminDb } from '../../../firebase-admin'; // ¡Aquí importamos adminAuth!
+import { headers } from 'next/headers'
+
+import { adminAuth, adminDb } from '../../../firebase-admin' // ¡Aquí importamos adminAuth!
 
 /**
  * Verifica el token de autorización (Bearer token) de una solicitud HTTP.
@@ -15,42 +16,50 @@ import { adminAuth, adminDb } from '../../../firebase-admin'; // ¡Aquí importa
  * En caso de fallo, retorna un objeto con una propiedad `error` que describe el problema.
  */
 export async function verifyServerAuth(request) {
-  const headersList = headers();
-  const authorization = headersList.get('Authorization');
+  const headersList = headers()
+  const authorization = headersList.get('Authorization')
 
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    return { error: 'No autorizado: Token de autorización no proporcionado o formato inválido.' };
+    return {
+      error:
+        'No autorizado: Token de autorización no proporcionado o formato inválido.',
+    }
   }
 
-  const idToken = authorization.split('Bearer ')[1];
+  const idToken = authorization.split('Bearer ')[1]
 
   try {
-    const decodedToken = await adminAuth.verifyIdToken(idToken); // Aquí se usa adminAuth
+    const decodedToken = await adminAuth.verifyIdToken(idToken) // Aquí se usa adminAuth
 
-    const userDocRef = adminDb.collection('users').doc(decodedToken.uid);
-    const userDoc = await userDocRef.get();
+    const userDocRef = adminDb.collection('users').doc(decodedToken.uid)
+    const userDoc = await userDocRef.get()
 
-    let role = 'default';
+    let role = 'default'
 
     if (userDoc.exists) {
-      const userData = userDoc.data();
+      const userData = userDoc.data()
       if (userData && userData.role) {
-        role = userData.role;
+        role = userData.role
       }
     } else {
-      console.warn(`Documento de usuario con UID ${decodedToken.uid} no encontrado en Firestore durante la verificación de auth.`);
+      console.warn(
+        `Documento de usuario con UID ${decodedToken.uid} no encontrado en Firestore durante la verificación de auth.`,
+      )
     }
 
-    return { uid: decodedToken.uid, email: decodedToken.email, role: role };
-
+    return { uid: decodedToken.uid, email: decodedToken.email, role }
   } catch (error) {
-    console.error("Error al verificar el token de autenticación del servidor:", error);
-    let errorMessage = 'No autorizado: Token inválido o expirado.';
+    console.error(
+      'Error al verificar el token de autenticación del servidor:',
+      error,
+    )
+    let errorMessage = 'No autorizado: Token inválido o expirado.'
     if (error.code === 'auth/id-token-expired') {
-      errorMessage = 'No autorizado: Su sesión ha expirado. Por favor, inicie sesión de nuevo.';
+      errorMessage =
+        'No autorizado: Su sesión ha expirado. Por favor, inicie sesión de nuevo.'
     } else if (error.code === 'auth/invalid-id-token') {
-      errorMessage = 'No autorizado: Token de sesión inválido.';
+      errorMessage = 'No autorizado: Token de sesión inválido.'
     }
-    return { error: errorMessage };
+    return { error: errorMessage }
   }
 }
