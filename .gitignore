@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env.local
+git filter-repo --path micampanav2-firebase-adminsdk-fbsvc-e9d4a4f70f.json --invert-paths
 
 # vercel
 .vercel
