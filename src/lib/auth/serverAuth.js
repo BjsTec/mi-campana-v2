@@ -10,7 +10,7 @@ import { adminAuth, adminDb } from '../../../firebase-admin' // ¡Aquí importam
  * Si el token es válido, decodifica el token y recupera información del usuario
  * desde Firebase Authentication y Firestore (para el rol del usuario).
  *
- * @param {Request} request El objeto Request de Next.js que contiene los headers.
+ * @param {Request} request El objeto Request de Next.js.
  * @returns {Promise<{uid?: string, email?: string, role?: string, error?: string}>}
  * Retorna un objeto con las propiedades `uid`, `email` y `role` del usuario si la verificación es exitosa.
  * En caso de fallo, retorna un objeto con una propiedad `error` que describe el problema.
