@@ -48,9 +48,7 @@ export default function DashboardLayout({ children }) {
       </aside>
 
       {/* Contenido principal del dashboard */}
-      <main
-        style={{ flexGrow: 1, padding: '20px', backgroundColor: '#fff' }}
-      >
+      <main style={{ flexGrow: 1, padding: '20px', backgroundColor: '#fff' }}>
         {children}{' '}
         {/* Aquí se renderizarán las páginas anidadas (como page.js o candidato/page.js) */}
       </main>
