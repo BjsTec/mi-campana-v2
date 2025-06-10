@@ -1,4 +1,4 @@
-'use client' 
+'use client' // Directiva esencial para un componente de cliente.
 
 export default function LoginPage() {
   return (
@@ -7,7 +7,6 @@ export default function LoginPage() {
         <h1 className="text-3xl font-bold text-gray-800 mb-4">
           Iniciar Sesión
         </h1>
-        <p className="text-gray-600">¡Página de login básica funcionando!</p>
         <p className="text-gray-600">
           Aquí irá tu formulario de inicio de sesión.
         </p>
