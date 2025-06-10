@@ -4,8 +4,6 @@
 'use client' // Directiva esencial para un componente de cliente en Next.js App Router.
 // Permite el uso de hooks como useState, useEffect y maneja la interactividad.
 
-import React from 'react' // Importamos React para crear componentes
-
 export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
