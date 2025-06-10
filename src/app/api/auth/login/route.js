@@ -1,5 +1,4 @@
-// src/app/api/auth/login/route.js
-// Endpoint para manejar el login de usuarios.
+'use client' 
 
 import { NextResponse } from 'next/server'
 

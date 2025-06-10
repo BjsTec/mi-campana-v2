@@ -1,11 +1,4 @@
-// src/app/(dashboard)/page.js
-// Esta es la página principal de tu sección /dashboard.
-
-// Al igual que otros componentes de página en el App Router de Next.js,
-// este es un Server Component por defecto.
-// Si necesitas interactividad (por ejemplo, usar useState o useEffect),
-// puedes añadir la directiva 'use client' al inicio de este archivo
-// o importar componentes hijos que usen 'use client'.
+'use client' 
 
 export default function DashboardPage() {
   return (

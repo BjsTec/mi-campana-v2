@@ -1,11 +1,4 @@
-// src/app/(dashboard)/candidato/page.js
-// Esta es la pagina principal para la ruta /candidato.
-
-// Los componentes de pagina en el App Router de Next.js son
-// Server Components por defecto.
-// Si necesitas interactividad (eventos click, hooks de estado como useState, useEffect),
-// tendras que añadir la directiva 'use client' al inicio del archivo
-// o importar componentes que sean 'use client'.
+'use client' 
 
 export default function LiderPage() {
   return (

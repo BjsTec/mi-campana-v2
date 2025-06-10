@@ -1,9 +1,4 @@
-// src/app/(dashboard)/layout.js
-// Este archivo define el layout compartido para todas las rutas
-// dentro del segmento (dashboard).
-
-// Por defecto, los componentes de layout en el App Router de Next.js
-// son Server Components.
+'use client' 
 
 export default function DashboardLayout({ children }) {
   return (

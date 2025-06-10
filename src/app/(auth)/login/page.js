@@ -1,8 +1,4 @@
-// src/app/(auth)/login/page.js
-// Esta es la página de inicio de sesión básica para los usuarios.
-
-'use client' // Directiva esencial para un componente de cliente en Next.js App Router.
-// Permite el uso de hooks como useState, useEffect y maneja la interactividad.
+'use client' 
 
 export default function LoginPage() {
   return (
