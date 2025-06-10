@@ -5,7 +5,8 @@ export default function ExternalClientHomePage() {
         ¡Bienvenido a tu Panel de Cliente!
       </h1>
       <p style={{ fontSize: '1.1rem' }}>
-        Este es tu espacio exclusivo para gestionar tu participación en La Campaña.
+        Este es tu espacio exclusivo para gestionar tu participación en La
+        Campaña.
       </p>
     </div>
   )

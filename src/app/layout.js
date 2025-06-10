@@ -15,7 +15,8 @@ export default function RootLayout({ children }) {
         {/* Aquí puedes añadir otros meta tags globales, enlaces a CDN de fuentes, etc. */}
       </head>
       <body className={inter.className}>
-        {children} {/* Aquí se renderizarán todas las páginas y layouts anidados */}
+        {children}{' '}
+        {/* Aquí se renderizarán todas las páginas y layouts anidados */}
       </body>
     </html>
   )
