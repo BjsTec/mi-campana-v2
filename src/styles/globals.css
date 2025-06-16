@@ -19,3 +19,20 @@ body {
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* --- Estilos para ocultar los botones de aumentar/reducir en input type="number" --- */
+
+/* Para Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none; /* Elimina la apariencia por defecto */
+  margin: 0; /* Asegura que no haya margen residual */
+}
+
+/* Para Firefox */
+input[type="number"] {
+  -moz-appearance: textfield; /* Restaura la apariencia de campo de texto normal */
+  appearance: textfield; /* Para navegadores modernos que usan la propiedad estándar */
+}
+
+/* ---------------------------------------------------------------------------------- */
