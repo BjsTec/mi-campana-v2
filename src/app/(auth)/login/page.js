@@ -1,52 +1,62 @@
-'use client'
+'use client' // Directiva esencial para un componente de cliente en Next.js App Router
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation' // 1. Primero Next.js
+// eslint-disable-next-line import/order
+import { useState } from 'react' // 2. Luego React (sin línea vacía entre ellos ahora)
 
-import { useRouter } from 'next/navigation'
-import BackButton from '@/components/ui/BackButton'
+// eslint-disable-next-line import/order
+import BackButton from '@/components/ui/BackButton' // 3. Luego componentes locales (sin línea vacía entre ellos ahora)
+
 export default function LoginPage() {
   const [cedula, setCedula] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('') // Estado para mensajes de éxito
+  const [loading, setLoading] = useState(false) // Estado de carga para el botón
+  const [showPassword, setShowPassword] = useState(false) // Estado para alternar visibilidad de contraseña
 
-  const router = useRouter()
+  const router = useRouter() // Inicializa el router para la navegación
 
+  // Función para manejar el regreso a la página principal
   const handleGoBack = () => {
-    router.push('/')
+    router.push('/') // Navega directamente a la página de inicio
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault() // Previene el comportamiento por defecto del formulario
 
-    setError('')
-    setSuccessMessage('')
-    setLoading(true)
+    setError('') // Limpia cualquier error previo
+    setSuccessMessage('') // Limpia cualquier mensaje de éxito previo
+    setLoading(true) // Activa el estado de carga
 
+    // Validaciones básicas antes de enviar
     if (!cedula || !password) {
       setError('Por favor, ingresa tu cédula y contraseña.')
       setLoading(false)
       return
     }
 
+    // Validación específica para la cédula (asegurarse de que sean solo números)
     if (!/^\d+$/.test(cedula)) {
       setError('La cédula solo debe contener números.')
       setLoading(false)
       return
     }
 
+    // Aquí iría la lógica para enviar los datos a tu Firebase Function (backend)
+    // Por ahora, solo simularemos una llamada a la API
     try {
       console.log('Intentando iniciar sesión con:', { cedula, password })
+      // Simulación de una llamada a la API con un retardo de 2 segundos
       await new Promise((resolve) => setTimeout(resolve, 2000))
       console.log('¡Inicio de sesión exitoso simulado!')
-      setSuccessMessage('¡Inicio de sesión exitoso!')
+      setSuccessMessage('¡Inicio de sesión exitoso!') // Mensaje de éxito en la UI
+      // Redirigir al usuario o manejar el estado de autenticación aquí
     } catch (err) {
       console.error('Error durante el inicio de sesión:', err)
       setError(err.message || 'Ocurrió un error inesperado.')
     } finally {
-      setLoading(false)
+      setLoading(false) // Desactiva el estado de carga
     }
   }
 
@@ -115,6 +125,7 @@ export default function LoginPage() {
                 }
               >
                 {showPassword ? (
+                  // Icono de ojo tachado (oculto)
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -150,6 +161,7 @@ export default function LoginPage() {
                     />
                   </svg>
                 ) : (
+                  // Icono de ojo (visible)
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -208,36 +220,55 @@ export default function LoginPage() {
                   cy="12"
                   r="10"
                   stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
+                  strokeWidth={4}
+                />
                 <path
                   className="opacity-75"
                   fill="currentColor"
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
+                />
               </svg>
             ) : (
               'Iniciar Sesión'
             )}
           </button>
         </form>
+
+        {/* Agrupar los enlaces y los textos finales */}
         <div className="mt-8 space-y-4">
+          {/* Enlace para 'Olvidaste tu contraseña' */}
           <p className="text-sm text-neutral-800">
             ¿Olvidaste tu contraseña?{' '}
             <a
-              href="/forgot-password"
+              href="/forgot-password" // Ruta explícita para recuperación de contraseña
               className="font-medium text-primary hover:text-primary-dark"
             >
               Click aquí
             </a>
           </p>
+
+          {/* Enlace para 'No tienes una cuenta?' */}
+          {/* Se ajustó el formato de los atributos del enlace para cumplir con Prettier */}
+          <p className="text-sm text-neutral-800">
+            ¿No tienes una cuenta?{' '}
+            <a
+              href="/register" // Ruta explícita para registro
+              className="font-medium text-primary hover:text-primary-dark"
+            >
+              Regístrate aquí
+            </a>
+          </p>
+
+          {/* Botón de BackButton para regresar al inicio */}
+          <BackButton onClick={handleGoBack} className="w-full" />
+
+          {/* Texto motivacional - Se ajustó el formato para evitar errores de Prettier */}
           <p className="text-lg text-neutral-800 mt-6">
             Consolida tu potencial electoral.
             <br />
             Consolida tu equipo de trabajo.
           </p>
         </div>
-        <BackButton onClick={handleGoBack} className="w-full mt-8" />
       </div>
     </div>
   )

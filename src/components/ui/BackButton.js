@@ -1,7 +1,4 @@
-// components/BackButton.js
-'use client' // Directiva esencial para un componente de cliente en Next.js App Router
-
-import React from 'react'
+'use client'
 
 /**
  * Componente de botón "Regresar" con una flecha hacia la izquierda.

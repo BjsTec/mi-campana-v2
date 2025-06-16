@@ -1,12 +1,15 @@
-'use client' 
+'use client' // Directiva esencial para un componente de cliente en Next.js App Router
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation' // Importar useRouter para la navegación
+import { useState } from 'react' // CORREGIDO: Importar useState de React (no '=')
 
 export default function ForgotPasswordPage() {
   const [cedula, setCedula] = useState('')
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const router = useRouter() // Inicializar el router
 
   const handleSubmit = async (e) => {
     e.preventDefault() // Previene el comportamiento por defecto del formulario
@@ -113,8 +116,6 @@ export default function ForgotPasswordPage() {
 
           {successMessage && (
             <p className="text-success text-sm mt-4" role="status">
-              {' '}
-              {/* Usando 'success' para mensajes positivos */}
               {successMessage}
             </p>
           )}
@@ -129,6 +130,7 @@ export default function ForgotPasswordPage() {
             disabled={loading}
           >
             {loading ? (
+              // SVG del spinner
               <svg
                 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                 xmlns="http://www.w3.org/2000/svg"
@@ -141,13 +143,13 @@ export default function ForgotPasswordPage() {
                   cy="12"
                   r="10"
                   stroke="currentColor"
-                  strokeWidth="4"
-                ></circle>
+                  strokeWidth={4}
+                />
                 <path
                   className="opacity-75"
                   fill="currentColor"
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
+                />
               </svg>
             ) : (
               'Enviar Enlace de Recuperación'
@@ -158,11 +160,10 @@ export default function ForgotPasswordPage() {
         <p className="mt-8 text-sm text-neutral-600">
           ¿Recordaste tu contraseña?{' '}
           <a
-            href="/login"
+            href="#" // El href="#" se mantiene para cumplir con la estructura de <a>
+            onClick={() => router.push('/login')} // Usar router.push para navegar al login
             className="font-medium text-primary hover:text-primary-dark"
           >
-            {' '}
-            {/* Enlace de vuelta al login */}
             Volver al inicio de sesión
           </a>
         </p>
