@@ -11,7 +11,7 @@
     "typescript",
     "typescriptreact"
   ],
-  "eslint.codeActionsOnSave.rules": null,
+  "eslint.codeActionsOnSave.rules": null
   // Puedes añadir esto si sigue sin detectar ESLint
   // "eslint.nodePath": "node_modules"
 }

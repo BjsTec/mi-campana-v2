@@ -1,40 +1,39 @@
-// src/app/forgot-password/page.js
-'use client'; // Directiva esencial para un componente de cliente en Next.js App Router
+'use client' 
 
-import React, { useState } from 'react';
+import { useState } from 'react'
 
 export default function ForgotPasswordPage() {
-  const [cedula, setCedula] = useState('');
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [cedula, setCedula] = useState('')
+  const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Previene el comportamiento por defecto del formulario
+    e.preventDefault() // Previene el comportamiento por defecto del formulario
 
-    setError(''); // Limpia cualquier error previo
-    setSuccessMessage(''); // Limpia cualquier mensaje de éxito previo
-    setLoading(true); // Activa el estado de carga
+    setError('') // Limpia cualquier error previo
+    setSuccessMessage('') // Limpia cualquier mensaje de éxito previo
+    setLoading(true) // Activa el estado de carga
 
     // Validación básica: asegurar que la cédula no esté vacía
     if (!cedula) {
-      setError('Por favor, ingresa tu cédula para recuperar la contraseña.');
-      setLoading(false);
-      return;
+      setError('Por favor, ingresa tu cédula para recuperar la contraseña.')
+      setLoading(false)
+      return
     }
 
     // Validación específica para la cédula (solo números)
     if (!/^\d+$/.test(cedula)) {
-      setError('La cédula solo debe contener números.');
-      setLoading(false);
-      return;
+      setError('La cédula solo debe contener números.')
+      setLoading(false)
+      return
     }
 
     // Aquí iría la lógica para enviar la cédula a tu Firebase Function (backend)
     // para iniciar el proceso de recuperación de contraseña.
     // Por ejemplo, enviar un correo electrónico con un enlace de restablecimiento.
     try {
-      console.log('Intentando recuperar contraseña para cédula:', cedula);
+      console.log('Intentando recuperar contraseña para cédula:', cedula)
 
       // Simulación de una llamada a la API
       // REMPLAZA ESTO CON LA URL REAL DE TU ENDPOINT DE RECUPERACIÓN DE CONTRASEÑA
@@ -53,17 +52,20 @@ export default function ForgotPasswordPage() {
       // }
 
       // Simulación de éxito después de 2 segundos
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setSuccessMessage('Si tu cédula está registrada, recibirás instrucciones para restablecer tu contraseña en breve.');
-      setCedula(''); // Limpiar el campo después de un intento exitoso
-
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      setSuccessMessage(
+        'Si tu cédula está registrada, recibirás instrucciones para restablecer tu contraseña en breve.',
+      )
+      setCedula('') // Limpiar el campo después de un intento exitoso
     } catch (err) {
-      console.error('Error durante la recuperación de contraseña:', err);
-      setError(err.message || 'Ocurrió un error inesperado al procesar tu solicitud.');
+      console.error('Error durante la recuperación de contraseña:', err)
+      setError(
+        err.message || 'Ocurrió un error inesperado al procesar tu solicitud.',
+      )
     } finally {
-      setLoading(false); // Desactiva el estado de carga
+      setLoading(false) // Desactiva el estado de carga
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-primary-dark p-4 sm:p-6 lg:p-8">
@@ -77,7 +79,10 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="cedula" className="block text-left text-sm font-medium text-neutral-600 mb-1">
+            <label
+              htmlFor="cedula"
+              className="block text-left text-sm font-medium text-neutral-600 mb-1"
+            >
               Cédula
             </label>
             <input
@@ -86,9 +91,9 @@ export default function ForgotPasswordPage() {
               name="cedula"
               value={cedula}
               onChange={(e) => {
-                const value = e.target.value;
+                const value = e.target.value
                 if (value === '' || /^\d+$/.test(value)) {
-                  setCedula(value);
+                  setCedula(value)
                 }
               }}
               required
@@ -107,7 +112,9 @@ export default function ForgotPasswordPage() {
           )}
 
           {successMessage && (
-            <p className="text-success text-sm mt-4" role="status"> {/* Usando 'success' para mensajes positivos */}
+            <p className="text-success text-sm mt-4" role="status">
+              {' '}
+              {/* Usando 'success' para mensajes positivos */}
               {successMessage}
             </p>
           )}
@@ -122,9 +129,25 @@ export default function ForgotPasswordPage() {
             disabled={loading}
           >
             {loading ? (
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <svg
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
               </svg>
             ) : (
               'Enviar Enlace de Recuperación'
@@ -134,11 +157,16 @@ export default function ForgotPasswordPage() {
 
         <p className="mt-8 text-sm text-neutral-600">
           ¿Recordaste tu contraseña?{' '}
-          <a href="/login" className="font-medium text-primary hover:text-primary-dark"> {/* Enlace de vuelta al login */}
+          <a
+            href="/login"
+            className="font-medium text-primary hover:text-primary-dark"
+          >
+            {' '}
+            {/* Enlace de vuelta al login */}
             Volver al inicio de sesión
           </a>
         </p>
       </div>
     </div>
-  );
+  )
 }

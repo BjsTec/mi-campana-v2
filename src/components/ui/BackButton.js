@@ -1,7 +1,7 @@
 // components/BackButton.js
-'use client'; // Directiva esencial para un componente de cliente en Next.js App Router
+'use client' // Directiva esencial para un componente de cliente en Next.js App Router
 
-import React from 'react';
+import React from 'react'
 
 /**
  * Componente de botón "Regresar" con una flecha hacia la izquierda.
@@ -35,9 +35,13 @@ export default function BackButton({ onClick, className = '' }) {
         stroke="currentColor"
         className="w-5 h-5 mr-2"
       >
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
+        />
       </svg>
       Regresar
     </button>
-  );
+  )
 }
