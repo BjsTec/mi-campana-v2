@@ -247,27 +247,14 @@ export default function LoginPage() {
             </a>
           </p>
 
-          {/* Enlace para 'No tienes una cuenta?' */}
-          {/* Se ajustó el formato de los atributos del enlace para cumplir con Prettier */}
-          <p className="text-sm text-neutral-800">
-            ¿No tienes una cuenta?{' '}
-            <a
-              href="/register" // Ruta explícita para registro
-              className="font-medium text-primary hover:text-primary-dark"
-            >
-              Regístrate aquí
-            </a>
-          </p>
-
-          {/* Botón de BackButton para regresar al inicio */}
-          <BackButton onClick={handleGoBack} className="w-full" />
-
-          {/* Texto motivacional - Se ajustó el formato para evitar errores de Prettier */}
           <p className="text-lg text-neutral-800 mt-6">
             Consolida tu potencial electoral.
             <br />
             Consolida tu equipo de trabajo.
           </p>
+
+          {/* Botón de BackButton para regresar al inicio */}
+          <BackButton onClick={handleGoBack} className="w-full" />
         </div>
       </div>
     </div>
