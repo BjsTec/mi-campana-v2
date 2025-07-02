@@ -1,60 +1,18 @@
-// functions/index.js
-const functions = require('firebase-functions')
-const admin = require('firebase-admin')
+// functions/index.js (Este es el archivo principal en la raíz de tu carpeta 'functions')
 
-// Inicializa la aplicación de Firebase Admin.
-admin.initializeApp()
+// Importar initializeApp UNA SOLA VEZ aquí.
+import { initializeApp } from 'firebase-admin/app';
 
-exports.getUsers = functions.https.onRequest(async (req, res) => {
-  // Configuración de CORS
-  res.set('Access-Control-Allow-Origin', '*')
-  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE')
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+// --- INICIALIZACIÓN GLOBAL DE FIREBASE ADMIN SDK (¡ESTO ES CRUCIAL!) ---
+// Esta línea DEBE estar presente y SIN comentar.
+initializeApp();
 
-  // Manejo de peticiones OPTIONS (preflight requests) para CORS
-  if (req.method === 'OPTIONS') {
-    res.status(204).send('')
-    return
-  }
+// --- Importa y RE-EXPORTA tus funciones desde los módulos ---
+// Esto le dice a Firebase CLI qué funciones deben ser desplegadas y con qué nombres.
+// Asegúrate de que las rutas relativas sean correctas según tu estructura de carpetas.
 
-  // Asegurarse de que solo se manejen peticiones GET para esta función.
-  if (req.method !== 'GET') {
-    return res.status(405).send('Método no permitido. Solo GET.')
-  }
+// Exporta las funciones de usuario desde el módulo 'users.js' dentro de la carpeta 'routes'.
+export * from './routes/users.js';
 
-  try {
-    // Datos simulados de usuarios
-    const users = [
-      {
-        id: 'user1',
-        name: 'Juan Pérez',
-        email: 'juan.perez@example.com',
-        role: 'admin',
-      },
-      {
-        id: 'user2',
-        name: 'María García',
-        email: 'maria.garcia@example.com',
-        role: 'user',
-      },
-      {
-        id: 'user3',
-        name: 'Carlos Ruiz',
-        email: 'carlos.ruiz@example.com',
-        role: 'editor',
-      },
-    ]
-
-    // Envía los datos como respuesta JSON
-    return res.status(200).json({
-      message: 'Usuarios obtenidos exitosamente',
-      data: users,
-    })
-  } catch (error) {
-    console.error('Error al obtener usuarios:', error)
-    return res.status(500).json({
-      message: 'Error interno del servidor al obtener usuarios.',
-      error: error.message,
-    })
-  }
-})
+// Si tuvieras un módulo de productos en 'functions/routes/products.js', lo exportarías así:
+// export * from './routes/products.js';

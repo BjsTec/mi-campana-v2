@@ -1,4 +1,5 @@
 import { Inter } from 'next/font/google'
+import { AuthProvider } from '@/context/AuthContext'
 import '../styles/globals.css' // ¡RUTA CORREGIDA para globals.css!
 
 const inter = Inter({ subsets: ['latin'] })
@@ -15,8 +16,9 @@ export default function RootLayout({ children }) {
         {/* Aquí puedes añadir otros meta tags globales, enlaces a CDN de fuentes, etc. */}
       </head>
       <body className={inter.className}>
-        {children}{' '}
-        {/* Aquí se renderizarán todas las páginas y layouts anidados */}
+         <AuthProvider> {/* Envuelve tus children con AuthProvider */}
+          {children}
+        </AuthProvider>
       </body>
     </html>
   )

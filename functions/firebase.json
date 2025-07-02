@@ -1,15 +1,36 @@
 {
-  "functions": [
-    {
-      "source": "functions",
-      "codebase": "default",
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ]
-    }
-  ]
+  "functions": {
+    "source": "functions",
+    "codebase": "default",
+    "runtime": "nodejs20", 
+    "serviceAccount": "funciones-auth-cedula@micampanav2.iam.gserviceaccount.com",
+     "env": { 
+      "BJS_APP_MI_CAMPANA_V2": "projects/micampanav2/secrets/BJS_APP_MI_CAMPANA_V2" 
+    },
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "*.local"
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules", 
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
 }
