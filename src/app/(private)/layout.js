@@ -140,7 +140,7 @@ export default function ExternalClientDashboardLayout({ children }) {
           {/* Información del usuario en el sidebar (visible en todos los tamaños) */}
           <div className="mb-8 text-center">
             <p className="text-xl font-bold">{user.name}</p>
-            <p className="text-primary-light text-sm capitalize">{user.role}</p>
+            <p className="text-primary-light text-sm capitalize">{user.role === "admin" ? "Web Master" : user.role}</p>
           </div>
 
           {/* Navegación principal del Sidebar */}
