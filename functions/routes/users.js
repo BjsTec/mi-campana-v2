@@ -104,46 +104,36 @@ export const registerUser = functions.https.onRequest(async (req, res) => {
       !userData.name ||
       !userData.email
     ) {
-      return res
-        .status(400)
-        .json({
-          message:
-            'Datos de usuario inválidos. Se requieren cédula, clave, nombre y email.',
-        })
+      return res.status(400).json({
+        message:
+          'Datos de usuario inválidos. Se requieren cédula, clave, nombre y email.',
+      })
     }
     if (typeof userData.cedula !== 'string' || userData.cedula.trim() === '') {
-      return res
-        .status(400)
-        .json({
-          message:
-            'La cédula es requerida y debe ser una cadena de texto no vacía.',
-        })
+      return res.status(400).json({
+        message:
+          'La cédula es requerida y debe ser una cadena de texto no vacía.',
+      })
     }
     if (typeof userData.clave !== 'string' || userData.clave.length < 6) {
-      return res
-        .status(400)
-        .json({
-          message: 'La clave es requerida y debe tener al menos 6 caracteres.',
-        })
+      return res.status(400).json({
+        message: 'La clave es requerida y debe tener al menos 6 caracteres.',
+      })
     }
     if (typeof userData.name !== 'string' || userData.name.trim() === '') {
-      return res
-        .status(400)
-        .json({
-          message:
-            'El nombre es requerido y debe ser una cadena de texto no vacía.',
-        })
+      return res.status(400).json({
+        message:
+          'El nombre es requerido y debe ser una cadena de texto no vacía.',
+      })
     }
     if (
       typeof userData.email !== 'string' ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userData.email)
     ) {
-      return res
-        .status(400)
-        .json({
-          message:
-            'El email es requerido y debe ser una dirección de correo válida.',
-        })
+      return res.status(400).json({
+        message:
+          'El email es requerido y debe ser una dirección de correo válida.',
+      })
     }
 
     // 1. Verificar si la cédula ya existe en Firestore para evitar duplicados
@@ -170,19 +160,15 @@ export const registerUser = functions.https.onRequest(async (req, res) => {
         authError,
       )
       if (authError.code === 'auth/email-already-exists') {
-        return res
-          .status(409)
-          .json({
-            message:
-              'Ya existe un usuario registrado con este correo electrónico.',
-          })
-      }
-      return res
-        .status(500)
-        .json({
-          message: 'Error interno al registrar el usuario en autenticación.',
-          error: authError.message,
+        return res.status(409).json({
+          message:
+            'Ya existe un usuario registrado con este correo electrónico.',
         })
+      }
+      return res.status(500).json({
+        message: 'Error interno al registrar el usuario en autenticación.',
+        error: authError.message,
+      })
     }
 
     // 3. (Opcional pero recomendado) Hashear la clave y guardarla en Firestore si se requiere verificación secundaria
@@ -259,12 +245,10 @@ export const loginWithEmail = functions.https.onRequest(async (req, res) => {
       console.error(
         'JWT_SECRET no configurado en las variables de entorno de Firebase Functions.',
       )
-      return res
-        .status(500)
-        .json({
-          message:
-            'Error de configuración del servidor. La clave JWT no está definida.',
-        })
+      return res.status(500).json({
+        message:
+          'Error de configuración del servidor. La clave JWT no está definida.',
+      })
     }
 
     const { email, clave } = req.body // Esperamos 'email' y 'clave' del frontend
@@ -309,12 +293,10 @@ export const loginWithEmail = functions.https.onRequest(async (req, res) => {
       console.error(
         `Documento de usuario no encontrado en 'users' para UID: ${firebaseAuthUid}`,
       )
-      return res
-        .status(404)
-        .json({
-          message: 'Perfil de usuario no encontrado en la base de datos.',
-          firebaseAuthUid: firebaseAuthUid,
-        })
+      return res.status(404).json({
+        message: 'Perfil de usuario no encontrado en la base de datos.',
+        firebaseAuthUid: firebaseAuthUid,
+      })
     }
 
     const userData = userDoc.data()
@@ -382,11 +364,9 @@ export const getSecureUsers = functions.https.onRequest(async (req, res) => {
     console.error(
       'No se proporcionó encabezado de autorización o formato inválido.',
     )
-    return res
-      .status(401)
-      .json({
-        message: 'No autorizado. Se requiere token de autenticación Bearer.',
-      })
+    return res.status(401).json({
+      message: 'No autorizado. Se requiere token de autenticación Bearer.',
+    })
   }
 
   const idToken = authorizationHeader.split('Bearer ')[1]
@@ -417,11 +397,9 @@ export const getSecureUsers = functions.https.onRequest(async (req, res) => {
       'Error en getSecureUsers (verificación de token o Firestore):',
       error,
     )
-    return res
-      .status(403)
-      .json({
-        message:
-          'Acceso denegado. Token inválido/expirado o error de autenticación.',
-      })
+    return res.status(403).json({
+      message:
+        'Acceso denegado. Token inválido/expirado o error de autenticación.',
+    })
   }
 })
