@@ -9,7 +9,7 @@ import BackButton from '@/components/ui/BackButton' // 3. Luego componentes loca
 
 import Lottie from 'lottie-react' // Importa el componente Lottie
 import loginLoadingAnimation from '@/animations/loginOne.json' // Ajusta esta ruta a la ubicación de tu archivo JSON
-import { useAuth } from '@/context/AuthContext'; // Importa el hook useAuth
+import { useAuth } from '@/context/AuthContext' // Importa el hook useAuth
 
 export default function LoginPage() {
   const [email, setemail] = useState('')
@@ -20,14 +20,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false) // Estado para alternar visibilidad de contraseña
 
   const router = useRouter() // Inicializa el router para la navegación
-   const { login } = useAuth() // Obtiene la función de login del contexto de autenticación
+  const { login } = useAuth() // Obtiene la función de login del contexto de autenticación
 
   // Función para manejar el regreso a la página principal
   const handleGoBack = () => {
     router.push('/') // Navega directamente a la página de inicio
   }
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault() // Previene el comportamiento por defecto del formulario
 
     setError('') // Limpia cualquier error previo
@@ -45,10 +45,11 @@ const handleSubmit = async (e) => {
     // Si 'email' es realmente un email, ELIMINA esta validación numérica.
     // Si tu backend todavía espera una cédula numérica, asegúrate de que el input 'email'
     // en el JSX del formulario tenga type="number" y los labels digan "Cédula".
-    if (!/^\d+$/.test(email)) { // <--- ESTE BLOQUE DE VALIDACIÓN DEBE SER AJUSTADO/ELIMINADO
-      setError('Por favor, ingresa solo números en el campo de cédula/email.'); // <-- Mensaje más genérico
-      setLoading(false);
-      return;
+    if (!/^\d+$/.test(email)) {
+      // <--- ESTE BLOQUE DE VALIDACIÓN DEBE SER AJUSTADO/ELIMINADO
+      setError('Por favor, ingresa solo números en el campo de cédula/email.') // <-- Mensaje más genérico
+      setLoading(false)
+      return
     }
     // Si tu campo 'email' es para correos electrónicos reales, usa una validación como esta:
     // if (!/\S+@\S+\.\S+/.test(email)) {
@@ -57,82 +58,93 @@ const handleSubmit = async (e) => {
     //   return;
     // }
 
-
     try {
-      const response = await fetch('/api/login', { // Llama a tu Route Handler local
+      const response = await fetch('/api/login', {
+        // Llama a tu Route Handler local
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, password }),
-      });
+      })
 
-      const data = await response.json(); // Parsea la respuesta JSON de tu Route Handler
-      console.log('Respuesta del Route Handler:', data); // Puedes dejar este log para depuración
+      const data = await response.json() // Parsea la respuesta JSON de tu Route Handler
+      console.log('Respuesta del Route Handler:', data) // Puedes dejar este log para depuración
 
       if (response.ok) {
-        const { idToken, firebaseAuthUid, name, role, email: userEmailFromResponse } = data;
+        const {
+          idToken,
+          firebaseAuthUid,
+          name,
+          role,
+          email: userEmailFromResponse,
+        } = data
 
         // --- INICIO: Manejar JWT Personalizado y Establecer Cookie ---
         // 1. Validar que el token haya llegado (aunque ya esté en 'data')
         if (!idToken) {
-            setError('Error: El servidor no proporcionó un token de sesión.');
-            setLoading(false);
-            return;
+          setError('Error: El servidor no proporcionó un token de sesión.')
+          setLoading(false)
+          return
         }
 
         try {
-            // 2. Llamar al nuevo Route Handler para establecer la cookie de sesión
-            const cookieResponse = await fetch('/api/set-session-cookie', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken }), // Envía el JWT al Route Handler
-            });
+          // 2. Llamar al nuevo Route Handler para establecer la cookie de sesión
+          const cookieResponse = await fetch('/api/set-session-cookie', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken }), // Envía el JWT al Route Handler
+          })
 
-            if (!cookieResponse.ok) {
-                const errorData = await cookieResponse.json();
-                throw new Error(errorData.message || 'Error al establecer la sesión del servidor.');
-            }
+          if (!cookieResponse.ok) {
+            const errorData = await cookieResponse.json()
+            throw new Error(
+              errorData.message ||
+                'Error al establecer la sesión del servidor.',
+            )
+          }
 
-            console.log('Cookie de sesión HttpOnly establecida por el servidor.');
+          console.log('Cookie de sesión HttpOnly establecida por el servidor.')
 
-            // 3. Almacenar los datos del usuario en AuthContext (NO el token en localStorage aquí)
-            // El token ya está en la cookie HttpOnly y será leído por el middleware
-            // y AuthContext lo leerá al recargar la página.
-            login({
-              firebaseAuthUid,
-              email: userEmailFromResponse,
-              name,
-              role,
-            });
+          // 3. Almacenar los datos del usuario en AuthContext (NO el token en localStorage aquí)
+          // El token ya está en la cookie HttpOnly y será leído por el middleware
+          // y AuthContext lo leerá al recargar la página.
+          login({
+            firebaseAuthUid,
+            email: userEmailFromResponse,
+            name,
+            role,
+          })
 
-            setSuccessMessage(data.message || '¡Inicio de sesión exitoso!');
+          setSuccessMessage(data.message || '¡Inicio de sesión exitoso!')
 
-            // 4. Redirige al usuario según su rol
-           if (data.role === 'admin') {
-  router.push('/dashboard-admin/nueva-campana'); // <-- Sin (private)
-} else {
-  router.push('/dashboard-internal'); // <-- Sin (private)
-}
+          // 4. Redirige al usuario según su rol
+          if (data.role === 'admin') {
+            router.push('/dashboard-admin/nueva-campana') // <-- Sin (private)
+          } else {
+            router.push('/dashboard-internal') // <-- Sin (private)
+          }
         } catch (cookieError) {
-            console.error('Error al establecer la cookie de sesión:', cookieError);
-            setError(cookieError.message || 'Error al iniciar sesión de forma segura.');
-            setLoading(false);
-            return;
+          console.error('Error al establecer la cookie de sesión:', cookieError)
+          setError(
+            cookieError.message || 'Error al iniciar sesión de forma segura.',
+          )
+          setLoading(false)
+          return
         }
         // --- FIN: Manejar JWT Personalizado y Establecer Cookie ---
-
       } else {
-        setError(data.error || 'Error desconocido al iniciar sesión.');
+        setError(data.error || 'Error desconocido al iniciar sesión.')
       }
     } catch (err) {
-      console.error('Error durante el inicio de sesión o comunicación:', err);
-      setError(err.message || 'Ocurrió un error inesperado en el proceso de login.');
+      console.error('Error durante el inicio de sesión o comunicación:', err)
+      setError(
+        err.message || 'Ocurrió un error inesperado en el proceso de login.',
+      )
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
-
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-primary-dark p-4 sm:p-6 lg:p-8">
@@ -291,7 +303,7 @@ const handleSubmit = async (e) => {
             }`}
             disabled={loading}
           >
-        {loading ? 'Cargando...' : 'Iniciar Sesión'}
+            {loading ? 'Cargando...' : 'Iniciar Sesión'}
           </button>
         </form>
 

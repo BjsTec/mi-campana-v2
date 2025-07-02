@@ -1,7 +1,7 @@
 // src/app/(public)/page.js
 // Este es un Server Component por defecto, no necesita 'use client' a menos que uses hooks.
 
-import Link from 'next/link'; // Importa el componente Link de Next.js
+import Link from 'next/link' // Importa el componente Link de Next.js
 
 export default function HomePage() {
   return (
@@ -40,5 +40,5 @@ export default function HomePage() {
         </Link>
       </p>
     </div>
-  );
+  )
 }

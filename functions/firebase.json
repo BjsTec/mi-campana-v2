@@ -2,10 +2,10 @@
   "functions": {
     "source": "functions",
     "codebase": "default",
-    "runtime": "nodejs20", 
+    "runtime": "nodejs20",
     "serviceAccount": "funciones-auth-cedula@micampanav2.iam.gserviceaccount.com",
-     "env": { 
-      "BJS_APP_MI_CAMPANA_V2": "projects/micampanav2/secrets/BJS_APP_MI_CAMPANA_V2" 
+    "env": {
+      "BJS_APP_MI_CAMPANA_V2": "projects/micampanav2/secrets/BJS_APP_MI_CAMPANA_V2"
     },
     "ignore": [
       "node_modules",
@@ -16,16 +16,12 @@
     ]
   },
   "firestore": {
-    "rules": "firestore.rules", 
+    "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
     "public": "public",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",

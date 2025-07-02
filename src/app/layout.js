@@ -16,7 +16,9 @@ export default function RootLayout({ children }) {
         {/* Aquí puedes añadir otros meta tags globales, enlaces a CDN de fuentes, etc. */}
       </head>
       <body className={inter.className}>
-         <AuthProvider> {/* Envuelve tus children con AuthProvider */}
+        <AuthProvider>
+          {' '}
+          {/* Envuelve tus children con AuthProvider */}
           {children}
         </AuthProvider>
       </body>
