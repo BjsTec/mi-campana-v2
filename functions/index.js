@@ -11,8 +11,8 @@ initializeApp()
 // Esto le dice a Firebase CLI qué funciones deben ser desplegadas y con qué nombres.
 // Asegúrate de que las rutas relativas sean correctas según tu estructura de carpetas.
 
-// Exporta las funciones de usuario desde el módulo 'users.js' dentro de la carpeta 'routes'.
-export * from './routes/users.js'
+export * from './routes/users.js' // Exporta las funciones de usuarios desde el módulo 'users.js' dentro de la carpeta 'routes'.
+export * from './routes/campaigns.js' // Exporta las funciones de campañas desde el módulo 'campaigns.js' dentro de la carpeta 'routes'.
 
 // Si tuvieras un módulo de productos en 'functions/routes/products.js', lo exportarías así:
 // export * from './routes/products.js';
