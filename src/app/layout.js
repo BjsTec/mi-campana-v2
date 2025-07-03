@@ -17,7 +17,6 @@ export default function RootLayout({ children }) {
       </head>
       <body className={inter.className}>
         <AuthProvider>
-          {' '}
           {/* Envuelve tus children con AuthProvider */}
           {children}
         </AuthProvider>

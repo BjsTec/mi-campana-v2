@@ -1,11 +1,11 @@
 // src/app/(private)/dashboard-internal/page.js
-'use client' // Necesario si vas a usar hooks o interacción con el cliente
+'use client'
 
 import React from 'react'
-import { useAuth } from '@/context/AuthContext' // Para acceder a los datos del usuario
+import { useAuth } from '@/context/AuthContext'
 
 export default function DashboardInternalPage() {
-  const { user } = useAuth() // Accede al usuario del contexto
+  const { user } = useAuth()
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
@@ -13,7 +13,8 @@ export default function DashboardInternalPage() {
         Bienvenido al Panel General
       </h1>
       <p className="text-gray-600 mb-4">
-        Este es el dashboard principal para todos los usuarios.
+        Este es el dashboard principal para todos los usuarios que no son
+        administradores.
       </p>
       {user && (
         <p className="text-sm text-gray-500">
