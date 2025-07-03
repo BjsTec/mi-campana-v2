@@ -186,6 +186,12 @@ export default function ExternalClientDashboardLayout({ children }) {
                 >
                   Editar Campaña
                 </Link>
+                 <Link
+                  href="/dashboard-candidato/voto-opinion"
+                  className="flex items-center px-3 py-2 rounded-md text-neutral-100 hover:bg-primary hover:text-white font-medium"
+                >
+                  voto opinon 
+                </Link>
               </>
             )}
             {/* ... Agrega más enlaces según sea necesario */}
