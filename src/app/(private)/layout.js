@@ -184,13 +184,19 @@ export default function ExternalClientDashboardLayout({ children }) {
                   href="/dashboard-candidato/editar-campana"
                   className="flex items-center px-3 py-2 rounded-md text-neutral-100 hover:bg-primary hover:text-white font-medium"
                 >
-                  Editar Campaña
+                  Gestionar Campaña
                 </Link>
-                 <Link
+                <Link
                   href="/dashboard-candidato/voto-opinion"
                   className="flex items-center px-3 py-2 rounded-md text-neutral-100 hover:bg-primary hover:text-white font-medium"
                 >
-                  voto opinon 
+                  voto opinon
+                </Link>
+                <Link
+                  href="/dashboard-candidato/galeria"
+                  className="flex items-center px-3 py-2 rounded-md text-neutral-100 hover:bg-primary hover:text-white font-medium"
+                >
+                  Galeria
                 </Link>
               </>
             )}

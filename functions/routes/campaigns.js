@@ -4,10 +4,14 @@ import * as functions from 'firebase-functions'
 import { getFirestore } from 'firebase-admin/firestore'
 import { getAuth } from 'firebase-admin/auth'
 import { getApp } from 'firebase-admin/app'
+import bcrypt from 'bcryptjs'
+
+// Configuración para bcrypt
+const saltRounds = 10
 
 // --- FUNCIÓN PARA CREAR UNA CAMPAÑA Y SU CANDIDATO ASOCIADO (POST) ---
 export const createCampaign = functions.https.onRequest(async (req, res) => {
-  // Configuración de CORS para permitir peticiones desde tu frontend
+  // ... (código existente de createCampaign)
   res.set('Access-Control-Allow-Origin', '*')
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
@@ -21,19 +25,11 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
     return res.status(405).send('Método no permitido. Solo POST.')
   }
 
-  // TODO: Añadir verificación de que quien llama es un 'admin'
-  // const adminUid = await verifyAdminToken(req.headers.authorization);
-  // if (!adminUid) {
-  //   return res.status(403).json({ message: 'Acceso denegado. Se requiere rol de administrador.' });
-  // }
-
   try {
     const db = getFirestore(getApp())
     const auth = getAuth(getApp())
-
     const data = req.body
 
-    // --- 1. Validación de Datos de Entrada ---
     const requiredFields = [
       'campaignName',
       'type',
@@ -50,8 +46,6 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
       }
     }
 
-    // --- 2. Verificación de Unicidad del Candidato ---
-    // Comprobar si ya existe un usuario con esa cédula
     const userByCedulaSnapshot = await db
       .collection('users')
       .where('cedula', '==', data.candidateCedula)
@@ -59,36 +53,28 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
       .get()
     if (!userByCedulaSnapshot.empty) {
       const existingUser = userByCedulaSnapshot.docs[0].data()
-      // Revisar si ya es candidato en una campaña del mismo tipo
       const isAlreadyCandidate = existingUser.campaignMemberships?.some(
         (membership) =>
           membership.type === data.type && membership.role === 'candidato',
       )
       if (isAlreadyCandidate) {
-        return res
-          .status(409)
-          .json({
-            message: `Este usuario ya es candidato para una campaña de tipo '${data.type}'.`,
-          })
+        return res.status(409).json({
+          message: `Este usuario ya es candidato para una campaña de tipo '${data.type}'.`,
+        })
       }
     }
 
-    // Comprobar si ya existe un usuario con ese email en Firebase Auth
     try {
       await auth.getUserByEmail(data.candidateEmail)
-      return res
-        .status(409)
-        .json({
-          message: 'El correo electrónico del candidato ya está en uso.',
-        })
+      return res.status(409).json({
+        message: 'El correo electrónico del candidato ya está en uso.',
+      })
     } catch (error) {
       if (error.code !== 'auth/user-not-found') {
-        throw error // Lanzar otros errores de autenticación
+        throw error
       }
-      // Si el error es 'user-not-found', significa que el email está disponible, lo cual es bueno.
     }
 
-    // --- 3. Creación del Usuario Candidato ---
     const candidateRecord = await auth.createUser({
       email: data.candidateEmail,
       password: data.candidatePassword,
@@ -96,17 +82,26 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
     })
     const candidateUid = candidateRecord.uid
 
-    // --- 4. Creación del Documento de Campaña ---
-    // Generar un slug único para el link de registro
-    const registrationSlug = `${data.type}-${data.campaignName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
+    const hashedPassword = await bcrypt.hash(data.candidatePassword, saltRounds)
+    const userCredentialsData = {
+      cedula: data.candidateCedula,
+      firebaseAuthUid: candidateUid,
+      hashedClave: hashedPassword,
+      createdAt: new Date().toISOString(),
+    }
+    await db
+      .collection('user_credentials')
+      .doc(candidateUid)
+      .set(userCredentialsData)
 
-    const newCampaignRef = db.collection('campaigns').doc() // Genera un nuevo ID para la campaña
+    const registrationSlug = `${data.type}-${data.campaignName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
+    const newCampaignRef = db.collection('campaigns').doc()
     const campaignData = {
       campaignName: data.campaignName,
       type: data.type,
-      scope: data.scope || null, // ej: "nacional", "departamental"
-      location: data.location || {}, // ej: { department: "Casanare", city: "Yopal" }
-      candidateId: candidateUid, // Enlace al candidato
+      scope: data.scope || null,
+      location: data.location || {},
+      candidateId: candidateUid,
       contactInfo: data.contactInfo || {},
       media: {
         logoUrl: data.logoUrl || null,
@@ -114,20 +109,21 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
       },
       socialLinks: data.socialLinks || {},
       status: 'activo',
-      paymentStatus: 'pagado', // Estado inicial
+      paymentStatus: 'pagado',
       registrationSlug: registrationSlug,
       createdAt: new Date().toISOString(),
-      createdBy: 'admin_uid_placeholder', // Reemplazar con el UID del admin verificado
+      createdBy: 'admin_uid_placeholder',
     }
 
-    // --- 5. Creación del Documento de Usuario con su Membresía ---
     const userDocRef = db.collection('users').doc(candidateUid)
     const userData = {
       name: data.candidateName,
       email: data.candidateEmail,
       cedula: data.candidateCedula,
+      role: 'candidato',
+      registeredViaAuthUid: candidateUid,
+      lastLogin: null,
       createdAt: new Date().toISOString(),
-      primaryRole: 'candidato',
       campaignMemberships: [
         {
           campaignId: newCampaignRef.id,
@@ -136,11 +132,9 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
           type: data.type,
         },
       ],
-      // Añadir ubicación si se proporciona
       location: data.candidateLocation || {},
     }
 
-    // Escribir ambos documentos en la base de datos
     await newCampaignRef.set(campaignData)
     await userDocRef.set(userData)
 
@@ -151,8 +145,6 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
     })
   } catch (error) {
     console.error('Error en createCampaign:', error)
-    // Si se creó el usuario en Auth pero falló Firestore, se debería considerar limpiarlo.
-    // Por ahora, devolvemos un error genérico.
     return res.status(500).json({
       message: 'Error interno del servidor al crear la campaña.',
       error: error.message,
@@ -160,4 +152,119 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
   }
 })
 
-// Aquí añadiremos más funciones como getCampaigns, updateCampaign, etc.
+// --- FUNCIÓN PARA ACTUALIZAR UNA CAMPAÑA (POST) ---
+export const updateCampaign = functions.https.onRequest(async (req, res) => {
+  // ... (código existente de updateCampaign)
+  res.set('Access-Control-Allow-Origin', '*')
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('')
+    return
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).send('Método no permitido.')
+  }
+
+  try {
+    const db = getFirestore(getApp())
+    const { campaignId, updates } = req.body
+
+    if (!campaignId || !updates || typeof updates !== 'object') {
+      return res.status(400).json({
+        message:
+          'Se requiere el ID de la campaña y un objeto con las actualizaciones.',
+      })
+    }
+
+    const { callingUserUid } = req.body
+    if (!callingUserUid) {
+      return res.status(401).json({
+        message: 'No se proporcionó UID del usuario para la autorización.',
+      })
+    }
+
+    const campaignRef = db.collection('campaigns').doc(campaignId)
+    const campaignDoc = await campaignRef.get()
+
+    if (!campaignDoc.exists) {
+      return res.status(404).json({ message: 'La campaña no fue encontrada.' })
+    }
+
+    if (campaignDoc.data().candidateId !== callingUserUid) {
+      return res.status(403).json({
+        message: 'Acceso denegado. No tienes permiso para editar esta campaña.',
+      })
+    }
+
+    const updateData = {}
+    for (const key in updates) {
+      if (Object.prototype.hasOwnProperty.call(updates, key)) {
+        updateData[key] = updates[key]
+      }
+    }
+
+    await campaignRef.update(updateData)
+
+    return res.status(200).json({
+      message: 'Campaña actualizada exitosamente.',
+      updatedFields: Object.keys(updateData),
+    })
+  } catch (error) {
+    console.error('Error en updateCampaign:', error)
+    return res.status(500).json({
+      message: 'Error interno del servidor al actualizar la campaña.',
+      error: error.message,
+    })
+  }
+})
+
+// --- NUEVA FUNCIÓN PARA OBTENER LOS DATOS DE UNA CAMPAÑA (GET) ---
+export const getCampaignById = functions.https.onRequest(async (req, res) => {
+  // Configuración de CORS
+  res.set('Access-Control-Allow-Origin', '*')
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('')
+    return
+  }
+
+  if (req.method !== 'GET') {
+    return res.status(405).send('Método no permitido.')
+  }
+
+  try {
+    const db = getFirestore(getApp())
+    const campaignId = req.query.id
+
+    if (!campaignId) {
+      return res.status(400).json({
+        message: 'Se requiere el ID de la campaña como parámetro en la URL.',
+      })
+    }
+
+    // TODO: Añadir verificación de que quien llama es un miembro de la campaña.
+
+    const campaignRef = db.collection('campaigns').doc(campaignId)
+    const campaignDoc = await campaignRef.get()
+
+    if (!campaignDoc.exists) {
+      return res.status(404).json({ message: 'La campaña no fue encontrada.' })
+    }
+
+    return res.status(200).json({
+      id: campaignDoc.id,
+      ...campaignDoc.data(),
+    })
+  } catch (error) {
+    console.error('Error en getCampaignById:', error)
+    return res.status(500).json({
+      message: 'Error interno del servidor al obtener la campaña.',
+      error: error.message,
+    })
+  }
+})

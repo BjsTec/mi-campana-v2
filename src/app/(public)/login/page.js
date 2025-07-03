@@ -94,7 +94,7 @@ export default function LoginPage() {
 
         setSuccessMessage(data.message || '¡Inicio de sesión exitoso!')
 
-        if (data.role === 'admin') {
+                     if (data.role === 'admin') {
           router.push('/dashboard-admin/nueva-campana')
         } else if (data.role === 'candidato') {
           router.push('/dashboard-candidato')
