@@ -1,6 +1,6 @@
 // src/app/api/set-session-cookie/route.js
-import { NextResponse } from 'next/server'
 import { verify } from 'jsonwebtoken' // Import 'verify' directamente
+import { NextResponse } from 'next/server'
 
 export async function POST(request) {
   const { idToken } = await request.json() // Espera el JWT personalizado del cliente

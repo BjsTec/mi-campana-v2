@@ -1,7 +1,12 @@
 'use client';
 
+<<<<<<< HEAD
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+=======
+import { useRouter } from 'next/navigation'
+import { createContext, useContext, useState, useEffect } from 'react'
+>>>>>>> b68e7cf63a3c7f30535209adbc37e3b3c76f4d1a
 
 const AuthContext = createContext(null);
 

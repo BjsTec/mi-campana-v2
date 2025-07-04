@@ -1,7 +1,7 @@
 // src/app/api/get-session/route.js
-import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { verify } from 'jsonwebtoken'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
 // --- CORRECCIÓN ---
 // Forzar el renderizado dinámico para esta ruta.

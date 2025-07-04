@@ -1,6 +1,6 @@
 // src/middleware.js
-import { NextResponse } from 'next/server'
 import { verify } from 'jsonwebtoken' // Import 'verify' directamente
+import { NextResponse } from 'next/server'
 
 // Las rutas que NO requieren autenticación (públicas)
 const PUBLIC_FILE = /\.(.*)$/ // Archivos estáticos

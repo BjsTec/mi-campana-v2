@@ -1,5 +1,6 @@
-import React from 'react'
 import Image from 'next/image'
+import React from 'react'
+
 import testImage from '@/assets/test.jpg' // Importamos la imagen local desde la carpeta assets
 
 // Define cuántas veces quieres que se repita la imagen para llenar la galería

@@ -1,4 +1,5 @@
 import { Inter } from 'next/font/google'
+
 import { AuthProvider } from '@/context/AuthContext'
 import '../styles/globals.css' // ¡RUTA CORREGIDA para globals.css!
 
