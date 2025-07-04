@@ -1,14 +1,8 @@
 'use client';
 
-<<<<<<< HEAD
 import { useState, useEffect, Fragment } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Switch } from '@headlessui/react'; // Para un toggle visual
-=======
-import { useState, useEffect } from 'react'
-
-import { useAuth } from '@/context/AuthContext'
->>>>>>> b68e7cf63a3c7f30535209adbc37e3b3c76f4d1a
+import { Switch } from '@headlessui/react';
 
 // --- INICIO: Iconos SVG para la UI ---
 const ContactIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>;
@@ -20,87 +14,78 @@ const GlobeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w
 
 // Componente de la página para gestionar la campaña
 export default function ManageCampaignPage() {
-    const { user } = useAuth();
-    const [campaign, setCampaign] = useState(null);
+    const { user, activeCampaign, campaignLoading, refreshActiveCampaign } = useAuth();
+    
     const [formData, setFormData] = useState({});
-    const [loading, setLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const [activeCampaignId, setActiveCampaignId] = useState(null);
-    const [isEditing, setIsEditing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Lógica para determinar y cargar la campaña activa...
+    // Efecto para rellenar el formulario cuando la campaña activa (del contexto) cambia
     useEffect(() => {
-        if (user && user.campaignMemberships && user.campaignMemberships.length > 0) {
-            const savedCampaignId = localStorage.getItem('activeCampaignId');
-            const candidateCampaigns = user.campaignMemberships.filter(m => m.role === 'candidato');
-            if (candidateCampaigns.length === 0) { setError("No eres candidato de ninguna campaña."); setLoading(false); return; }
-            const campaignToLoad = savedCampaignId && candidateCampaigns.some(c => c.campaignId === savedCampaignId) ? savedCampaignId : candidateCampaigns[0].campaignId;
-            if (activeCampaignId !== campaignToLoad) {
-                setActiveCampaignId(campaignToLoad);
-                localStorage.setItem('activeCampaignId', campaignToLoad);
-            }
-        } else if (user) { setError("No tienes membresías de campaña."); setLoading(false); }
-    }, [user, activeCampaignId]);
-
-    useEffect(() => {
-        if (activeCampaignId) {
-            const fetchCampaignData = async () => {
-                setLoading(true);
-                try {
-                    const getCampaignUrl = process.env.NEXT_PUBLIC_GET_CAMPAIGN_URL;
-                    if (!getCampaignUrl) throw new Error("URL no configurada.");
-                    const response = await fetch(`${getCampaignUrl}?id=${activeCampaignId}`);
-                    if (!response.ok) throw new Error('No se pudo cargar la información.');
-                    const data = await response.json();
-                    setCampaign(data);
-                    setFormData({
-                        'contactInfo.email': data.contactInfo?.email || '',
-                        'contactInfo.phone': data.contactInfo?.phone || '',
-                        'socialLinks.facebook': data.socialLinks?.facebook || '',
-                        'socialLinks.twitter': data.socialLinks?.twitter || '',
-                        'colors.primary': data.colors?.primary || '#3B82F6',
-                        'colors.accent': data.colors?.accent || '#FFFFFF',
-                        'status': data.status || 'privado', // Añadido para el toggle
-                    });
-                } catch (err) { setError(err.message); } finally { setLoading(false); }
-            };
-            fetchCampaignData();
+        if (activeCampaign) {
+            setFormData({
+                'contactInfo.email': activeCampaign.contactInfo?.email || '',
+                'contactInfo.phone': activeCampaign.contactInfo?.phone || '',
+                'socialLinks.facebook': activeCampaign.socialLinks?.facebook || '',
+                'socialLinks.twitter': activeCampaign.socialLinks?.twitter || '',
+                'colors.primary': activeCampaign.colors?.primary || '#3084F2',
+                'colors.accent': activeCampaign.colors?.accent || '#FFFFFF',
+                'status': activeCampaign.status || 'privado',
+            });
         }
-    }, [activeCampaignId]);
+    }, [activeCampaign]);
 
-    const handleCampaignChange = (e) => setActiveCampaignId(e.target.value);
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
+
     const handleStatusChange = (newStatus) => {
         setFormData(prev => ({ ...prev, 'status': newStatus ? 'publico' : 'privado' }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
+        setIsSubmitting(true);
         setError(''); setSuccess('');
         try {
             const updateCampaignUrl = process.env.NEXT_PUBLIC_UPDATE_CAMPAIGN_URL;
             if (!updateCampaignUrl) throw new Error("URL de actualización no configurada.");
+            
             const response = await fetch(updateCampaignUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ campaignId: campaign.id, callingUserUid: user.uid, updates: formData }),
+                body: JSON.stringify({ campaignId: activeCampaign.id, callingUserUid: user.uid, updates: formData }),
             });
+            
             const result = await response.json();
             if (!response.ok) throw new Error(result.message);
-            setSuccess('¡Perfil de campaña actualizado!');
+            
+            setSuccess('¡Perfil actualizado!');
+            await refreshActiveCampaign(); // Avisa al contexto que recargue los datos
             setIsEditing(false);
-            // Forzar recarga de datos para ver los cambios inmediatamente
-            setActiveCampaignId(prevId => prevId ? prevId + ' ' : 'reload'); 
-        } catch (err) { setError(err.message); } finally { setLoading(false); }
+
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
-    if (loading) return <div className="text-center py-10"><p className="text-gray-500">Cargando perfil de la campaña...</p></div>;
-    if (error) return <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert"><p className="font-bold">Error</p><p>{error}</p></div>;
+    if (campaignLoading) {
+        return <div className="text-center py-10"><p className="text-gray-500">Cargando perfil de la campaña...</p></div>;
+    }
+
+    if (!activeCampaign) {
+        return (
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md" role="alert">
+                <p className="font-bold">Información</p>
+                <p>No tienes una campaña activa o no se pudo cargar. Por favor, selecciona una campaña o contacta a soporte.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
@@ -111,12 +96,13 @@ export default function ManageCampaignPage() {
                     handleStatusChange={handleStatusChange}
                     handleSubmit={handleSubmit}
                     setIsEditing={setIsEditing}
-                    loading={loading}
+                    loading={isSubmitting}
                     success={success}
+                    error={error}
                 />
             ) : (
                 <ProfileView 
-                    campaign={campaign} 
+                    campaign={activeCampaign} 
                     setIsEditing={setIsEditing}
                 />
             )}
@@ -178,32 +164,23 @@ function ProfileView({ campaign, setIsEditing }) {
 }
 
 // --- Componente para la VISTA DE EDICIÓN ---
-function EditView({ formData, handleInputChange, handleStatusChange, handleSubmit, setIsEditing, loading, success }) {
+function EditView({ formData, handleInputChange, handleStatusChange, handleSubmit, setIsEditing, loading, success, error }) {
     const isPublic = formData['status'] === 'publico';
 
     return (
         <form onSubmit={handleSubmit} className="space-y-10">
-            {/* Tarjeta de Estado */}
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-800 mb-5 flex items-center"><GlobeIcon />Estado de la Campaña</h2>
                 <Switch.Group as="div" className="flex items-center justify-between">
                     <span className="flex-grow flex flex-col">
                         <Switch.Label as="span" className="text-sm font-medium text-gray-900" passive>Perfil Público</Switch.Label>
-                        <Switch.Description as="span" className="text-sm text-gray-500">
-                            Permite que tu campaña sea visible para visitantes externos.
-                        </Switch.Description>
+                        <Switch.Description as="span" className="text-sm text-gray-500">Permite que tu campaña sea visible para visitantes externos.</Switch.Description>
                     </span>
-                    <Switch
-                        checked={isPublic}
-                        onChange={(newVal) => handleStatusChange(newVal)}
-                        className={`${isPublic ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-                    >
+                    <Switch checked={isPublic} onChange={handleStatusChange} className={`${isPublic ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}>
                         <span aria-hidden="true" className={`${isPublic ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`} />
                     </Switch>
                 </Switch.Group>
             </div>
-
-            {/* Tarjetas de edición existentes... */}
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-800 mb-5 flex items-center"><ContactIcon />Información de Contacto</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -243,16 +220,11 @@ function EditView({ formData, handleInputChange, handleStatusChange, handleSubmi
                     </div>
                 </div>
             </div>
-
-            {/* Botones de Acción */}
             <div className="flex items-center justify-end gap-4">
+                {error && <p className="text-red-600 text-sm font-medium">{error}</p>}
                 {success && <p className="text-green-600 text-sm font-medium">{success}</p>}
-                <button type="button" onClick={() => setIsEditing(false)} className="py-2 px-6 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Cancelar
-                </button>
-                <button type="submit" disabled={loading} className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400">
-                    {loading ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
+                <button type="button" onClick={() => setIsEditing(false)} className="py-2 px-6 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancelar</button>
+                <button type="submit" disabled={loading} className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400">{loading ? 'Guardando...' : 'Guardar Cambios'}</button>
             </div>
         </form>
     );

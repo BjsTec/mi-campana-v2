@@ -1,5 +1,4 @@
 import { Inter } from 'next/font/google'
-
 import { AuthProvider } from '@/context/AuthContext'
 import '../styles/globals.css' // ¡RUTA CORREGIDA para globals.css!
 
@@ -18,6 +17,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={inter.className}>
         <AuthProvider>
+          {' '}
           {/* Envuelve tus children con AuthProvider */}
           {children}
         </AuthProvider>
