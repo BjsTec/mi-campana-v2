@@ -2,6 +2,7 @@
 'use client'
 
 import React, { useState } from 'react'
+
 import { useAuth } from '@/context/AuthContext' // Para mostrar info del usuario logueado
 // Eliminadas las importaciones de Lottie:
 // import Lottie from 'lottie-react';

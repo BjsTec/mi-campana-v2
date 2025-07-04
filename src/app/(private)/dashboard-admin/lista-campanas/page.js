@@ -2,6 +2,7 @@
 'use client'
 
 import React from 'react'
+
 import { useAuth } from '@/context/AuthContext' // Para mostrar info del usuario logueado
 
 // --- Datos simulados de usuarios ---
@@ -111,7 +112,7 @@ export default function ListaUsuariosPage() {
                       usuario.activo ? 'bg-green-500' : 'bg-red-500'
                     }`}
                     title={usuario.activo ? 'Activo' : 'Inactivo'}
-                  ></div>
+                  />
                 </div>
                 <p className="text-gray-700 mb-2">
                   <span className="font-medium">Ocupación:</span>{' '}

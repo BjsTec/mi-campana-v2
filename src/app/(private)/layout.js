@@ -1,9 +1,10 @@
 'use client' // <-- ESENCIAL: Este layout usa hooks, por eso es un componente de cliente
 
-import { useState, useEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation' // Para redirección, ej. después del logout
-import { useAuth } from '@/context/AuthContext' // Para acceder al usuario y la función de logout
 import Link from 'next/link' // Usar Link para navegación interna
+import { useRouter, usePathname } from 'next/navigation' // Para redirección, ej. después del logout
+import { useState, useEffect } from 'react'
+
+import { useAuth } from '@/context/AuthContext' // Para acceder al usuario y la función de logout
 
 export default function ExternalClientDashboardLayout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false) // Estado para controlar el menú hamburguesa
@@ -79,14 +80,14 @@ export default function ExternalClientDashboardLayout({ children }) {
                   strokeLinejoin="round"
                   strokeWidth={2}
                   d="M6 18L18 6M6 6l12 12"
-                ></path>
+                />
               ) : (
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
                   d="M4 6h16M4 12h16M4 18h16"
-                ></path>
+                />
               )}
             </svg>
           </button>
@@ -113,7 +114,7 @@ export default function ExternalClientDashboardLayout({ children }) {
                 strokeLinejoin="round"
                 strokeWidth={2}
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              ></path>
+              />
             </svg>
             Cerrar Sesión
           </button>
@@ -143,7 +144,7 @@ export default function ExternalClientDashboardLayout({ children }) {
                   strokeLinejoin="round"
                   strokeWidth={2}
                   d="M6 18L18 6M6 6l12 12"
-                ></path>
+                />
               </svg>
             </button>
           </div>
@@ -198,7 +199,7 @@ export default function ExternalClientDashboardLayout({ children }) {
                 >
                   Galeria
                 </Link>
-                 <Link
+                <Link
                   href="/dashboard-candidato/nuevo-gerente"
                   className="flex items-center px-3 py-2 rounded-md text-neutral-100 hover:bg-primary hover:text-white font-medium"
                 >
@@ -224,7 +225,7 @@ export default function ExternalClientDashboardLayout({ children }) {
                 strokeLinejoin="round"
                 strokeWidth={2}
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              ></path>
+              />
             </svg>
             Cerrar Sesión
           </button>

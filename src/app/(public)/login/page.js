@@ -1,11 +1,11 @@
 'use client' // Directiva esencial para un componente de cliente en Next.js App Router
 
+import Lottie from 'lottie-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import BackButton from '@/components/ui/BackButton'
-import Lottie from 'lottie-react'
 import loginLoadingAnimation from '@/animations/loginOne.json'
+import BackButton from '@/components/ui/BackButton'
 import { useAuth } from '@/context/AuthContext'
 
 export default function LoginPage() {
@@ -119,8 +119,8 @@ export default function LoginPage() {
         <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50 backdrop-blur-sm">
           <Lottie
             animationData={loginLoadingAnimation}
-            loop={true}
-            autoplay={true}
+            loop
+            autoplay
             style={{ width: 200, height: 200 }}
           />
         </div>
