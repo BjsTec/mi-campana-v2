@@ -1,84 +1,90 @@
-'use client'
+'use client';
 
-import { createContext, useContext, useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-const AuthContext = createContext(null)
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  // Renombramos a 'loading' para mayor claridad
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
+    const [user, setUser] = useState(null);
+    const [activeCampaign, setActiveCampaign] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const router = useRouter();
 
-  // --- INICIO DE LA CORRECCIÓN ---
-  // Este useEffect se ejecuta UNA SOLA VEZ para verificar la sesión del lado del servidor
-  useEffect(() => {
-    async function checkUserSession() {
-      try {
-        // Hacemos una petición a nuestra API para ver si hay una sesión activa en la cookie
-        const response = await fetch('/api/get-session')
+    // 1. Efecto para verificar la sesión al cargar la app o al refrescar la página.
+    useEffect(() => {
+        const initializeSession = async () => {
+            try {
+                const sessionRes = await fetch('/api/get-session');
+                if (sessionRes.ok) {
+                    const sessionData = await sessionRes.json();
+                    if (sessionData.user) {
+                        // Si hay una sesión válida, la establecemos.
+                        setUser(sessionData.user);
+                    }
+                }
+            } catch (error) {
+                console.error("Error inicializando la sesión:", error);
+                setUser(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        initializeSession();
+    }, []);
 
-        if (response.ok) {
-          const data = await response.json()
-          if (data.user) {
-            // Si el servidor confirma la sesión, establecemos el usuario
-            setUser(data.user)
-            console.log('Sesión restablecida desde la cookie HttpOnly.')
-          }
+    // 2. Efecto para cargar la campaña activa cuando el usuario cambia.
+    useEffect(() => {
+        const loadActiveCampaign = async () => {
+            if (user && user.campaignMemberships?.length > 0) {
+                const savedCampaignId = localStorage.getItem('activeCampaignId');
+                const firstMembershipId = user.campaignMemberships[0].campaignId;
+                const campaignIdToLoad = savedCampaignId || firstMembershipId;
+
+                if (campaignIdToLoad) {
+                    try {
+                        const getCampaignUrl = process.env.NEXT_PUBLIC_GET_CAMPAIGN_URL;
+                        if (!getCampaignUrl) throw new Error("URL de campaña no configurada.");
+                        
+                        const campaignRes = await fetch(`${getCampaignUrl}?id=${campaignIdToLoad}`);
+                        if (campaignRes.ok) {
+                            const campaignData = await campaignRes.json();
+                            setActiveCampaign(campaignData);
+                        }
+                    } catch (error) {
+                        console.error("Error al cargar la campaña activa:", error);
+                    }
+                }
+            }
+        };
+        loadActiveCampaign();
+    }, [user]); // Se ejecuta cada vez que el objeto 'user' cambia.
+
+    // 3. La función de login ahora actualiza activamente el estado.
+    const login = (userData) => {
+        setUser(userData);
+        // Guardamos la primera campaña como activa por defecto al iniciar sesión.
+        const firstMembershipId = userData.campaignMemberships?.[0]?.campaignId;
+        if (firstMembershipId) {
+            localStorage.setItem('activeCampaignId', firstMembershipId);
         }
-      } catch (error) {
-        // Si hay un error de red o la API falla, no hacemos nada y el usuario sigue como null
-        console.error('No se pudo verificar la sesión del usuario', error)
-      } finally {
-        // Cuando la verificación termina (con o sin éxito), dejamos de cargar
-        setLoading(false)
-      }
+    };
+
+    const logout = async () => {
+        setUser(null);
+        setActiveCampaign(null);
+        localStorage.removeItem('activeCampaignId');
+        await fetch('/api/logout', { method: 'POST' });
+        router.push('/login'); // Navegación suave al login.
+    };
+
+    const value = { user, activeCampaign, isLoading, login, logout };
+
+    if (isLoading) {
+        return <div className="flex items-center justify-center min-h-screen bg-gray-100"><p>Verificando sesión...</p></div>;
     }
 
-    checkUserSession()
-  }, []) // El array vacío [] asegura que esto solo se ejecute al montar el componente
-  // --- FIN DE LA CORRECCIÓN ---
-
-  // La función de login simplemente actualiza el estado en el cliente.
-  // La cookie ya fue establecida en la página de login.
-  const login = (userData) => {
-    setUser(userData)
-  }
-
-  // La función de logout debe limpiar el estado y la cookie del servidor
-  const logout = async () => {
-    setUser(null) // Limpia el estado del usuario inmediatamente
-    try {
-      // Llama a una API para que borre la cookie HttpOnly del lado del servidor
-      await fetch('/api/logout', { method: 'POST' })
-    } catch (error) {
-      console.error('Error al intentar cerrar la sesión del servidor:', error)
-    }
-    // Redirige al login después de cerrar sesión
-    router.push('/login')
-  }
-
-  const value = { user, login, logout, loading }
-
-  // Muestra un loader mientras se verifica el estado inicial de autenticación
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <p className="text-gray-700">Verificando sesión...</p>
-      </div>
-    )
-  }
-
-  // Una vez que la carga ha terminado, proporciona el contexto a los hijos
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// Hook personalizado para usar el contexto de autenticación fácilmente
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth debe usarse dentro de un AuthProvider')
-  }
-  return context
-}
+export const useAuth = () => useContext(AuthContext);

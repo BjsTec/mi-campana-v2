@@ -1,49 +1,46 @@
-'use client' // Directiva esencial para un componente de cliente en Next.js App Router
+'use client'; // Directiva esencial para un componente de cliente en Next.js App Router
 
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { jwtDecode } from 'jwt-decode';
 
-import BackButton from '@/components/ui/BackButton'
-import Lottie from 'lottie-react'
-import loginLoadingAnimation from '@/animations/loginOne.json'
-import { useAuth } from '@/context/AuthContext'
+import BackButton from '@/components/ui/BackButton';
+import Lottie from 'lottie-react';
+import loginLoadingAnimation from '@/animations/loginOne.json';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
-  // --- CORRECCIÓN 2: Renombrar 'email' a 'cedula' para mayor claridad ---
-  const [cedula, setCedula] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
+  const [cedula, setCedula] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const router = useRouter()
-  const { login } = useAuth()
+  const router = useRouter();
+  const { login } = useAuth();
 
   const handleGoBack = () => {
-    router.push('/')
-  }
+    router.push('/');
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setSuccessMessage('')
-    setLoading(true)
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    setLoading(true);
 
     if (!cedula || !password) {
-      setError('Por favor, ingresa tu cédula y contraseña.')
-      setLoading(false)
-      return
+      setError('Por favor, ingresa tu cédula y contraseña.');
+      setLoading(false);
+      return;
     }
 
     try {
-      // --- CORRECCIÓN 1: Llamar directamente a la Cloud Function de Firebase ---
-      // Asegúrate de añadir esta variable de entorno en tu archivo .env.local
-      // NEXT_PUBLIC_LOGIN_FUNCTION_URL=https://loginwithemail-sfa54lzvpa-uc.a.run.app
-      const loginFunctionUrl = process.env.NEXT_PUBLIC_LOGIN_FUNCTION_URL
+      const loginFunctionUrl = process.env.NEXT_PUBLIC_LOGIN_FUNCTION_URL;
 
       if (!loginFunctionUrl) {
-        throw new Error('La URL de la función de login no está configurada.')
+        throw new Error('La URL de la función de login no está configurada.');
       }
 
       const response = await fetch(loginFunctionUrl, {
@@ -51,67 +48,54 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        // El backend espera el campo 'email', por eso enviamos la cédula en ese campo.
         body: JSON.stringify({ email: cedula, clave: password }),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (response.ok) {
-        const {
-          idToken,
-          firebaseAuthUid,
-          name,
-          role,
-          email: userEmailFromResponse,
-        } = data
+        const { idToken } = data;
 
         if (!idToken) {
-          throw new Error('El servidor no proporcionó un token de sesión.')
+          throw new Error('El servidor no proporcionó un token de sesión.');
         }
 
-        // 2. Llamar al Route Handler local para establecer la cookie de sesión segura
         const cookieResponse = await fetch('/api/set-session-cookie', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken }), // Envía solo el token
-        })
+          body: JSON.stringify({ idToken }),
+        });
 
         if (!cookieResponse.ok) {
-          const errorData = await cookieResponse.json()
+          const errorData = await cookieResponse.json();
           throw new Error(
             errorData.message || 'Error al establecer la sesión del servidor.',
-          )
+          );
         }
 
-        // 3. Almacenar datos del usuario en el contexto y redirigir
-        login({
-          firebaseAuthUid,
-          email: userEmailFromResponse,
-          name,
-          role,
-        })
-
-        setSuccessMessage(data.message || '¡Inicio de sesión exitoso!')
-
-        if (data.role === 'admin') {
-          router.push('/dashboard-admin/nueva-campana')
-        } else if (data.role === 'candidato') {
-          router.push('/dashboard-candidato')
+        const decodedUserData = jwtDecode(idToken);
+        
+        // --- INICIO DE LA CORRECCIÓN ---
+        // Se usa window.location.href para forzar una recarga completa,
+        // asegurando que el AuthContext se inicialice con la nueva sesión.
+        if (decodedUserData.role === 'admin') {
+          window.location.href = '/dashboard-admin/nueva-campana';
+        } else if (decodedUserData.role === 'candidato') {
+          window.location.href = '/dashboard-candidato';
         } else {
-          router.push('/dashboard-internal')
+          window.location.href = '/dashboard-internal';
         }
+        // --- FIN DE LA CORRECCIÓN ---
+
       } else {
-        // Si la respuesta no es OK, lanza un error con el mensaje del backend
-        throw new Error(data.message || 'Error desconocido al iniciar sesión.')
+        throw new Error(data.message || 'Error desconocido al iniciar sesión.');
       }
     } catch (err) {
-      console.error('Error durante el proceso de login:', err)
-      setError(err.message || 'Ocurrió un error inesperado.')
-    } finally {
-      setLoading(false)
+      console.error('Error durante el proceso de login:', err);
+      setError(err.message || 'Ocurrió un error inesperado.');
+      setLoading(false); // Detenemos la carga solo si hay un error
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-primary-dark p-4">
@@ -147,9 +131,9 @@ export default function LoginPage() {
               name="cedula"
               value={cedula}
               onChange={(e) => {
-                const value = e.target.value
+                const value = e.target.value;
                 if (value === '' || /^\d+$/.test(value)) {
-                  setCedula(value)
+                  setCedula(value);
                 }
               }}
               required
@@ -244,5 +228,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
