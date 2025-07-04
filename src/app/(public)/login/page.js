@@ -1,46 +1,46 @@
-'use client'; // Directiva esencial para un componente de cliente en Next.js App Router
+// src/app/(public)/login/page.js
+'use client' // Directiva esencial para un componente de cliente en Next.js App Router
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { jwtDecode } from 'jwt-decode'
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { jwtDecode } from 'jwt-decode';
-
-import BackButton from '@/components/ui/BackButton';
-import Lottie from 'lottie-react';
-import loginLoadingAnimation from '@/animations/loginOne.json';
-import { useAuth } from '@/context/AuthContext';
+import BackButton from '@/components/ui/BackButton'
+import Lottie from 'lottie-react'
+import loginLoadingAnimation from '@/animations/loginOne.json'
+import { useAuth } from '@/context/AuthContext'
 
 export default function LoginPage() {
-  const [cedula, setCedula] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [cedula, setCedula] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
-  const router = useRouter();
-  const { login } = useAuth();
+  const router = useRouter()
+  const { login } = useAuth()
 
   const handleGoBack = () => {
-    router.push('/');
-  };
+    router.push('/')
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccessMessage('');
-    setLoading(true);
+    e.preventDefault()
+    setError('')
+    setSuccessMessage('')
+    setLoading(true)
 
     if (!cedula || !password) {
-      setError('Por favor, ingresa tu cédula y contraseña.');
-      setLoading(false);
-      return;
+      setError('Por favor, ingresa tu cédula y contraseña.')
+      setLoading(false)
+      return
     }
 
     try {
-      const loginFunctionUrl = process.env.NEXT_PUBLIC_LOGIN_FUNCTION_URL;
+      const loginFunctionUrl = process.env.NEXT_PUBLIC_LOGIN_FUNCTION_URL
 
       if (!loginFunctionUrl) {
-        throw new Error('La URL de la función de login no está configurada.');
+        throw new Error('La URL de la función de login no está configurada.')
       }
 
       const response = await fetch(loginFunctionUrl, {
@@ -49,53 +49,52 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email: cedula, clave: password }),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (response.ok) {
-        const { idToken } = data;
+        const { idToken } = data
 
         if (!idToken) {
-          throw new Error('El servidor no proporcionó un token de sesión.');
+          throw new Error('El servidor no proporcionó un token de sesión.')
         }
 
         const cookieResponse = await fetch('/api/set-session-cookie', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken }),
-        });
+        })
 
         if (!cookieResponse.ok) {
-          const errorData = await cookieResponse.json();
+          const errorData = await cookieResponse.json()
           throw new Error(
             errorData.message || 'Error al establecer la sesión del servidor.',
-          );
+          )
         }
 
-        const decodedUserData = jwtDecode(idToken);
-        
+        const decodedUserData = jwtDecode(idToken)
+
         // --- INICIO DE LA CORRECCIÓN ---
         // Se usa window.location.href para forzar una recarga completa,
         // asegurando que el AuthContext se inicialice con la nueva sesión.
         if (decodedUserData.role === 'admin') {
-          window.location.href = '/dashboard-admin/nueva-campana';
+          window.location.href = '/dashboard-admin/home-wm'
         } else if (decodedUserData.role === 'candidato') {
-          window.location.href = '/dashboard-candidato';
+          window.location.href = '/dashboard-candidato'
         } else {
-          window.location.href = '/dashboard-internal';
+          window.location.href = '/dashboard-internal'
         }
         // --- FIN DE LA CORRECCIÓN ---
-
       } else {
-        throw new Error(data.message || 'Error desconocido al iniciar sesión.');
+        throw new Error(data.message || 'Error desconocido al iniciar sesión.')
       }
     } catch (err) {
-      console.error('Error durante el proceso de login:', err);
-      setError(err.message || 'Ocurrió un error inesperado.');
-      setLoading(false); // Detenemos la carga solo si hay un error
+      console.error('Error durante el proceso de login:', err)
+      setError(err.message || 'Ocurrió un error inesperado.')
+      setLoading(false) // Detenemos la carga solo si hay un error
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary to-primary-dark p-4">
@@ -131,9 +130,9 @@ export default function LoginPage() {
               name="cedula"
               value={cedula}
               onChange={(e) => {
-                const value = e.target.value;
+                const value = e.target.value
                 if (value === '' || /^\d+$/.test(value)) {
-                  setCedula(value);
+                  setCedula(value)
                 }
               }}
               required
@@ -228,5 +227,5 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }

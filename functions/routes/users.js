@@ -248,13 +248,13 @@ export const loginWithEmail = functions.https.onRequest(
       })
 
       const tokenPayload = {
-    uid: firebaseAuthUid,
-    email: userData.email,
-    name: userData.name,
-    role: userData.role,
-    // --- ESTA ES LA LÍNEA QUE HACE EXACTAMENTE LO QUE PIDES ---
-    campaignMemberships: userData.campaignMemberships || [], 
-};
+        uid: firebaseAuthUid,
+        email: userData.email,
+        name: userData.name,
+        role: userData.role,
+        // --- ESTA ES LA LÍNEA QUE HACE EXACTAMENTE LO QUE PIDES ---
+        campaignMemberships: userData.campaignMemberships || [],
+      }
 
       const idToken = jwt.sign(tokenPayload, cleanedJwtSecret, {
         algorithm: 'HS256',
