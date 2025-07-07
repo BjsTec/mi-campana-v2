@@ -1,4 +1,4 @@
-// context/AuthContext.js
+// src/context/AuthContext.js
 'use client'
 import { createContext, useContext, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -9,9 +9,9 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [activeCampaign, setActiveCampaign] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const router = useRouter()
+  const [idToken, setIdToken] = useState(null) // <--- ¡ESTA ES LA LÍNEA CLAVE A AÑADIR!
+  const router = useRouter() // 1. Efecto para verificar la sesión al cargar la app o al refrescar la página.
 
-  // 1. Efecto para verificar la sesión al cargar la app o al refrescar la página.
   useEffect(() => {
     const initializeSession = async () => {
       try {
@@ -19,21 +19,21 @@ export function AuthProvider({ children }) {
         if (sessionRes.ok) {
           const sessionData = await sessionRes.json()
           if (sessionData.user) {
-            // Si hay una sesión válida, la establecemos.
             setUser(sessionData.user)
+            setIdToken(sessionData.idToken) // <--- ¡Y ESTA LÍNEA CLAVE! (Asumiendo que tu /api/get-session devuelve idToken)
           }
         }
       } catch (error) {
         console.error('Error inicializando la sesión:', error)
         setUser(null)
+        setIdToken(null) // <--- Limpiar si hay error
       } finally {
         setIsLoading(false)
       }
     }
     initializeSession()
-  }, [])
+  }, []) // 2. Efecto para cargar la campaña activa cuando el usuario cambia. (Este bloque queda igual)
 
-  // 2. Efecto para cargar la campaña activa cuando el usuario cambia.
   useEffect(() => {
     const loadActiveCampaign = async () => {
       if (user && user.campaignMemberships?.length > 0) {
@@ -61,11 +61,12 @@ export function AuthProvider({ children }) {
       }
     }
     loadActiveCampaign()
-  }, [user]) // Se ejecuta cada vez que el objeto 'user' cambia.
+  }, [user]) // 3. La función de login ahora actualiza activamente el estado.
 
-  // 3. La función de login ahora actualiza activamente el estado.
   const login = (userData) => {
+    // Asegúrate de que userData contenga idToken
     setUser(userData)
+    setIdToken(userData.idToken) // <--- ¡Y ESTA LÍNEA CLAVE! (Asumiendo que tu login lo devuelve)
     // Guardamos la primera campaña como activa por defecto al iniciar sesión.
     const firstMembershipId = userData.campaignMemberships?.[0]?.campaignId
     if (firstMembershipId) {
@@ -76,17 +77,18 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     setUser(null)
     setActiveCampaign(null)
+    setIdToken(null) // <--- Limpiar idToken al cerrar sesión
     localStorage.removeItem('activeCampaignId')
     await fetch('/api/logout', { method: 'POST' })
-    router.push('/login') // Navegación suave al login.
-  }
+    router.push('/login')
+  } // <--- ¡AÑADIR idToken AL OBJETO DE VALOR EXPORTADO!
 
-  const value = { user, activeCampaign, isLoading, login, logout }
+  const value = { user, activeCampaign, isLoading, login, logout, idToken }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <p>Verificando sesión...</p>
+        <p>Verificando sesión...</p>{' '}
       </div>
     )
   }

@@ -2,9 +2,7 @@
 'use client'
 
 import React from 'react'
-// Ya no necesitamos useCampaign aquí si los admins no están ligados a una campaña
-// import { useCampaign } from '@/context/CampaignContext';
-import { useAuth } from '@/context/AuthContext' // Para acceder al usuario autenticado
+import { useAuth } from '@/context/AuthContext'
 
 // Importar los componentes de gráficos y registrar Chart.js
 import { Bar, Pie } from 'react-chartjs-2'
@@ -38,7 +36,6 @@ import {
 } from '@heroicons/react/24/outline'
 
 // --- Datos Simulados (MOCKUP DATA) ---
-// Estos datos ahora se asumen como globales para el administrador.
 const mockData = {
   campaignTypes: [
     { name: 'Demo Free', count: 5 },
@@ -119,7 +116,7 @@ const mockData = {
   },
 }
 
-// --- Colores de marca para los gráficos (directamente definidos aquí, ya que el config.mjs no es accesible en runtime JS) ---
+// --- Colores de marca para los gráficos (definidos aquí, basados en tu tailwind.config.mjs) ---
 const chartBrandColors = {
   primaryDefault: '#3084F2',
   primaryLight: '#61A3F7',
@@ -133,37 +130,47 @@ const chartBrandColors = {
   neutral300: '#D1D5DB',
   neutral600: '#4B5563',
   neutral800: '#1F2937',
-  errorDark: '#dc3545', // Asumiendo este color para mensajes de error
-  // Paleta extendida para los 9 tipos de campaña, para el gráfico de pastel
+  errorDark: '#dc3545',
   campaignTypePalette: [
     '#3084F2', // Primary
     '#F2B90F', // Secondary
-    '#28a745', // Success green (ej. verde de tailwind)
-    '#dc3545', // Error red (ej. rojo de tailwind)
-    '#ffc107', // Warning yellow (ej. amarillo de tailwind)
-    '#17a2b8', // Info cyan (ej. cian de tailwind)
-    '#6f42c1', // Purple (ej. púrpura de tailwind)
-    '#fd7e14', // Orange (ej. naranja de tailwind)
-    '#e83e8c', // Pink (ej. rosa de tailwind)
+    '#28a745', // Success green
+    '#dc3545', // Error red
+    '#ffc107', // Warning yellow
+    '#17a2b8', // Info cyan
+    '#6f42c1', // Purple
+    '#fd7e14', // Orange
+    '#e83e8c', // Pink
   ],
 }
 
 // --- Componente de Tarjeta de Estadística ---
 const StatCard = ({ title, value, description, icon: IconComponent }) => (
-  <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex-1 min-w-[250px] flex flex-col items-start border border-neutral-200">
-    {IconComponent && <IconComponent className="h-8 w-8 text-primary mb-3" />}
-    <h3 className="text-xl font-semibold text-neutral-800 mb-2">{title}</h3>
-    <p className="text-4xl font-bold text-primary mb-2">{value}</p>
-    <p className="text-sm text-neutral-600">{description}</p>
+  <div className="bg-white p-5 sm:p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex-1 min-w-[200px] flex flex-col items-start border border-neutral-200">
+    {/* Ajuste de padding y min-width */}
+    {IconComponent && (
+      <IconComponent className="h-7 w-7 sm:h-8 sm:w-8 text-primary mb-2 sm:mb-3" />
+    )}
+    {/* Ajuste de tamaño de icono y margen */}
+    <h3 className="text-lg sm:text-xl font-semibold text-neutral-800 mb-1 sm:mb-2">
+      {title}
+    </h3>
+    {/* Ajuste de tamaño de título */}
+    <p className="text-3xl sm:text-4xl font-bold text-primary mb-1 sm:mb-2">
+      {value}
+    </p>
+    {/* Ajuste de tamaño del valor */}
+    <p className="text-xs sm:text-sm text-neutral-600">{description}</p>
+    {/* Ajuste de tamaño de descripción */}
   </div>
 )
 
 // Componente Skeleton Card para estados de carga
 const SkeletonCard = () => (
-  <div className="bg-white p-6 rounded-lg shadow-md animate-pulse border border-neutral-200">
-    <div className="h-8 w-8 bg-neutral-200 rounded-full mb-3"></div>
-    <div className="h-4 bg-neutral-200 rounded w-3/4 mb-4"></div>
-    <div className="h-8 bg-neutral-300 rounded w-1/2 mb-2"></div>
+  <div className="bg-white p-5 sm:p-6 rounded-lg shadow-md animate-pulse border border-neutral-200">
+    <div className="h-7 w-7 sm:h-8 sm:w-8 bg-neutral-200 rounded-full mb-2 sm:mb-3"></div>
+    <div className="h-4 bg-neutral-200 rounded w-3/4 mb-3"></div>
+    <div className="h-7 bg-neutral-300 rounded w-1/2 mb-2"></div>
     <div className="h-3 bg-neutral-200 rounded w-full"></div>
   </div>
 )
@@ -171,8 +178,6 @@ const SkeletonCard = () => (
 export default function StatisticsPage() {
   const { user, isLoading: authLoading } = useAuth()
 
-  // Asumimos que los datos del mockup ya están "cargados" porque son estáticos por ahora.
-  // Si en el futuro los datos fueran dinámicos, necesitarías un isLoading/useEffect aquí.
   const dataLoading = false // Simula que la carga de datos ha terminado
 
   if (authLoading) {
@@ -183,7 +188,6 @@ export default function StatisticsPage() {
     )
   }
 
-  // Validación de rol: Solo administradores pueden ver esta página.
   if (!user || user.role !== 'admin') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-red-100 text-error-dark">
@@ -192,7 +196,6 @@ export default function StatisticsPage() {
     )
   }
 
-  // Calcular estadísticas resumidas
   const totalCampaigns = mockData.campaignTypes.reduce(
     (sum, type) => sum + type.count,
     0,
@@ -200,7 +203,6 @@ export default function StatisticsPage() {
   const totalDemoFreeCampaigns =
     mockData.campaignTypes.find((t) => t.name === 'Demo Free')?.count || 0
 
-  // Datos para el gráfico de tipo de campaña
   const campaignTypeChartData = {
     labels: mockData.campaignTypes.map((type) => type.name),
     datasets: [
@@ -208,13 +210,12 @@ export default function StatisticsPage() {
         label: 'Número de Campañas por Tipo',
         data: mockData.campaignTypes.map((type) => type.count),
         backgroundColor: chartBrandColors.campaignTypePalette,
-        borderColor: chartBrandColors.campaignTypePalette.map((color) => color), // Usa el mismo color para el borde
+        borderColor: chartBrandColors.campaignTypePalette.map((color) => color),
         borderWidth: 1,
       },
     ],
   }
 
-  // Datos para el gráfico de usuarios por tipo de campaña
   const usersByCampaignTypeChartData = {
     labels: mockData.totalUsersByCampaignType.map((data) => data.type),
     datasets: [
@@ -228,7 +229,6 @@ export default function StatisticsPage() {
     ],
   }
 
-  // Datos para el gráfico de suscripciones por semana
   const weeklySubscriptionsChartData = {
     labels: mockData.subscriptionsPerPeriod.weekly.map((data) => data.week),
     datasets: [
@@ -242,7 +242,6 @@ export default function StatisticsPage() {
     ],
   }
 
-  // Datos para el gráfico de suscripciones por mes
   const monthlySubscriptionsChartData = {
     labels: mockData.subscriptionsPerPeriod.monthly.map((data) => data.month),
     datasets: [
@@ -296,7 +295,6 @@ export default function StatisticsPage() {
     },
   }
 
-  // Si los datos están cargando (simulado como `false` por ahora)
   if (dataLoading) {
     return (
       <div className="p-4 sm:p-6 lg:p-8 bg-neutral-50">
@@ -326,13 +324,14 @@ export default function StatisticsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 bg-neutral-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-neutral-800 mb-6">
+    <div className="p-2 sm:p-4 lg:p-8 bg-neutral-50 min-h-screen">
+      {/* Reducción de padding general en móvil */}
+      <h1 className="text-xl sm:text-3xl font-bold text-neutral-800 mb-4 sm:mb-6">
         Estadísticas Globales del Programa
       </h1>
-
+      {/* Ajuste de tamaño de título */}
       {/* Tarjetas de Resumen */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
         <StatCard
           title="Total de Campañas Activas"
           value={totalCampaigns}
@@ -358,13 +357,15 @@ export default function StatisticsPage() {
           icon={UserPlusIcon}
         />
       </div>
-
       {/* Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md border border-neutral-200">
-          <h2 className="text-xl font-semibold text-neutral-800 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-8">
+        {/* Reducción de gap y mb */}
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md border border-neutral-200">
+          {/* Reducción de padding */}
+          <h2 className="text-lg font-semibold text-neutral-800 mb-3">
             Número de Campañas por Tipo
           </h2>
+          {/* Ajuste de tamaño de título */}
           <Pie
             data={campaignTypeChartData}
             options={{
@@ -379,10 +380,12 @@ export default function StatisticsPage() {
             }}
           />
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border border-neutral-200">
-          <h2 className="text-xl font-semibold text-neutral-800 mb-4">
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md border border-neutral-200">
+          {/* Reducción de padding */}
+          <h2 className="text-lg font-semibold text-neutral-800 mb-3">
             Usuarios Registrados por Tipo de Campaña
           </h2>
+          {/* Ajuste de tamaño de título */}
           <Bar
             data={usersByCampaignTypeChartData}
             options={{
@@ -398,12 +401,14 @@ export default function StatisticsPage() {
           />
         </div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md border border-neutral-200">
-          <h2 className="text-xl font-semibold text-neutral-800 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-8">
+        {/* Reducción de gap y mb */}
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md border border-neutral-200">
+          {/* Reducción de padding */}
+          <h2 className="text-lg font-semibold text-neutral-800 mb-3">
             Nuevas Suscripciones Semanales
           </h2>
+          {/* Ajuste de tamaño de título */}
           <Bar
             data={weeklySubscriptionsChartData}
             options={{
@@ -418,10 +423,12 @@ export default function StatisticsPage() {
             }}
           />
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md border border-neutral-200">
-          <h2 className="text-xl font-semibold text-neutral-800 mb-4">
+        <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md border border-neutral-200">
+          {/* Reducción de padding */}
+          <h2 className="text-lg font-semibold text-neutral-800 mb-3">
             Nuevas Suscripciones Mensuales
           </h2>
+          {/* Ajuste de tamaño de título */}
           <Bar
             data={monthlySubscriptionsChartData}
             options={{
@@ -437,38 +444,41 @@ export default function StatisticsPage() {
           />
         </div>
       </div>
-
       {/* Listado de Clientes Interesados (Leads) */}
-      <div className="bg-white p-6 rounded-lg shadow-md border border-neutral-200">
-        <h2 className="text-xl font-semibold text-neutral-800 mb-4">
+      <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md border border-neutral-200">
+        {/* Reducción de padding */}
+        <h2 className="text-lg font-semibold text-neutral-800 mb-3">
           Clientes Potenciales (Leads de Interés)
         </h2>
+        {/* Ajuste de tamaño de título */}
         {mockData.leadsInterest.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-neutral-200">
+            <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
+              {/* Ajuste del tamaño de fuente de la tabla */}
               <thead className="bg-neutral-50">
                 <tr>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider"
+                    className="px-2 py-1 sm:px-3 sm:py-2 text-left font-medium text-neutral-600 uppercase tracking-wider"
                   >
                     Nombre
                   </th>
+                  {/* Reducción de padding */}
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider"
+                    className="px-2 py-1 sm:px-3 sm:py-2 text-left font-medium text-neutral-600 uppercase tracking-wider"
                   >
                     Email
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider"
+                    className="px-2 py-1 sm:px-3 sm:py-2 text-left font-medium text-neutral-600 uppercase tracking-wider"
                   >
-                    Plan Interés
+                    Plan
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider"
+                    className="px-2 py-1 sm:px-3 sm:py-2 text-left font-medium text-neutral-600 uppercase tracking-wider"
                   >
                     Fecha
                   </th>
@@ -480,25 +490,29 @@ export default function StatisticsPage() {
                     key={index}
                     className="hover:bg-neutral-50 transition-colors duration-150"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-800">
+                    <td className="px-2 py-2 sm:px-3 sm:py-3 whitespace-nowrap font-medium text-neutral-800">
                       {lead.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
+                    {/* Reducción de padding */}
+                    <td className="px-2 py-2 sm:px-3 sm:py-3 whitespace-nowrap text-neutral-600 truncate">
                       {lead.email}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
+                    {/* Reducción de padding y truncate */}
+                    <td className="px-2 py-2 sm:px-3 sm:py-3 whitespace-nowrap text-neutral-600">
                       {lead.plan}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
+                    {/* Reducción de padding */}
+                    <td className="px-2 py-2 sm:px-3 sm:py-3 whitespace-nowrap text-neutral-600">
                       {lead.date}
                     </td>
+                    {/* Reducción de padding */}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="text-neutral-600">
+          <p className="text-neutral-600 text-sm">
             No hay clientes potenciales registrados por ahora.
           </p>
         )}
