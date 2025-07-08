@@ -298,6 +298,12 @@ export default function ExternalClientDashboardLayout({ children }) {
                   >
                     Equipo
                   </Link>
+                  <Link
+                    href="/dashboard-candidato/foros"
+                    className="flex items-center px-3 py-2 rounded-md hover:bg-white/20 font-medium"
+                  >
+                    Foros
+                  </Link>
                 </>
               )}
               {/* --- FIN DE LA CORRECCIÓN --- */}
