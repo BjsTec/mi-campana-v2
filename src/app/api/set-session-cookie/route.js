@@ -1,11 +1,10 @@
 // src/app/api/set-session-cookie/route.js
-import { verify } from 'jsonwebtoken' // Import 'verify' directamente
+import { verify } from 'jsonwebtoken'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
   const { idToken } = await request.json() // Espera el JWT personalizado del cliente
 
-  // --- CORRECCIÓN 1: Usar el nombre correcto de la variable de entorno ---
   const jwtSecret = process.env.JWT_SECRET
 
   if (!jwtSecret) {
@@ -26,15 +25,16 @@ export async function POST(request) {
   }
 
   try {
-    // --- CORRECCIÓN 2: Verificar el token usando el secreto como texto simple ---
-    // No es necesario convertirlo a un Buffer.
     const decoded = verify(idToken, jwtSecret, { algorithms: ['HS256'] })
 
-    // Calcular la duración de la cookie
     const expiresInMs = decoded.exp * 1000 - Date.now()
 
     const response = NextResponse.json(
-      { message: 'Sesión iniciada exitosamente.' },
+      {
+        message: 'Sesión iniciada exitosamente.',
+        idToken: idToken, // ¡CORRECCIÓN CLAVE! Devolver el idToken al frontend
+        user: decoded, // Opcional: devolver el usuario decodificado si el frontend lo necesita aquí
+      },
       { status: 200 },
     )
 

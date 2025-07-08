@@ -13,6 +13,7 @@ initializeApp()
 
 export * from './routes/users.js' // Exporta las funciones de usuarios desde el módulo 'users.js' dentro de la carpeta 'routes'.
 export * from './routes/campaigns.js' // Exporta las funciones de campañas desde el módulo 'campaigns.js' dentro de la carpeta 'routes'.
+export * from './routes/variables.js'
 
 // Si tuvieras un módulo de productos en 'functions/routes/products.js', lo exportarías así:
 // export * from './routes/products.js';

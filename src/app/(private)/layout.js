@@ -292,6 +292,12 @@ export default function ExternalClientDashboardLayout({ children }) {
                   >
                     Nuevo Gerente
                   </Link>
+                  <Link
+                    href="/dashboard-candidato/equipo"
+                    className="flex items-center px-3 py-2 rounded-md hover:bg-white/20 font-medium"
+                  >
+                    Equipo
+                  </Link>
                 </>
               )}
               {/* --- FIN DE LA CORRECCIÓN --- */}

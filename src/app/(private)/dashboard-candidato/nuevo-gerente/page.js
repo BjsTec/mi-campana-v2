@@ -1,10 +1,11 @@
-// ../src/app/(private)/dashboard-candidato/nuevo-gerente/page.js
+// src/app/(private)/dashboard-candidato/nuevo-gerente/page.js
 
 // ¡IMPORTANTE! Esta línea es CRÍTICA. Indica que este es un "Client Component"
 // y puede usar hooks de React como useState y useEffect.
 'use client'
 
 import { useState, useEffect } from 'react'
+// import Alert from '@/components/ui/Alert'; // Removido por ahora, según tu indicación
 
 // --- DATOS MOCKEADOS PARA PAÍSES, ESTADOS Y CIUDADES ---
 const PaisesMock = [
@@ -57,10 +58,7 @@ const CiudadesMock = {
   COR: [{ id: 'CORC', nombre: 'Córdoba Capital' }],
 }
 
-// Se cambió el nombre de la función de 'nuevo-gerente' a 'Page'
-// 'Page' es la convención para los componentes de página en Next.js App Router.
 export default function Page() {
-  // <-- LLAVE DE APERTURA DE LA FUNCIÓN PRINCIPAL DE LA PÁGINA
   const [formData, setFormData] = useState({
     nombre: '',
     cedula: '',
@@ -83,7 +81,7 @@ export default function Page() {
   useEffect(() => {
     if (formData.pais) {
       setEstadosDisponibles(EstadosMock[formData.pais] || [])
-      setFormData((prev) => ({ ...prev, estado: '', ciudad: '' })) // Reset estado y ciudad
+      setFormData((prev) => ({ ...prev, estado: '', ciudad: '' }))
     } else {
       setEstadosDisponibles([])
     }
@@ -93,7 +91,7 @@ export default function Page() {
   useEffect(() => {
     if (formData.estado) {
       setCiudadesDisponibles(CiudadesMock[formData.estado] || [])
-      setFormData((prev) => ({ ...prev, ciudad: '' })) // Reset ciudad
+      setFormData((prev) => ({ ...prev, ciudad: '' }))
     } else {
       setCiudadesDisponibles([])
     }
@@ -108,12 +106,11 @@ export default function Page() {
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault() // Evita el comportamiento predeterminado del formulario
+    e.preventDefault()
     setCargando(true)
-    setMensaje('')
+    setMensaje('') // Limpiar mensaje anterior
 
     // Validación básica antes de simular envío
-    // Se eliminó 'formData.email' de la validación ya que no es un campo en el formulario actual.
     if (
       !formData.nombre ||
       !formData.cedula ||
@@ -130,14 +127,38 @@ export default function Page() {
       return
     }
 
-    console.log('Datos del formulario a enviar:', formData)
+    // --- NUEVOS DATOS SIMULADOS PARA EL BACKEND ---
+    const datosAdicionalesBackend = {
+      fechaCreacion: new Date().toISOString(),
+      identificacionCreador: 'USR-001-ADMIN',
+      identificacionCampaña: 'CMP-2025-ABCD',
+      status: 'activo',
+      verificado: false,
+      verificadoPor: null,
+      rating: (Math.random() * 4 + 1).toFixed(1),
+      votosTotal: Math.floor(Math.random() * 1000),
+      votosPromesa: Math.floor(Math.random() * 500),
+      votosPotenciales: Math.floor(Math.random() * 200),
+      votosReales: Math.floor(Math.random() * 100),
+    }
+
+    const datosParaBackend = {
+      ...formData,
+      ...datosAdicionalesBackend,
+    }
+
+    console.log(
+      'Datos COMPLETOS del formulario a enviar (simulado al backend):',
+      datosParaBackend,
+    )
 
     // --- SIMULACIÓN DE ENVÍO AL BACKEND ---
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000)) // Simula un retardo de 2 segundos
+      await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      setMensaje('🎉 ¡Registro creado con éxito! (Simulado)')
-      // Limpiar formulario después de envío exitoso
+      setMensaje(
+        '� ¡Registro creado con éxito! (Simulado al backend con datos adicionales)',
+      )
       setFormData({
         nombre: '',
         cedula: '',
@@ -158,20 +179,41 @@ export default function Page() {
     }
   }
 
+  // --- HANDLERS PARA LOS NUEVOS BOTONES ---
+  const handleGerenteClick = () => {
+    console.log('¡Botón "Gerente" presionado!')
+    setMensaje('Has presionado el botón "Gerente".')
+  }
+
+  const handleAnilloClick = () => {
+    console.log('¡Botón "Anillo" presionado!')
+    setMensaje('Has presionado el botón "Anillo".')
+  }
+
   return (
-    // <-- PARÉNTESIS DE APERTURA DEL RETURN DEL JSX
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      {' '}
-      {/* <-- DIV CONTENEDOR PRINCIPAL */}
       <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
-        {' '}
-        {/* <-- DIV DEL CONTENIDO DEL FORMULARIO */}
+        {/* --- NUEVOS BOTONES --- */}
+        <div className="flex justify-center gap-4 mb-8">
+          <button
+            onClick={handleGerenteClick}
+            className="px-6 py-3 bg-green-600 text-white font-bold rounded-md shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out"
+          >
+            Gerente
+          </button>
+          <button
+            onClick={handleAnilloClick}
+            className="px-6 py-3 bg-purple-600 text-white font-bold rounded-md shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-150 ease-in-out"
+          >
+            Anillo
+          </button>
+        </div>
+        {/* --- FIN NUEVOS BOTONES --- */}
+
         <h2 className="text-3xl font-extrabold text-gray-900 mb-6 text-center">
           Registro de Nueva Persona
         </h2>
         <form onSubmit={handleSubmit} className="space-y-6">
-          {' '}
-          {/* <-- FORMULARIO */}
           {/* Información Personal */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -209,6 +251,7 @@ export default function Page() {
               />
             </div>
           </div>
+
           {/* Contacto */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -245,6 +288,7 @@ export default function Page() {
               />
             </div>
           </div>
+
           {/* Ubicación */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -323,6 +367,7 @@ export default function Page() {
               </select>
             </div>
           </div>
+
           {/* Información Adicional */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -359,6 +404,7 @@ export default function Page() {
               />
             </div>
           </div>
+
           {/* Sexo */}
           <div>
             <label
@@ -381,6 +427,7 @@ export default function Page() {
               <option value="O">Otro</option>
             </select>
           </div>
+
           {/* Mensajes de Estado */}
           {mensaje && (
             <p
@@ -389,6 +436,7 @@ export default function Page() {
               {mensaje}
             </p>
           )}
+
           {/* Botón de Envío */}
           <div>
             <button
