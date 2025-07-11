@@ -41,7 +41,7 @@ const authorizeAdmin = async (req, res, next) => {
   }
 
   try {
-    const jwtSecretValue = JWT_SECRET_KEY_PARAM.value() 
+    const jwtSecretValue = JWT_SECRET_KEY_PARAM.value()
 
     if (!jwtSecretValue) {
       console.error(
@@ -103,7 +103,6 @@ const setPublicCorsHeaders = (req, res, next) => {
   next()
 }
 
-
 // --- FUNCIÓN PARA CREAR UNA CAMPAÑA Y SU CANDIDATO ASOCIADO (POST) ---
 // Esta función es pública por diseño actual (no usa authorizeAdmin directamente).
 export const createCampaign = functions.https.onRequest(async (req, res) => {
@@ -144,32 +143,32 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
       }
     }
 
-    let candidateUid;
-    let existingUserDocRef; // Referencia al documento de usuario en Firestore
-    let existingUserData = null; // Datos del usuario existente en Firestore
+    let candidateUid
+    let existingUserDocRef // Referencia al documento de usuario en Firestore
+    let existingUserData = null // Datos del usuario existente en Firestore
 
     // --- Lógica para manejar usuarios existentes o nuevos ---
     try {
       // Intenta obtener el usuario por email de Firebase Auth
-      const userRecord = await auth.getUserByEmail(data.candidateEmail);
-      candidateUid = userRecord.uid;
-      existingUserDocRef = db.collection('users').doc(candidateUid);
-      existingUserData = (await existingUserDocRef.get()).data();
+      const userRecord = await auth.getUserByEmail(data.candidateEmail)
+      candidateUid = userRecord.uid
+      existingUserDocRef = db.collection('users').doc(candidateUid)
+      existingUserData = (await existingUserDocRef.get()).data()
 
       // Si el usuario ya existe en Auth y tiene una membresía de candidato ACTIVA del MISMO TIPO
-      const isAlreadyActiveCandidateOfType = existingUserData?.campaignMemberships?.some(
-        (membership) =>
-          membership.type === data.type && 
-          membership.role === 'candidato' && 
-          membership.status === 'activo'
-      );
+      const isAlreadyActiveCandidateOfType =
+        existingUserData?.campaignMemberships?.some(
+          (membership) =>
+            membership.type === data.type &&
+            membership.role === 'candidato' &&
+            membership.status === 'activo',
+        )
 
       if (isAlreadyActiveCandidateOfType) {
         return res.status(409).json({
           message: `El correo electrónico ya está asociado a un candidato ACTIVO para una campaña de tipo '${data.type}'.`,
-        });
+        })
       }
-
     } catch (error) {
       if (error.code === 'auth/user-not-found') {
         // Si el email NO existe en Firebase Auth, verificamos por cédula en Firestore
@@ -177,26 +176,27 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
           .collection('users')
           .where('cedula', '==', data.candidateCedula)
           .limit(1)
-          .get();
-        
+          .get()
+
         if (!userByCedulaSnapshot.empty) {
           // Usuario existente en Firestore por cédula (ej. un votante)
-          existingUserDocRef = userByCedulaSnapshot.docs[0].ref;
-          existingUserData = userByCedulaSnapshot.docs[0].data();
-          candidateUid = existingUserDocRef.id; // El UID de Auth se vinculará al ID de este documento
+          existingUserDocRef = userByCedulaSnapshot.docs[0].ref
+          existingUserData = userByCedulaSnapshot.docs[0].data()
+          candidateUid = existingUserDocRef.id // El UID de Auth se vinculará al ID de este documento
 
           // Si la cédula ya está asociada a un candidato ACTIVO del MISMO TIPO
-          const isAlreadyActiveCandidateOfType = existingUserData?.campaignMemberships?.some(
-            (membership) =>
-              membership.type === data.type && 
-              membership.role === 'candidato' && 
-              membership.status === 'activo'
-          );
+          const isAlreadyActiveCandidateOfType =
+            existingUserData?.campaignMemberships?.some(
+              (membership) =>
+                membership.type === data.type &&
+                membership.role === 'candidato' &&
+                membership.status === 'activo',
+            )
 
           if (isAlreadyActiveCandidateOfType) {
             return res.status(409).json({
               message: `La cédula ya está asociada a un candidato ACTIVO para una campaña de tipo '${data.type}'.`,
-            });
+            })
           }
 
           // Crear un nuevo usuario en Firebase Auth y vincularlo al UID existente de Firestore
@@ -205,36 +205,39 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
               email: data.candidateEmail,
               password: data.candidatePassword,
               displayName: data.candidateName,
-              uid: candidateUid // Intentar usar el UID existente para vincular
-            });
-            candidateUid = newAuthRecord.uid; // Asegurar que candidateUid es el UID final de Auth
-            
-            // Actualizar el documento de usuario en Firestore con el email y el rol si es necesario
-            await existingUserDocRef.update({ 
-              email: data.candidateEmail, 
-              role: 'candidato', // Asegurar que el rol sea candidato
-              updatedAt: new Date().toISOString()
-            });
+              uid: candidateUid, // Intentar usar el UID existente para vincular
+            })
+            candidateUid = newAuthRecord.uid // Asegurar que candidateUid es el UID final de Auth
 
+            // Actualizar el documento de usuario en Firestore con el email y el rol si es necesario
+            await existingUserDocRef.update({
+              email: data.candidateEmail,
+              role: 'candidato', // Asegurar que el rol sea candidato
+              updatedAt: new Date().toISOString(),
+            })
           } catch (authError) {
             if (authError.code === 'auth/email-already-in-use') {
-              return res.status(409).json({ message: 'El correo electrónico del candidato ya está en uso en otro usuario.' });
+              return res
+                .status(409)
+                .json({
+                  message:
+                    'El correo electrónico del candidato ya está en uso en otro usuario.',
+                })
             }
-            throw authError; // Re-lanzar otros errores de Auth
+            throw authError // Re-lanzar otros errores de Auth
           }
-
         } else {
           // Usuario completamente nuevo: No existe ni en Auth por email ni en Firestore por cédula
           const newAuthRecord = await auth.createUser({
             email: data.candidateEmail,
             password: data.candidatePassword,
             displayName: data.candidateName,
-          });
-          candidateUid = newAuthRecord.uid;
-          existingUserDocRef = db.collection('users').doc(candidateUid); // Nueva referencia para el nuevo usuario
+          })
+          candidateUid = newAuthRecord.uid
+          existingUserDocRef = db.collection('users').doc(candidateUid) // Nueva referencia para el nuevo usuario
         }
       } else {
-        throw error; // Re-lanzar otros errores de Firebase Auth
+        throw error // Re-lanzar otros errores de Firebase Auth
       }
     }
 
@@ -243,13 +246,16 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
     await db
       .collection('user_credentials')
       .doc(candidateUid)
-      .set({
-        cedula: data.candidateCedula,
-        firebaseAuthUid: candidateUid,
-        hashedClave: hashedPassword,
-        updatedAt: new Date().toISOString(), // Actualizar fecha de modificación
-        createdAt: existingUserData?.createdAt || new Date().toISOString(), // Mantener fecha de creación original si existe
-      }, { merge: true }); // Usar merge para no sobrescribir otros campos si el documento ya existe
+      .set(
+        {
+          cedula: data.candidateCedula,
+          firebaseAuthUid: candidateUid,
+          hashedClave: hashedPassword,
+          updatedAt: new Date().toISOString(), // Actualizar fecha de modificación
+          createdAt: existingUserData?.createdAt || new Date().toISOString(), // Mantener fecha de creación original si existe
+        },
+        { merge: true },
+      ) // Usar merge para no sobrescribir otros campos si el documento ya existe
 
     // --- Generar slug de registro para la campaña ---
     const registrationSlug = `${data.type}-${data.campaignName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
@@ -271,7 +277,7 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
       // Nuevos campos para métricas de campaña
       totalConfirmedVotes: 0, // Total de votos confirmados en la campaña
       totalPotentialVotes: 0, // Total de votos potenciales en la campaña
-      
+
       // Ajuste: Estructura de Location (país, estado, ciudad, puestoVotacion)
       location: {
         country: data.location?.country || 'Colombia', // Default a Colombia
@@ -279,7 +285,7 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
         city: data.location?.city || null,
         // votingStation: data.location?.votingStation || null, // Si la campaña tiene su propio puesto de votación
       },
-      
+
       // Ajuste: Estructura de ContactInfo
       contactInfo: {
         email: data.contactInfo?.email || null,
@@ -291,23 +297,29 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
         salesEmail: data.contactInfo?.salesEmail || null,
         salesWhatsapp: data.contactInfo?.salesWhatsapp || null,
       },
-      
+
       // Ajuste: Estructura de Media (objeto vacío si no se proporciona, o con nulls si se proporciona y no tienen valor)
-      media: data.media && Object.keys(data.media).length > 0 ? {
-        logoUrl: data.media.logoUrl || null,
-        bannerUrl: data.media.bannerUrl || null,
-      } : {}, 
-      
+      media:
+        data.media && Object.keys(data.media).length > 0
+          ? {
+              logoUrl: data.media.logoUrl || null,
+              bannerUrl: data.media.bannerUrl || null,
+            }
+          : {},
+
       // Ajuste: Estructura de SocialLinks (objeto vacío si no se proporciona, o con nulls si se proporciona y no tienen valor)
-      socialLinks: data.socialLinks && Object.keys(data.socialLinks).length > 0 ? {
-        facebook: data.socialLinks.facebook || null,
-        instagram: data.socialLinks.instagram || null,
-        tiktok: data.socialLinks.tiktok || null,
-        threads: data.socialLinks.threads || null,
-        youtube: data.socialLinks.youtube || null,
-        linkedin: data.socialLinks.linkedin || null,
-        twitter: data.socialLinks.twitter || null,
-      } : {},
+      socialLinks:
+        data.socialLinks && Object.keys(data.socialLinks).length > 0
+          ? {
+              facebook: data.socialLinks.facebook || null,
+              instagram: data.socialLinks.instagram || null,
+              tiktok: data.socialLinks.tiktok || null,
+              threads: data.socialLinks.threads || null,
+              youtube: data.socialLinks.youtube || null,
+              linkedin: data.socialLinks.linkedin || null,
+              twitter: data.socialLinks.twitter || null,
+            }
+          : {},
 
       // Nuevo campo: Opciones de mensajería por defecto y configurables
       messagingOptions: {
@@ -327,32 +339,33 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
       whatsapp: data.whatsapp || null, // Añadido según la tabla de usuarios
       phone: data.phone || null, // Añadido según la tabla de usuarios
       // passwordHash no se guarda aquí, está en user_credentials
-      
-      location: { // Ubicación del usuario, puede ser diferente a la de la campaña
+
+      location: {
+        // Ubicación del usuario, puede ser diferente a la de la campaña
         country: data.candidateLocation?.country || 'Colombia',
         state: data.candidateLocation?.state || null,
         city: data.candidateLocation?.city || null,
         votingStation: data.puestoVotacion || null, // Añadido según la tabla de usuarios
       },
-      
+
       dateBirth: data.dateBirth, // Añadido según la tabla de usuarios
       sexo: data.sexo, // Añadido según la tabla de usuarios
-      
+
       role: 'candidato', // Rol principal del usuario en el sistema
       level: 0, // Nivel 0 para el candidato
       status: 'activo', // Estado activo para el usuario
-      
+
       createdAt: existingUserData?.createdAt || new Date().toISOString(), // Mantener fecha de creación original si existe
       updatedAt: new Date().toISOString(), // Fecha de última actualización
       registeredViaAuthUid: 'admin_uid_placeholder', // Quién lo registró (ej. un admin)
       lastLogin: null, // Se actualizará en el login
-    };
+    }
 
     // Gestionar campaignMemberships
-    let updatedCampaignMemberships = existingUserData?.campaignMemberships || [];
+    let updatedCampaignMemberships = existingUserData?.campaignMemberships || []
     const existingMembershipIndex = updatedCampaignMemberships.findIndex(
-      (m) => m.type === data.type && m.role === 'candidato'
-    );
+      (m) => m.type === data.type && m.role === 'candidato',
+    )
 
     const newMembership = {
       campaignId: newCampaignRef.id,
@@ -368,7 +381,7 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
       votoEsperado: null, // No aplica para el rol de candidato
       directVotes: 0, // Inicialmente 0
       pyramidVotes: 0, // Inicialmente 0
-    };
+    }
 
     if (existingMembershipIndex !== -1) {
       // Si ya existe una membresía de candidato del mismo tipo, la actualizamos.
@@ -378,19 +391,22 @@ export const createCampaign = functions.https.onRequest(async (req, res) => {
       updatedCampaignMemberships[existingMembershipIndex] = {
         ...updatedCampaignMemberships[existingMembershipIndex],
         ...newMembership, // Sobrescribir con los nuevos detalles de la campaña
-        status: 'activo' // Asegurar que la nueva sea activa
-      };
+        status: 'activo', // Asegurar que la nueva sea activa
+      }
     } else {
       // Si no existe una membresía de candidato del mismo tipo, la añadimos.
-      updatedCampaignMemberships.push(newMembership);
+      updatedCampaignMemberships.push(newMembership)
     }
-    userDataToSet.campaignMemberships = updatedCampaignMemberships;
+    userDataToSet.campaignMemberships = updatedCampaignMemberships
 
     // --- Guardar la nueva campaña y el perfil de usuario ---
     await newCampaignRef.set(campaignData)
     // Usar set con merge para actualizar el documento de usuario si ya existe,
     // o crearlo si es completamente nuevo.
-    await db.collection('users').doc(candidateUid).set(userDataToSet, { merge: true }) 
+    await db
+      .collection('users')
+      .doc(candidateUid)
+      .set(userDataToSet, { merge: true })
 
     // --- Respuesta exitosa ---
     return res.status(201).json({

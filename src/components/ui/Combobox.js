@@ -1,106 +1,129 @@
 // src/components/ui/Combobox.js
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 
-const Combobox = ({ label, name, value, options, onChange, placeholder, required = false, disabled = false }) => {
-  const [inputValue, setInputValue] = useState('');
-  const [filteredOptions, setFilteredOptions] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const inputRef = useRef(null);
-  const listRef = useRef(null);
+const Combobox = ({
+  label,
+  name,
+  value,
+  options,
+  onChange,
+  placeholder,
+  required = false,
+  disabled = false,
+}) => {
+  const [inputValue, setInputValue] = useState('')
+  const [filteredOptions, setFilteredOptions] = useState([])
+  const [isOpen, setIsOpen] = useState(false)
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const inputRef = useRef(null)
+  const listRef = useRef(null)
 
   // Sincronizar input con el valor externo (si el valor cambia desde fuera)
   useEffect(() => {
-    const selectedOption = options.find(option => option.id === value);
+    const selectedOption = options.find((option) => option.id === value)
     if (selectedOption) {
-      setInputValue(selectedOption.name);
+      setInputValue(selectedOption.name)
     } else if (value === '') {
-      setInputValue(''); // Limpiar input si el valor externo es vacío
+      setInputValue('') // Limpiar input si el valor externo es vacío
     }
-  }, [value, options]);
+  }, [value, options])
 
   // Manejar el filtrado de opciones
   useEffect(() => {
     if (inputValue === '') {
-      setFilteredOptions(options);
+      setFilteredOptions(options)
     } else {
       setFilteredOptions(
-        options.filter(option =>
-          option.name.toLowerCase().includes(inputValue.toLowerCase())
-        )
-      );
+        options.filter((option) =>
+          option.name.toLowerCase().includes(inputValue.toLowerCase()),
+        ),
+      )
     }
-    setHighlightedIndex(-1); // Reset highlight on filter change
-  }, [inputValue, options]);
+    setHighlightedIndex(-1) // Reset highlight on filter change
+  }, [inputValue, options])
 
   // Manejar cambios en el input
   const handleInputChange = (e) => {
-    setInputValue(e.target.value);
-    setIsOpen(true);
-  };
+    setInputValue(e.target.value)
+    setIsOpen(true)
+  }
 
   // Manejar selección de una opción
   const handleOptionClick = (option) => {
-    setInputValue(option.name);
-    onChange({ target: { name, value: option.id } }); // Simular evento para el reducer
-    setIsOpen(false);
-  };
+    setInputValue(option.name)
+    onChange({ target: { name, value: option.id } }) // Simular evento para el reducer
+    setIsOpen(false)
+  }
 
   // Manejar focus/blur para abrir/cerrar el dropdown
   const handleInputFocus = () => {
-    setIsOpen(true);
-    setFilteredOptions(options); // Mostrar todas las opciones al enfocar
-  };
+    setIsOpen(true)
+    setFilteredOptions(options) // Mostrar todas las opciones al enfocar
+  }
 
   const handleInputBlur = (e) => {
     // Retrasar el cierre para permitir el click en las opciones
     setTimeout(() => {
-      if (!listRef.current || !listRef.current.contains(document.activeElement)) {
-        setIsOpen(false);
+      if (
+        !listRef.current ||
+        !listRef.current.contains(document.activeElement)
+      ) {
+        setIsOpen(false)
         // Si el valor del input no coincide con ninguna opción, restablecerlo
-        const selectedOption = options.find(option => option.id === value);
+        const selectedOption = options.find((option) => option.id === value)
         if (!selectedOption || selectedOption.name !== inputValue) {
-          if (value) { // Si ya hay un valor seleccionado, restaurar su nombre
-            setInputValue(selectedOption ? selectedOption.name : '');
-          } else { // Si no hay valor seleccionado, limpiar el input
-            setInputValue('');
+          if (value) {
+            // Si ya hay un valor seleccionado, restaurar su nombre
+            setInputValue(selectedOption ? selectedOption.name : '')
+          } else {
+            // Si no hay valor seleccionado, limpiar el input
+            setInputValue('')
           }
         }
       }
-    }, 100); // Pequeño retraso
-  };
+    }, 100) // Pequeño retraso
+  }
 
   // Manejar navegación con teclado
   const handleKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setHighlightedIndex(prev => (prev < filteredOptions.length - 1 ? prev + 1 : prev));
+      e.preventDefault()
+      setHighlightedIndex((prev) =>
+        prev < filteredOptions.length - 1 ? prev + 1 : prev,
+      )
       if (listRef.current && listRef.current.children[highlightedIndex + 1]) {
-        listRef.current.children[highlightedIndex + 1].scrollIntoView({ block: 'nearest' });
+        listRef.current.children[highlightedIndex + 1].scrollIntoView({
+          block: 'nearest',
+        })
       }
     } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0));
+      e.preventDefault()
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0))
       if (listRef.current && listRef.current.children[highlightedIndex - 1]) {
-        listRef.current.children[highlightedIndex - 1].scrollIntoView({ block: 'nearest' });
+        listRef.current.children[highlightedIndex - 1].scrollIntoView({
+          block: 'nearest',
+        })
       }
     } else if (e.key === 'Enter') {
-      e.preventDefault();
+      e.preventDefault()
       if (highlightedIndex !== -1 && filteredOptions[highlightedIndex]) {
-        handleOptionClick(filteredOptions[highlightedIndex]);
+        handleOptionClick(filteredOptions[highlightedIndex])
       } else if (inputValue && filteredOptions.length === 1) {
-        handleOptionClick(filteredOptions[0]); // Si solo hay una opción, seleccionarla
+        handleOptionClick(filteredOptions[0]) // Si solo hay una opción, seleccionarla
       }
-      setIsOpen(false);
+      setIsOpen(false)
     } else if (e.key === 'Escape') {
-      setIsOpen(false);
-      inputRef.current.blur();
+      setIsOpen(false)
+      inputRef.current.blur()
     }
-  };
+  }
 
   return (
     <div className="relative">
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+      <label
+        htmlFor={name}
+        className="block text-sm font-medium text-gray-700 mb-1"
+      >
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
@@ -129,7 +152,9 @@ const Combobox = ({ label, name, value, options, onChange, placeholder, required
             <li
               key={option.id}
               className={`cursor-default select-none relative py-2 pl-3 pr-9 ${
-                index === highlightedIndex ? 'text-white bg-blue-600' : 'text-gray-900'
+                index === highlightedIndex
+                  ? 'text-white bg-blue-600'
+                  : 'text-gray-900'
               }`}
               onClick={() => handleOptionClick(option)}
               onMouseEnter={() => setHighlightedIndex(index)}
@@ -147,7 +172,7 @@ const Combobox = ({ label, name, value, options, onChange, placeholder, required
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default Combobox;
+export default Combobox

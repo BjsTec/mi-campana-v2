@@ -1,7 +1,13 @@
 // src/app/(private)/dashboard-admin/nueva-campana/page.js
 'use client'
 
-import React, { useState, useReducer, useEffect, useCallback, useRef } from 'react'
+import React, {
+  useState,
+  useReducer,
+  useEffect,
+  useCallback,
+  useRef,
+} from 'react'
 import { useAuth } from '../../../../context/AuthContext' // Corregido: Se usa la ruta relativa
 
 // Importar los componentes modulares
@@ -9,34 +15,117 @@ import CampaignInfoStep from '@/components/admin/campaigns/CampaignInfoStep'
 import CandidateInfoStep from '@/components/admin/campaigns/CandidateInfoStep'
 import MediaMessagingStep from '@/components/admin/campaigns/MediaMessagingStep'
 
-
 // --- Iconos SVG para una UI más rica ---
 const CampaignIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-2.236 9.168-5.514M15 11l-1 1" /> </svg>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    {' '}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-2.236 9.168-5.514M15 11l-1 1"
+    />{' '}
+  </svg>
 )
 const UserIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> </svg>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    {' '}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+    />{' '}
+  </svg>
 )
 const MediaIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /> </svg>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    {' '}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+    />{' '}
+  </svg>
 )
 const CheckCircleIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-6 w-6 text-green-500"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    {' '}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+    />{' '}
+  </svg>
 )
 const ArrowRightIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /> </svg>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 ml-2"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    {' '}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M14 5l7 7m0 0l-7 7m7-7H3"
+    />{' '}
+  </svg>
 )
-const UploadIcon = () => ( // Se mantiene aquí si ImageUploader se mueve y usa este icono
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /> </svg>
+const UploadIcon = () => (
+  // Se mantiene aquí si ImageUploader se mueve y usa este icono
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-10 w-10 text-gray-400"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    {' '}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+    />{' '}
+  </svg>
 )
-
 
 // --- Estado inicial del formulario, basado en el JSON de Postman y la estructura de la BD ---
 const initialState = {
   campaignName: '',
   type: 'concejal', // Valor por defecto para el tipo de campaña
   scope: 'municipal', // Valor por defecto
-  
+
   // Datos del candidato (usuario)
   candidateName: '',
   candidateCedula: '',
@@ -49,16 +138,16 @@ const initialState = {
   puestoVotacion: '', // Del usuario
 
   // Ubicación de la campaña
-  location: { 
+  location: {
     country: 'Colombia', // Por defecto
     state: '', // ID del departamento
-    city: '' // ID de la ciudad
+    city: '', // ID de la ciudad
   },
   // Ubicación del candidato (puede ser igual a la de la campaña o diferente)
-  candidateLocation: { 
+  candidateLocation: {
     country: 'Colombia', // Por defecto
-    state: '', 
-    city: ''
+    state: '',
+    city: '',
   },
 
   // Información de contacto de la campaña
@@ -73,8 +162,8 @@ const initialState = {
   // Media de la campaña
   media: { logoUrl: '', bannerUrl: '' },
   // Redes sociales de la campaña
-  socialLinks: { 
-    facebook: '', 
+  socialLinks: {
+    facebook: '',
     instagram: '',
     tiktok: '',
     threads: '',
@@ -108,7 +197,7 @@ function formReducer(state, action) {
       }
       return { ...state, [action.field]: action.value }
     case 'SET_FORM_DATA': // Nuevo caso para precargar todo el formulario
-      return { ...state, ...action.payload };
+      return { ...state, ...action.payload }
     case 'RESET_FORM':
       return initialState
     default:
@@ -133,105 +222,124 @@ export default function NuevaCampanaPage() {
   const [bannerFile, setBannerFile] = useState(null)
 
   // Estados para datos de ubicación
-  const [departamentos, setDepartamentos] = useState([]);
-  const [ciudades, setCiudades] = useState([]);
-  const [candidateCiudades, setCandidateCiudades] = useState([]); // Ciudades específicas para el candidato
+  const [departamentos, setDepartamentos] = useState([])
+  const [ciudades, setCiudades] = useState([])
+  const [candidateCiudades, setCandidateCiudades] = useState([]) // Ciudades específicas para el candidato
 
   // Estados para la búsqueda de usuario por cédula
-  const [foundUser, setFoundUser] = useState(null); // Almacena el usuario encontrado
-  const [isSearching, setIsSearching] = useState(false); // Estado de carga de la búsqueda
-  const debounceTimeoutRef = useRef(null); // Para el debounce
+  const [foundUser, setFoundUser] = useState(null) // Almacena el usuario encontrado
+  const [isSearching, setIsSearching] = useState(false) // Estado de carga de la búsqueda
+  const debounceTimeoutRef = useRef(null) // Para el debounce
 
   // URL de tus Firebase Functions desde variables de entorno
-  const CREATE_CAMPAIGN_URL = process.env.NEXT_PUBLIC_CREATE_CAMPAIGN_URL;
-  const GET_DEPARTMENTS_URL = process.env.NEXT_PUBLIC_GET_DEPARTMENTS_URL;
-  const GET_CITIES_BY_DEPARTMENT_URL = process.env.NEXT_PUBLIC_GET_CITIES_BY_DEPARTMENT_URL;
-  const GET_USER_BY_CEDULA_URL = process.env.NEXT_PUBLIC_GET_USER_BY_CEDULA_URL;
-
+  const CREATE_CAMPAIGN_URL = process.env.NEXT_PUBLIC_CREATE_CAMPAIGN_URL
+  const GET_DEPARTMENTS_URL = process.env.NEXT_PUBLIC_GET_DEPARTMENTS_URL
+  const GET_CITIES_BY_DEPARTMENT_URL =
+    process.env.NEXT_PUBLIC_GET_CITIES_BY_DEPARTMENT_URL
+  const GET_USER_BY_CEDULA_URL = process.env.NEXT_PUBLIC_GET_USER_BY_CEDULA_URL
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const fieldValue = type === 'checkbox' ? checked : value;
+    const { name, value, type, checked } = e.target
+    const fieldValue = type === 'checkbox' ? checked : value
 
     dispatch({
       type: 'UPDATE_FIELD',
       field: name,
       value: fieldValue,
-    });
+    })
 
     // Lógica de búsqueda por cédula con debounce (se mantiene aquí para pasar a CandidateInfoStep)
     if (name === 'candidateCedula') {
       if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
+        clearTimeout(debounceTimeoutRef.current)
       }
       debounceTimeoutRef.current = setTimeout(() => {
-        if (value.trim().length >= 7) { // Mínimo 7 dígitos para buscar
-          handleCedulaSearch(value.trim());
+        if (value.trim().length >= 7) {
+          // Mínimo 7 dígitos para buscar
+          handleCedulaSearch(value.trim())
         } else {
-          setFoundUser(null); // Limpiar usuario encontrado si la cédula es muy corta
-          setIsSearching(false);
-          setMessage({ text: '', type: '' }); // Limpiar mensaje de búsqueda
+          setFoundUser(null) // Limpiar usuario encontrado si la cédula es muy corta
+          setIsSearching(false)
+          setMessage({ text: '', type: '' }) // Limpiar mensaje de búsqueda
         }
-      }, 500); // Debounce de 500ms
+      }, 500) // Debounce de 500ms
     }
-  };
+  }
 
   // Función para buscar usuario por cédula
-  const handleCedulaSearch = useCallback(async (cedula) => {
-    setIsSearching(true);
-    setFoundUser(null); // Limpiar cualquier usuario previamente encontrado
-    setMessage({ text: '', type: '' }); // Limpiar mensajes anteriores
+  const handleCedulaSearch = useCallback(
+    async (cedula) => {
+      setIsSearching(true)
+      setFoundUser(null) // Limpiar cualquier usuario previamente encontrado
+      setMessage({ text: '', type: '' }) // Limpiar mensajes anteriores
 
-    try {
-      if (!GET_USER_BY_CEDULA_URL) {
-        throw new Error('URL para buscar usuario por cédula no configurada.');
-      }
-      const response = await fetch(`${GET_USER_BY_CEDULA_URL}?cedula=${cedula}`);
-      if (!response.ok) {
-        throw new Error('Error al buscar usuario por cédula.');
-      }
-      const result = await response.json();
+      try {
+        if (!GET_USER_BY_CEDULA_URL) {
+          throw new Error('URL para buscar usuario por cédula no configurada.')
+        }
+        const response = await fetch(
+          `${GET_USER_BY_CEDULA_URL}?cedula=${cedula}`,
+        )
+        if (!response.ok) {
+          throw new Error('Error al buscar usuario por cédula.')
+        }
+        const result = await response.json()
 
-      if (result.user) {
-        setFoundUser(result.user);
-        setMessage({ text: `✅ Usuario encontrado: ${result.user.name} (${result.user.email}).`, type: 'success' });
-      } else {
-        setMessage({ text: 'ℹ️ No se encontró ningún usuario con esa cédula. Puedes registrar uno nuevo.', type: 'info' });
+        if (result.user) {
+          setFoundUser(result.user)
+          setMessage({
+            text: `✅ Usuario encontrado: ${result.user.name} (${result.user.email}).`,
+            type: 'success',
+          })
+        } else {
+          setMessage({
+            text: 'ℹ️ No se encontró ningún usuario con esa cédula. Puedes registrar uno nuevo.',
+            type: 'info',
+          })
+        }
+      } catch (error) {
+        console.error('Error en handleCedulaSearch:', error)
+        setMessage({
+          text: `❌ Error al buscar usuario: ${error.message}`,
+          type: 'error',
+        })
+      } finally {
+        setIsSearching(false)
       }
-    } catch (error) {
-      console.error('Error en handleCedulaSearch:', error);
-      setMessage({ text: `❌ Error al buscar usuario: ${error.message}`, type: 'error' });
-    } finally {
-      setIsSearching(false);
-    }
-  }, [GET_USER_BY_CEDULA_URL]);
+    },
+    [GET_USER_BY_CEDULA_URL],
+  )
 
   // Función para precargar el formulario con los datos del usuario encontrado
   const handlePreloadUser = useCallback(() => {
     if (foundUser) {
-      dispatch({ 
-        type: 'SET_FORM_DATA', 
+      dispatch({
+        type: 'SET_FORM_DATA',
         payload: {
           ...formData, // Mantener los datos actuales del formulario
           candidateName: foundUser.name || '',
-          candidateEmail: foundUser.email || '', 
+          candidateEmail: foundUser.email || '',
           whatsapp: foundUser.whatsapp || '',
           phone: foundUser.phone || '',
           sexo: foundUser.sexo || '',
-          dateBirth: foundUser.dateBirth ? foundUser.dateBirth.split('T')[0] : '', // Formato YYYY-MM-DD
+          dateBirth: foundUser.dateBirth
+            ? foundUser.dateBirth.split('T')[0]
+            : '', // Formato YYYY-MM-DD
           candidateLocation: {
             country: foundUser.location?.country || 'Colombia',
             state: foundUser.location?.state || '',
             city: foundUser.location?.city || '',
           },
           puestoVotacion: foundUser.location?.votingStation || '',
-        }
-      });
-      setMessage({ text: '✅ Datos del usuario precargados. Revisa y completa la información.', type: 'success' });
-      setFoundUser(null); // Ocultar la sugerencia después de precargar
+        },
+      })
+      setMessage({
+        text: '✅ Datos del usuario precargados. Revisa y completa la información.',
+        type: 'success',
+      })
+      setFoundUser(null) // Ocultar la sugerencia después de precargar
     }
-  }, [foundUser, formData]);
-
+  }, [foundUser, formData])
 
   const handleFileChange = (setter, previewSetter, file) => {
     if (file && file.type.startsWith('image/')) {
@@ -284,17 +392,20 @@ export default function NuevaCampanaPage() {
         dateBirth: formData.dateBirth, // Formato YYYY-MM-DD
         puestoVotacion: formData.puestoVotacion,
 
-        location: { // Ubicación de la campaña
+        location: {
+          // Ubicación de la campaña
           country: formData.location.country,
           state: formData.location.state,
           city: formData.location.city,
         },
-        candidateLocation: { // Ubicación del candidato
+        candidateLocation: {
+          // Ubicación del candidato
           country: formData.candidateLocation.country,
           state: formData.candidateLocation.state,
           city: formData.candidateLocation.city,
         },
-        contactInfo: { // Contacto de la campaña
+        contactInfo: {
+          // Contacto de la campaña
           email: formData.contactInfo.email,
           phone: formData.contactInfo.phone,
           whatsapp: formData.contactInfo.whatsapp,
@@ -302,11 +413,13 @@ export default function NuevaCampanaPage() {
           supportEmail: formData.contactInfo.supportEmail,
           supportWhatsapp: formData.contactInfo.supportWhatsapp,
         },
-        media: { // Media de la campaña
+        media: {
+          // Media de la campaña
           logoUrl: logoUrl,
           bannerUrl: bannerUrl,
         },
-        socialLinks: { // Redes sociales de la campaña
+        socialLinks: {
+          // Redes sociales de la campaña
           facebook: formData.socialLinks.facebook,
           instagram: formData.socialLinks.instagram,
           tiktok: formData.socialLinks.tiktok,
@@ -315,7 +428,8 @@ export default function NuevaCampanaPage() {
           linkedin: formData.socialLinks.linkedin,
           twitter: formData.socialLinks.twitter,
         },
-        messagingOptions: { // Opciones de mensajería
+        messagingOptions: {
+          // Opciones de mensajería
           email: formData.messagingOptions.email,
           alerts: formData.messagingOptions.alerts,
           sms: formData.messagingOptions.sms,
@@ -324,7 +438,7 @@ export default function NuevaCampanaPage() {
       }
 
       // 3. Obtener la URL de la función desde las variables de entorno
-      const createCampaignUrl = CREATE_CAMPAIGN_URL; // Usar la constante importada
+      const createCampaignUrl = CREATE_CAMPAIGN_URL // Usar la constante importada
       if (!createCampaignUrl) {
         throw new Error(
           'La URL para crear campañas no está configurada en las variables de entorno.',
@@ -396,7 +510,7 @@ export default function NuevaCampanaPage() {
             departamentos={departamentos}
             ciudades={ciudades}
             setDepartamentos={setDepartamentos} // Pasar el setter de departamentos
-            setCiudades={setCiudades}         // Pasar el setter de ciudades
+            setCiudades={setCiudades} // Pasar el setter de ciudades
             setMessage={setMessage}
             dispatch={dispatch}
             GET_DEPARTMENTS_URL={GET_DEPARTMENTS_URL}
@@ -410,7 +524,7 @@ export default function NuevaCampanaPage() {
             handleInputChange={handleInputChange}
             departamentos={departamentos}
             candidateCiudades={candidateCiudades}
-            setCandidateCiudades={setCandidateCiudades} 
+            setCandidateCiudades={setCandidateCiudades}
             setMessage={setMessage}
             dispatch={dispatch}
             GET_CITIES_BY_DEPARTMENT_URL={GET_CITIES_BY_DEPARTMENT_URL}
@@ -424,16 +538,16 @@ export default function NuevaCampanaPage() {
       case 3:
         return (
           <MediaMessagingStep
-      formData={formData}
-      handleInputChange={handleInputChange}
-      setLogoFile={setLogoFile}
-      setBannerFile={setBannerFile}
-      logoPreview={logoPreview}
-      bannerPreview={bannerPreview}
-      handleFileChange={handleFileChange}
-      setLogoPreview={setLogoPreview} 
-      setBannerPreview={setBannerPreview} 
-    />
+            formData={formData}
+            handleInputChange={handleInputChange}
+            setLogoFile={setLogoFile}
+            setBannerFile={setBannerFile}
+            logoPreview={logoPreview}
+            bannerPreview={bannerPreview}
+            handleFileChange={handleFileChange}
+            setLogoPreview={setLogoPreview}
+            setBannerPreview={setBannerPreview}
+          />
         )
       default:
         return null

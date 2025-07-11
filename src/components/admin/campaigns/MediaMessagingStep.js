@@ -1,44 +1,58 @@
 // src/components/admin/campaigns/MediaMessagingStep.js
-import React from 'react';
+import React from 'react'
 
 // Iconos SVG (asumiendo que los iconos se importarán o definirán en el componente padre o globalmente)
 const UploadIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /> </svg>
-);
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-10 w-10 text-gray-400"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    {' '}
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+    />{' '}
+  </svg>
+)
 
 // Componente para subir imágenes con Drag-and-Drop y previsualización
 function ImageUploader({ label, onFileChange, preview }) {
-  const [isDragging, setIsDragging] = React.useState(false);
+  const [isDragging, setIsDragging] = React.useState(false)
 
   const handleDragEnter = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
   const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
   const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
+    e.preventDefault()
+    e.stopPropagation()
+  }
   const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFileChange(e.dataTransfer.files[0]);
-      e.dataTransfer.clearData();
+      onFileChange(e.dataTransfer.files[0])
+      e.dataTransfer.clearData()
     }
-  };
+  }
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
-      onFileChange(e.target.files[0]);
+      onFileChange(e.target.files[0])
     }
-  };
+  }
 
   return (
     <div>
@@ -83,9 +97,8 @@ function ImageUploader({ label, onFileChange, preview }) {
         )}
       </div>
     </div>
-  );
+  )
 }
-
 
 const MediaMessagingStep = ({
   formData,
@@ -108,20 +121,27 @@ const MediaMessagingStep = ({
         <ImageUploader
           label="Logo de la Campaña"
           // MODIFICADO: Pasamos setLogoFile y setLogoPreview directamente
-          onFileChange={(file) => handleFileChange(setLogoFile, setLogoPreview, file)}
+          onFileChange={(file) =>
+            handleFileChange(setLogoFile, setLogoPreview, file)
+          }
           preview={logoPreview}
         />
         <ImageUploader
           label="Banner de la Campaña"
           // MODIFICADO: Pasamos setBannerFile y setBannerPreview directamente
-          onFileChange={(file) => handleFileChange(setBannerFile, setBannerPreview, file)}
+          onFileChange={(file) =>
+            handleFileChange(setBannerFile, setBannerPreview, file)
+          }
           preview={bannerPreview}
         />
       </div>
       {/* Redes Sociales */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="socialLinks.facebook" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.facebook"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL Facebook
           </label>
           <input
@@ -135,7 +155,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.instagram" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.instagram"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL Instagram
           </label>
           <input
@@ -149,7 +172,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.tiktok" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.tiktok"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL TikTok
           </label>
           <input
@@ -163,7 +189,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.threads" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.threads"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL Threads
           </label>
           <input
@@ -177,7 +206,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.youtube" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.youtube"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL YouTube
           </label>
           <input
@@ -191,7 +223,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.linkedin" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.linkedin"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL LinkedIn
           </label>
           <input
@@ -205,7 +240,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.twitter" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.twitter"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL Twitter
           </label>
           <input
@@ -221,7 +259,9 @@ const MediaMessagingStep = ({
       </div>
       {/* Opciones de Mensajería */}
       <div className="space-y-4">
-        <h4 className="text-md font-medium text-gray-900">Opciones de Mensajería</h4>
+        <h4 className="text-md font-medium text-gray-900">
+          Opciones de Mensajería
+        </h4>
         <div className="flex items-center">
           <input
             id="messagingOptions.email"
@@ -231,7 +271,10 @@ const MediaMessagingStep = ({
             onChange={handleInputChange}
             className="h-4 w-4 text-primary-600 border-gray-300 rounded" // Usando primary-600
           />
-          <label htmlFor="messagingOptions.email" className="ml-2 block text-sm text-gray-900">
+          <label
+            htmlFor="messagingOptions.email"
+            className="ml-2 block text-sm text-gray-900"
+          >
             Envío de Emails a Votantes
           </label>
         </div>
@@ -244,7 +287,10 @@ const MediaMessagingStep = ({
             onChange={handleInputChange}
             className="h-4 w-4 text-primary-600 border-gray-300 rounded" // Usando primary-600
           />
-          <label htmlFor="messagingOptions.alerts" className="ml-2 block text-sm text-gray-900">
+          <label
+            htmlFor="messagingOptions.alerts"
+            className="ml-2 block text-sm text-gray-900"
+          >
             Alertas Internas
           </label>
         </div>
@@ -257,7 +303,10 @@ const MediaMessagingStep = ({
             onChange={handleInputChange}
             className="h-4 w-4 text-primary-600 border-gray-300 rounded" // Usando primary-600
           />
-          <label htmlFor="messagingOptions.sms" className="ml-2 block text-sm text-gray-900">
+          <label
+            htmlFor="messagingOptions.sms"
+            className="ml-2 block text-sm text-gray-900"
+          >
             Envío de SMS
           </label>
         </div>
@@ -270,13 +319,16 @@ const MediaMessagingStep = ({
             onChange={handleInputChange}
             className="h-4 w-4 text-primary-600 border-gray-300 rounded" // Usando primary-600
           />
-          <label htmlFor="messagingOptions.whatsappBusiness" className="ml-2 block text-sm text-gray-900">
+          <label
+            htmlFor="messagingOptions.whatsappBusiness"
+            className="ml-2 block text-sm text-gray-900"
+          >
             Envío por WhatsApp Business
           </label>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default MediaMessagingStep;
+export default MediaMessagingStep

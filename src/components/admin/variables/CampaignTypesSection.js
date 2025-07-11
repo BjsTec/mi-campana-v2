@@ -1,29 +1,47 @@
 // src/components/admin/variables/CampaignTypesSection.js
-import React, { useState } from 'react';
-import { PlusCircleIcon, PencilIcon, EyeIcon, EyeSlashIcon, TrashIcon, CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import React, { useState } from 'react'
+import {
+  PlusCircleIcon,
+  PencilIcon,
+  EyeIcon,
+  EyeSlashIcon,
+  TrashIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/24/outline'
 
 // Componente de Fila Editable de Tabla (para Desktop/Tablet)
-const EditableTableRow = ({ item, fields, onSave, onToggleActive, onDelete }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedItem, setEditedItem] = useState(item);
+const EditableTableRow = ({
+  item,
+  fields,
+  onSave,
+  onToggleActive,
+  onDelete,
+}) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedItem, setEditedItem] = useState(item)
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditedItem(prev => ({
+    const { name, value, type, checked } = e.target
+    setEditedItem((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
+    }))
+  }
 
   const handleSave = () => {
-    onSave(editedItem);
-    setIsEditing(false);
-  };
+    onSave(editedItem)
+    setIsEditing(false)
+  }
 
   return (
     <tr className="hover:bg-neutral-50 transition-colors duration-150">
-      {fields.map(field => (
-        <td key={field.key} className="px-3 py-3 whitespace-nowrap text-sm text-neutral-600">
+      {fields.map((field) => (
+        <td
+          key={field.key}
+          className="px-3 py-3 whitespace-nowrap text-sm text-neutral-600"
+        >
           {isEditing && field.editable ? (
             field.type === 'checkbox' ? (
               <input
@@ -91,7 +109,11 @@ const EditableTableRow = ({ item, fields, onSave, onToggleActive, onDelete }) =>
                   className={`p-1 rounded-full transition-colors duration-150 ${item.active ? 'text-success hover:text-success-dark hover:bg-green-100' : 'text-error hover:text-error-dark hover:bg-red-100'}`}
                   title={item.active ? 'Desactivar' : 'Activar'}
                 >
-                  {item.active ? <EyeIcon className="h-6 w-6" /> : <EyeSlashIcon className="h-6 w-6" />}
+                  {item.active ? (
+                    <EyeIcon className="h-6 w-6" />
+                  ) : (
+                    <EyeSlashIcon className="h-6 w-6" />
+                  )}
                 </button>
               )}
               {onDelete && (
@@ -108,27 +130,33 @@ const EditableTableRow = ({ item, fields, onSave, onToggleActive, onDelete }) =>
         </div>
       </td>
     </tr>
-  );
-};
+  )
+}
 
 // Nuevo Componente para la Vista de Lista/Card en Móviles
-const MobileEditableCard = ({ item, fields, onSave, onToggleActive, onDelete }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedItem, setEditedItem] = useState(item);
-  const [showDetails, setShowDetails] = useState(false);
+const MobileEditableCard = ({
+  item,
+  fields,
+  onSave,
+  onToggleActive,
+  onDelete,
+}) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedItem, setEditedItem] = useState(item)
+  const [showDetails, setShowDetails] = useState(false)
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditedItem(prev => ({
+    const { name, value, type, checked } = e.target
+    setEditedItem((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
+    }))
+  }
 
   const handleSave = () => {
-    onSave(editedItem);
-    setIsEditing(false);
-  };
+    onSave(editedItem)
+    setIsEditing(false)
+  }
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200 mb-3">
@@ -147,8 +175,13 @@ const MobileEditableCard = ({ item, fields, onSave, onToggleActive, onDelete }) 
 
       {showDetails && (
         <div className="border-t border-neutral-100 pt-2 mt-2">
-          {fields.map(field => {
-            if (field.key === 'id' || field.key === 'name' || field.key === 'title') return null;
+          {fields.map((field) => {
+            if (
+              field.key === 'id' ||
+              field.key === 'name' ||
+              field.key === 'title'
+            )
+              return null
 
             return (
               <div key={field.key} className="mb-1 text-xs text-neutral-600">
@@ -187,12 +220,14 @@ const MobileEditableCard = ({ item, fields, onSave, onToggleActive, onDelete }) 
                   item[field.key]?.toString() || ''
                 )}
               </div>
-            );
+            )
           })}
         </div>
       )}
 
-      <div className={`mt-3 pt-3 border-t border-neutral-100 flex ${isEditing ? 'justify-around' : 'justify-end'} items-center space-x-2`}>
+      <div
+        className={`mt-3 pt-3 border-t border-neutral-100 flex ${isEditing ? 'justify-around' : 'justify-end'} items-center space-x-2`}
+      >
         {isEditing ? (
           <>
             <button
@@ -200,14 +235,16 @@ const MobileEditableCard = ({ item, fields, onSave, onToggleActive, onDelete }) 
               className="flex-1 text-success hover:text-success-dark transition-colors duration-150 p-1 rounded-md hover:bg-green-100 flex items-center justify-center"
               title="Guardar Cambios"
             >
-              <CheckCircleIcon className="h-5 w-5 mr-1" /> <span className="hidden sm:inline">Guardar</span>
+              <CheckCircleIcon className="h-5 w-5 mr-1" />{' '}
+              <span className="hidden sm:inline">Guardar</span>
             </button>
             <button
               onClick={() => setIsEditing(false)}
               className="flex-1 text-error hover:text-error-dark transition-colors duration-150 p-1 rounded-md hover:bg-red-100 flex items-center justify-center"
               title="Cancelar Edición"
             >
-              <XCircleIcon className="h-5 w-5 mr-1" /> <span className="hidden sm:inline">Cancelar</span>
+              <XCircleIcon className="h-5 w-5 mr-1" />{' '}
+              <span className="hidden sm:inline">Cancelar</span>
             </button>
           </>
         ) : (
@@ -225,7 +262,11 @@ const MobileEditableCard = ({ item, fields, onSave, onToggleActive, onDelete }) 
                 className={`p-1 rounded-full transition-colors duration-150 ${item.active ? 'text-success hover:text-success-dark hover:bg-green-100' : 'text-error hover:text-error-dark hover:bg-red-100'}`}
                 title={item.active ? 'Desactivar' : 'Activar'}
               >
-                {item.active ? <EyeIcon className="h-5 w-5" /> : <EyeSlashIcon className="h-5 w-5" />}
+                {item.active ? (
+                  <EyeIcon className="h-5 w-5" />
+                ) : (
+                  <EyeSlashIcon className="h-5 w-5" />
+                )}
               </button>
             )}
             {onDelete && (
@@ -241,38 +282,58 @@ const MobileEditableCard = ({ item, fields, onSave, onToggleActive, onDelete }) 
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-const CampaignTypesSection = ({ campaignTypes, onSaveCampaignType, onToggleCampaignTypeActive, onDeleteCampaignType, onAddCampaignType }) => {
-  const [newCampaignTypeName, setNewCampaignTypeName] = useState('');
-  const [newCampaignTypeDescription, setNewCampaignTypeDescription] = useState('');
+const CampaignTypesSection = ({
+  campaignTypes,
+  onSaveCampaignType,
+  onToggleCampaignTypeActive,
+  onDeleteCampaignType,
+  onAddCampaignType,
+}) => {
+  const [newCampaignTypeName, setNewCampaignTypeName] = useState('')
+  const [newCampaignTypeDescription, setNewCampaignTypeDescription] =
+    useState('')
 
   const handleAdd = () => {
     if (newCampaignTypeName.trim() && newCampaignTypeDescription.trim()) {
       const newId = newCampaignTypeName
         .toLowerCase()
         .replace(/\s/g, '_')
-        .replace(/[^a-z0-9_]/g, '');
+        .replace(/[^a-z0-9_]/g, '')
       const newItem = {
         id: newId,
         name: newCampaignTypeName.trim(),
         description: newCampaignTypeDescription.trim(),
         active: true,
-      };
-      onAddCampaignType(newItem);
-      setNewCampaignTypeName('');
-      setNewCampaignTypeDescription('');
+      }
+      onAddCampaignType(newItem)
+      setNewCampaignTypeName('')
+      setNewCampaignTypeDescription('')
     } else {
-      alert('Por favor, completa el nombre y la descripción del tipo de campaña.');
+      alert(
+        'Por favor, completa el nombre y la descripción del tipo de campaña.',
+      )
     }
-  };
+  }
 
   const campaignTypeFields = [
     { label: 'Nombre', key: 'name', editable: true, type: 'text' },
-    { label: 'Descripción', key: 'description', editable: true, type: 'textarea' },
-    { label: 'Activo', key: 'active', editable: true, type: 'checkbox', format: (val) => (val ? 'Sí' : 'No') },
-  ];
+    {
+      label: 'Descripción',
+      key: 'description',
+      editable: true,
+      type: 'textarea',
+    },
+    {
+      label: 'Activo',
+      key: 'active',
+      editable: true,
+      type: 'checkbox',
+      format: (val) => (val ? 'Sí' : 'No'),
+    },
+  ]
 
   return (
     <section className="bg-white p-3 sm:p-5 rounded-lg shadow-md mb-6 sm:mb-8 border border-neutral-200">
@@ -284,18 +345,25 @@ const CampaignTypesSection = ({ campaignTypes, onSaveCampaignType, onToggleCampa
         <table className="min-w-full divide-y divide-neutral-200 text-xs sm:text-sm">
           <thead className="bg-neutral-50">
             <tr>
-              {campaignTypeFields.map(field => (
-                <th key={field.key} scope="col" className="px-2 py-1 sm:px-3 sm:py-2 text-left font-medium text-neutral-600 uppercase tracking-wider">
+              {campaignTypeFields.map((field) => (
+                <th
+                  key={field.key}
+                  scope="col"
+                  className="px-2 py-1 sm:px-3 sm:py-2 text-left font-medium text-neutral-600 uppercase tracking-wider"
+                >
                   {field.label}
                 </th>
               ))}
-              <th scope="col" className="px-2 py-1 sm:px-3 sm:py-2 text-right font-medium text-neutral-600 uppercase tracking-wider">
+              <th
+                scope="col"
+                className="px-2 py-1 sm:px-3 sm:py-2 text-right font-medium text-neutral-600 uppercase tracking-wider"
+              >
                 Acciones
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-neutral-200">
-            {campaignTypes.map(type => (
+            {campaignTypes.map((type) => (
               <EditableTableRow
                 key={type.id}
                 item={type}
@@ -311,7 +379,7 @@ const CampaignTypesSection = ({ campaignTypes, onSaveCampaignType, onToggleCampa
 
       {/* Mostrar lista de cards en móvil, ocultar en md en adelante */}
       <div className="md:hidden">
-        {campaignTypes.map(type => (
+        {campaignTypes.map((type) => (
           <MobileEditableCard
             key={type.id}
             item={type}
@@ -330,7 +398,10 @@ const CampaignTypesSection = ({ campaignTypes, onSaveCampaignType, onToggleCampa
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <label htmlFor="newCampaignTypeName" className="block text-xs sm:text-sm font-medium text-neutral-700">
+            <label
+              htmlFor="newCampaignTypeName"
+              className="block text-xs sm:text-sm font-medium text-neutral-700"
+            >
               Nombre del Tipo
             </label>
             <input
@@ -343,7 +414,10 @@ const CampaignTypesSection = ({ campaignTypes, onSaveCampaignType, onToggleCampa
             />
           </div>
           <div>
-            <label htmlFor="newCampaignTypeDescription" className="block text-xs sm:text-sm font-medium text-neutral-700">
+            <label
+              htmlFor="newCampaignTypeDescription"
+              className="block text-xs sm:text-sm font-medium text-neutral-700"
+            >
               Descripción
             </label>
             <textarea
@@ -365,7 +439,7 @@ const CampaignTypesSection = ({ campaignTypes, onSaveCampaignType, onToggleCampa
         </button>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default CampaignTypesSection;
+export default CampaignTypesSection

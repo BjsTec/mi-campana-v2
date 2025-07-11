@@ -1,5 +1,5 @@
 // src/components/admin/campaigns/CampaignInfoStep.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react'
 
 const CampaignInfoStep = ({
   formData,
@@ -13,33 +13,47 @@ const CampaignInfoStep = ({
   GET_CITIES_BY_DEPARTMENT_URL,
   dispatch,
 }) => {
-  const [campaignTypes, setCampaignTypes] = useState([]); // Nuevo estado para los tipos de campaña
-  const GET_PUBLIC_CAMPAIGN_TYPES_URL = process.env.NEXT_PUBLIC_FN_GET_PUBLIC_CAMPAIGN_TYPES_URL; // Obtener la URL de las variables de entorno
+  const [campaignTypes, setCampaignTypes] = useState([]) // Nuevo estado para los tipos de campaña
+  const GET_PUBLIC_CAMPAIGN_TYPES_URL =
+    process.env.NEXT_PUBLIC_FN_GET_PUBLIC_CAMPAIGN_TYPES_URL // Obtener la URL de las variables de entorno
 
   // Cargar departamentos al inicio
   useEffect(() => {
     const fetchDepartamentos = async () => {
       try {
         if (!GET_DEPARTMENTS_URL) {
-          throw new Error('URL para obtener departamentos no configurada.');
+          throw new Error('URL para obtener departamentos no configurada.')
         }
-        const response = await fetch(GET_DEPARTMENTS_URL);
+        const response = await fetch(GET_DEPARTMENTS_URL)
         if (!response.ok) {
-          throw new Error('No se pudieron cargar los departamentos.');
+          throw new Error('No se pudieron cargar los departamentos.')
         }
-        const data = await response.json();
-        setDepartamentos(data);
+        const data = await response.json()
+        setDepartamentos(data)
         // Si el estado de la campaña no está precargado, selecciona el primero por defecto
         if (!formData.location.state && data.length > 0) {
-          dispatch({ type: 'UPDATE_FIELD', field: 'location.state', value: data[0].id });
+          dispatch({
+            type: 'UPDATE_FIELD',
+            field: 'location.state',
+            value: data[0].id,
+          })
         }
       } catch (error) {
-        console.error('Error al obtener departamentos:', error);
-        setMessage({ text: `❌ Error al cargar departamentos: ${error.message}`, type: 'error' });
+        console.error('Error al obtener departamentos:', error)
+        setMessage({
+          text: `❌ Error al cargar departamentos: ${error.message}`,
+          type: 'error',
+        })
       }
-    };
-    fetchDepartamentos();
-  }, [GET_DEPARTMENTS_URL, setDepartamentos, setMessage, formData.location.state, dispatch]);
+    }
+    fetchDepartamentos()
+  }, [
+    GET_DEPARTMENTS_URL,
+    setDepartamentos,
+    setMessage,
+    formData.location.state,
+    dispatch,
+  ])
 
   // Cargar ciudades para la ubicación de la campaña
   useEffect(() => {
@@ -47,58 +61,82 @@ const CampaignInfoStep = ({
       if (formData.location.state) {
         try {
           if (!GET_CITIES_BY_DEPARTMENT_URL) {
-            throw new Error('URL para obtener ciudades por departamento no configurada.');
+            throw new Error(
+              'URL para obtener ciudades por departamento no configurada.',
+            )
           }
-          const response = await fetch(`${GET_CITIES_BY_DEPARTMENT_URL}?departmentId=${formData.location.state}`);
+          const response = await fetch(
+            `${GET_CITIES_BY_DEPARTMENT_URL}?departmentId=${formData.location.state}`,
+          )
           if (!response.ok) {
-            throw new Error('No se pudieron cargar las ciudades de la campaña.');
+            throw new Error('No se pudieron cargar las ciudades de la campaña.')
           }
-          const data = await response.json();
-          setCiudades(data);
+          const data = await response.json()
+          setCiudades(data)
           // Limpiar ciudad si el departamento cambia y la ciudad actual no pertenece
-          if (!data.some(c => c.id === formData.location.city)) {
-            dispatch({ type: 'UPDATE_FIELD', field: 'location.city', value: '' });
+          if (!data.some((c) => c.id === formData.location.city)) {
+            dispatch({
+              type: 'UPDATE_FIELD',
+              field: 'location.city',
+              value: '',
+            })
           }
         } catch (error) {
-          console.error('Error al obtener ciudades de la campaña:', error);
-          setMessage({ text: `❌ Error al cargar ciudades de la campaña: ${error.message}`, type: 'error' });
+          console.error('Error al obtener ciudades de la campaña:', error)
+          setMessage({
+            text: `❌ Error al cargar ciudades de la campaña: ${error.message}`,
+            type: 'error',
+          })
         }
       } else {
-        setCiudades([]);
-        dispatch({ type: 'UPDATE_FIELD', field: 'location.city', value: '' });
+        setCiudades([])
+        dispatch({ type: 'UPDATE_FIELD', field: 'location.city', value: '' })
       }
-    };
-    fetchCiudades();
-  }, [formData.location.state, GET_CITIES_BY_DEPARTMENT_URL, setCiudades, setMessage, formData.location.city, dispatch]);
+    }
+    fetchCiudades()
+  }, [
+    formData.location.state,
+    GET_CITIES_BY_DEPARTMENT_URL,
+    setCiudades,
+    setMessage,
+    formData.location.city,
+    dispatch,
+  ])
 
   // Cargar tipos de campaña al inicio
   useEffect(() => {
     const fetchCampaignTypes = async () => {
       try {
         if (!GET_PUBLIC_CAMPAIGN_TYPES_URL) {
-          throw new Error('URL para obtener tipos de campaña no configurada.');
+          throw new Error('URL para obtener tipos de campaña no configurada.')
         }
-        const response = await fetch(GET_PUBLIC_CAMPAIGN_TYPES_URL);
+        const response = await fetch(GET_PUBLIC_CAMPAIGN_TYPES_URL)
         if (!response.ok) {
-          throw new Error('No se pudieron cargar los tipos de campaña.');
+          throw new Error('No se pudieron cargar los tipos de campaña.')
         }
-        const data = await response.json();
-        setCampaignTypes(data);
+        const data = await response.json()
+        setCampaignTypes(data)
         // Si el tipo de campaña no está precargado, selecciona el primero activo por defecto
         if (!formData.type && data.length > 0) {
-          const defaultType = data.find(type => type.active);
+          const defaultType = data.find((type) => type.active)
           if (defaultType) {
-            dispatch({ type: 'UPDATE_FIELD', field: 'type', value: defaultType.id });
+            dispatch({
+              type: 'UPDATE_FIELD',
+              field: 'type',
+              value: defaultType.id,
+            })
           }
         }
       } catch (error) {
-        console.error('Error al obtener tipos de campaña:', error);
-        setMessage({ text: `❌ Error al cargar tipos de campaña: ${error.message}`, type: 'error' });
+        console.error('Error al obtener tipos de campaña:', error)
+        setMessage({
+          text: `❌ Error al cargar tipos de campaña: ${error.message}`,
+          type: 'error',
+        })
       }
-    };
-    fetchCampaignTypes();
-  }, [GET_PUBLIC_CAMPAIGN_TYPES_URL, setMessage, formData.type, dispatch]);
-
+    }
+    fetchCampaignTypes()
+  }, [GET_PUBLIC_CAMPAIGN_TYPES_URL, setMessage, formData.type, dispatch])
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -138,11 +176,17 @@ const CampaignInfoStep = ({
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md text-gray-900" // Ajustado focus:ring y focus:border a primary, añadido text-gray-900
           >
             <option value="">Seleccione un tipo de campaña</option>
-            {campaignTypes.filter(type => type.active).map((type) => ( // Filtrar solo activos
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
+            {campaignTypes
+              .filter((type) => type.active)
+              .map(
+                (
+                  type, // Filtrar solo activos
+                ) => (
+                  <option key={type.id} value={type.id}>
+                    {type.name}
+                  </option>
+                ),
+              )}
           </select>
         </div>
         <div>
@@ -167,7 +211,10 @@ const CampaignInfoStep = ({
       {/* Ubicación de la Campaña */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <label htmlFor="location.country" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="location.country"
+            className="block text-sm font-medium text-gray-700"
+          >
             País (Campaña) *
           </label>
           <select
@@ -183,7 +230,10 @@ const CampaignInfoStep = ({
           </select>
         </div>
         <div>
-          <label htmlFor="location.state" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="location.state"
+            className="block text-sm font-medium text-gray-700"
+          >
             Departamento (Campaña) *
           </label>
           <select
@@ -195,7 +245,7 @@ const CampaignInfoStep = ({
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-gray-900" // Ajustado focus:ring y focus:border a primary, añadido text-gray-900
           >
             <option value="">Seleccione un departamento</option>
-            {departamentos.map(dep => (
+            {departamentos.map((dep) => (
               <option key={dep.id} value={dep.id}>
                 {dep.name}
               </option>
@@ -203,7 +253,10 @@ const CampaignInfoStep = ({
           </select>
         </div>
         <div>
-          <label htmlFor="location.city" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="location.city"
+            className="block text-sm font-medium text-gray-700"
+          >
             Ciudad (Campaña) *
           </label>
           <select
@@ -216,7 +269,7 @@ const CampaignInfoStep = ({
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-gray-900" // Ajustado focus:ring y focus:border a primary, añadido text-gray-900
           >
             <option value="">Seleccione una ciudad</option>
-            {ciudades.map(ciu => (
+            {ciudades.map((ciu) => (
               <option key={ciu.id} value={ciu.id}>
                 {ciu.name}
               </option>
@@ -230,7 +283,10 @@ const CampaignInfoStep = ({
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="contactInfo.email" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="contactInfo.email"
+            className="block text-sm font-medium text-gray-700"
+          >
             Email de Contacto *
           </label>
           <input
@@ -244,7 +300,10 @@ const CampaignInfoStep = ({
           />
         </div>
         <div>
-          <label htmlFor="contactInfo.phone" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="contactInfo.phone"
+            className="block text-sm font-medium text-gray-700"
+          >
             Teléfono de Contacto *
           </label>
           <input
@@ -258,7 +317,10 @@ const CampaignInfoStep = ({
           />
         </div>
         <div>
-          <label htmlFor="contactInfo.whatsapp" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="contactInfo.whatsapp"
+            className="block text-sm font-medium text-gray-700"
+          >
             WhatsApp de Contacto
           </label>
           <input
@@ -271,7 +333,10 @@ const CampaignInfoStep = ({
           />
         </div>
         <div>
-          <label htmlFor="contactInfo.web" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="contactInfo.web"
+            className="block text-sm font-medium text-gray-700"
+          >
             Sitio Web
           </label>
           <input
@@ -284,7 +349,10 @@ const CampaignInfoStep = ({
           />
         </div>
         <div>
-          <label htmlFor="contactInfo.supportEmail" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="contactInfo.supportEmail"
+            className="block text-sm font-medium text-gray-700"
+          >
             Email de Soporte
           </label>
           <input
@@ -297,7 +365,10 @@ const CampaignInfoStep = ({
           />
         </div>
         <div>
-          <label htmlFor="contactInfo.supportWhatsapp" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="contactInfo.supportWhatsapp"
+            className="block text-sm font-medium text-gray-700"
+          >
             WhatsApp de Soporte
           </label>
           <input
@@ -312,7 +383,7 @@ const CampaignInfoStep = ({
         {/* Se eliminan los campos de salesEmail y salesWhatsapp según el JSON de Postman */}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default CampaignInfoStep;
+export default CampaignInfoStep

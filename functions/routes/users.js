@@ -40,7 +40,7 @@ const authorizeAdmin = async (req, res, next) => {
     // Si JWT_SECRET_KEY_PARAM y jwt no están definidos globalmente en este contexto de Firebase Functions
     // o importados en este archivo, las siguientes líneas causarán un error.
     // Asumiendo que se importarán o definirán si esta función se saca de variables.js
-    const jwtSecretValue = JWT_SECRET_KEY_PARAM.value() 
+    const jwtSecretValue = JWT_SECRET_KEY_PARAM.value()
 
     if (!jwtSecretValue) {
       console.error(
@@ -462,28 +462,34 @@ export const getUserByCedula = functions.https.onRequest(async (req, res) => {
 
   setPublicCorsHeaders(req, res, async () => {
     if (req.method !== 'GET') {
-      return res.status(405).send('Método no permitido. Solo GET.');
+      return res.status(405).send('Método no permitido. Solo GET.')
     }
 
-    const cedula = req.query.cedula;
+    const cedula = req.query.cedula
 
     if (!cedula) {
       return res.status(400).json({
         message: 'Se requiere el número de cédula como parámetro (cedula).',
-      });
+      })
     }
 
     try {
-      const db = getFirestore(getApp());
+      const db = getFirestore(getApp())
       // Buscar en la colección 'users' por el campo 'cedula'
-      const userSnapshot = await db.collection('users').where('cedula', '==', cedula).limit(1).get();
+      const userSnapshot = await db
+        .collection('users')
+        .where('cedula', '==', cedula)
+        .limit(1)
+        .get()
 
       if (userSnapshot.empty) {
-        return res.status(200).json({ user: null, message: 'Usuario no encontrado por cédula.' });
+        return res
+          .status(200)
+          .json({ user: null, message: 'Usuario no encontrado por cédula.' })
       }
 
-      const userData = userSnapshot.docs[0].data();
-      const userId = userSnapshot.docs[0].id;
+      const userData = userSnapshot.docs[0].data()
+      const userId = userSnapshot.docs[0].id
 
       // Opcional: Filtrar datos sensibles si userData contiene información que no debería ser pública
       const publicUserData = {
@@ -495,16 +501,17 @@ export const getUserByCedula = functions.https.onRequest(async (req, res) => {
         location: userData.location || null,
         campaignMemberships: userData.campaignMemberships || [],
         // Puedes añadir más campos aquí si son relevantes para el frontend y no son sensibles
-      };
+      }
 
-      return res.status(200).json({ user: publicUserData, message: 'Usuario encontrado.' });
-
+      return res
+        .status(200)
+        .json({ user: publicUserData, message: 'Usuario encontrado.' })
     } catch (error) {
-      console.error('Error en getUserByCedula:', error);
+      console.error('Error en getUserByCedula:', error)
       return res.status(500).json({
         message: 'Error interno del servidor al buscar usuario por cédula.',
         error: error.message,
-      });
+      })
     }
-  });
-});
+  })
+})
