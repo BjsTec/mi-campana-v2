@@ -1,129 +1,101 @@
 // src/app/(private)/dashboard-admin/nueva-campana/page.js
 'use client'
 
-import React, { useState, useReducer } from 'react'
-// Corregido: Se usa la ruta relativa para asegurar que el compilador encuentre el contexto.
-import { useAuth } from '../../../../context/AuthContext'
+import React, { useState, useReducer, useEffect, useCallback, useRef } from 'react'
+import { useAuth } from '../../../../context/AuthContext' // Corregido: Se usa la ruta relativa
+
+// Importar los componentes modulares
+import CampaignInfoStep from '@/components/admin/campaigns/CampaignInfoStep'
+import CandidateInfoStep from '@/components/admin/campaigns/CandidateInfoStep'
+import MediaMessagingStep from '@/components/admin/campaigns/MediaMessagingStep'
+
 
 // --- Iconos SVG para una UI más rica ---
 const CampaignIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-2.236 9.168-5.514M15 11l-1 1"
-    />
-  </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-2.236 9.168-5.514M15 11l-1 1" /> </svg>
 )
 const UserIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-    />
-  </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> </svg>
 )
 const MediaIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-    />
-  </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /> </svg>
 )
 const CheckCircleIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-6 w-6 text-green-500"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-    />
-  </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> </svg>
 )
 const ArrowRightIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-5 w-5 ml-2"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M14 5l7 7m0 0l-7 7m7-7H3"
-    />
-  </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /> </svg>
 )
-const UploadIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-10 w-10 text-gray-400"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-    />
-  </svg>
+const UploadIcon = () => ( // Se mantiene aquí si ImageUploader se mueve y usa este icono
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /> </svg>
 )
 
-// --- Estado inicial del formulario, basado en el JSON de Postman ---
+
+// --- Estado inicial del formulario, basado en el JSON de Postman y la estructura de la BD ---
 const initialState = {
   campaignName: '',
-  type: 'concejo',
-  scope: 'municipal',
-  location: { department: 'Bogota', city: 'Bogota' },
+  type: 'concejal', // Valor por defecto para el tipo de campaña
+  scope: 'municipal', // Valor por defecto
+  
+  // Datos del candidato (usuario)
   candidateName: '',
   candidateCedula: '',
   candidateEmail: '',
   candidatePassword: '',
-  candidateLocation: { department: 'Bogota', city: 'Bogota' },
-  contactInfo: { email: '', phone: '' },
+  whatsapp: '', // Del usuario
+  phone: '', // Del usuario
+  sexo: '', // Del usuario
+  dateBirth: '', // Del usuario
+  puestoVotacion: '', // Del usuario
+
+  // Ubicación de la campaña
+  location: { 
+    country: 'Colombia', // Por defecto
+    state: '', // ID del departamento
+    city: '' // ID de la ciudad
+  },
+  // Ubicación del candidato (puede ser igual a la de la campaña o diferente)
+  candidateLocation: { 
+    country: 'Colombia', // Por defecto
+    state: '', 
+    city: ''
+  },
+
+  // Información de contacto de la campaña
+  contactInfo: {
+    email: '',
+    phone: '',
+    whatsapp: '',
+    web: '',
+    supportEmail: '',
+    supportWhatsapp: '',
+  },
+  // Media de la campaña
   media: { logoUrl: '', bannerUrl: '' },
-  socialLinks: { facebook: '', instagram: '' },
+  // Redes sociales de la campaña
+  socialLinks: { 
+    facebook: '', 
+    instagram: '',
+    tiktok: '',
+    threads: '',
+    youtube: '',
+    linkedin: '',
+    twitter: '',
+  },
+  // Opciones de mensajería
+  messagingOptions: {
+    email: true,
+    alerts: true,
+    sms: false,
+    whatsappBusiness: false,
+  },
 }
 
 // --- Reducer para manejar el estado del formulario de forma organizada ---
 function formReducer(state, action) {
   switch (action.type) {
     case 'UPDATE_FIELD':
-      // Maneja campos anidados como "contactInfo.email"
+      // Maneja campos anidados como "contactInfo.email" o "location.state"
       const keys = action.field.split('.')
       if (keys.length > 1) {
         return {
@@ -135,91 +107,13 @@ function formReducer(state, action) {
         }
       }
       return { ...state, [action.field]: action.value }
+    case 'SET_FORM_DATA': // Nuevo caso para precargar todo el formulario
+      return { ...state, ...action.payload };
     case 'RESET_FORM':
       return initialState
     default:
       return state
   }
-}
-
-// --- Componente para subir imágenes con Drag-and-Drop y previsualización ---
-function ImageUploader({ label, onFileChange, preview }) {
-  const [isDragging, setIsDragging] = useState(false)
-
-  const handleDragEnter = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(true)
-  }
-  const handleDragLeave = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-  }
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-  }
-  const handleDrop = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      onFileChange(e.dataTransfer.files[0])
-      e.dataTransfer.clearData()
-    }
-  }
-
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      onFileChange(e.target.files[0])
-    }
-  }
-
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label}
-      </label>
-      <div
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        className={`relative mt-1 flex justify-center px-6 pt-5 pb-6 border-2 ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'} border-dashed rounded-md transition-colors duration-200`}
-      >
-        {preview ? (
-          <img
-            src={preview}
-            alt="Preview"
-            className="h-32 w-auto object-contain rounded-md"
-          />
-        ) : (
-          <div className="space-y-1 text-center">
-            <UploadIcon />
-            <div className="flex text-sm text-gray-600">
-              <label
-                htmlFor={`file-upload-${label}`}
-                className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500"
-              >
-                <span>Sube un archivo</span>
-                <input
-                  id={`file-upload-${label}`}
-                  name={`file-upload-${label}`}
-                  type="file"
-                  className="sr-only"
-                  onChange={handleFileChange}
-                  accept="image/*"
-                />
-              </label>
-              <p className="pl-1">o arrástralo aquí</p>
-            </div>
-            <p className="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
 }
 
 // --- Componente principal de la página ---
@@ -238,13 +132,106 @@ export default function NuevaCampanaPage() {
   const [logoFile, setLogoFile] = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
 
+  // Estados para datos de ubicación
+  const [departamentos, setDepartamentos] = useState([]);
+  const [ciudades, setCiudades] = useState([]);
+  const [candidateCiudades, setCandidateCiudades] = useState([]); // Ciudades específicas para el candidato
+
+  // Estados para la búsqueda de usuario por cédula
+  const [foundUser, setFoundUser] = useState(null); // Almacena el usuario encontrado
+  const [isSearching, setIsSearching] = useState(false); // Estado de carga de la búsqueda
+  const debounceTimeoutRef = useRef(null); // Para el debounce
+
+  // URL de tus Firebase Functions desde variables de entorno
+  const CREATE_CAMPAIGN_URL = process.env.NEXT_PUBLIC_CREATE_CAMPAIGN_URL;
+  const GET_DEPARTMENTS_URL = process.env.NEXT_PUBLIC_GET_DEPARTMENTS_URL;
+  const GET_CITIES_BY_DEPARTMENT_URL = process.env.NEXT_PUBLIC_GET_CITIES_BY_DEPARTMENT_URL;
+  const GET_USER_BY_CEDULA_URL = process.env.NEXT_PUBLIC_GET_USER_BY_CEDULA_URL;
+
+
   const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const fieldValue = type === 'checkbox' ? checked : value;
+
     dispatch({
       type: 'UPDATE_FIELD',
-      field: e.target.name,
-      value: e.target.value,
-    })
-  }
+      field: name,
+      value: fieldValue,
+    });
+
+    // Lógica de búsqueda por cédula con debounce (se mantiene aquí para pasar a CandidateInfoStep)
+    if (name === 'candidateCedula') {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      debounceTimeoutRef.current = setTimeout(() => {
+        if (value.trim().length >= 7) { // Mínimo 7 dígitos para buscar
+          handleCedulaSearch(value.trim());
+        } else {
+          setFoundUser(null); // Limpiar usuario encontrado si la cédula es muy corta
+          setIsSearching(false);
+          setMessage({ text: '', type: '' }); // Limpiar mensaje de búsqueda
+        }
+      }, 500); // Debounce de 500ms
+    }
+  };
+
+  // Función para buscar usuario por cédula
+  const handleCedulaSearch = useCallback(async (cedula) => {
+    setIsSearching(true);
+    setFoundUser(null); // Limpiar cualquier usuario previamente encontrado
+    setMessage({ text: '', type: '' }); // Limpiar mensajes anteriores
+
+    try {
+      if (!GET_USER_BY_CEDULA_URL) {
+        throw new Error('URL para buscar usuario por cédula no configurada.');
+      }
+      const response = await fetch(`${GET_USER_BY_CEDULA_URL}?cedula=${cedula}`);
+      if (!response.ok) {
+        throw new Error('Error al buscar usuario por cédula.');
+      }
+      const result = await response.json();
+
+      if (result.user) {
+        setFoundUser(result.user);
+        setMessage({ text: `✅ Usuario encontrado: ${result.user.name} (${result.user.email}).`, type: 'success' });
+      } else {
+        setMessage({ text: 'ℹ️ No se encontró ningún usuario con esa cédula. Puedes registrar uno nuevo.', type: 'info' });
+      }
+    } catch (error) {
+      console.error('Error en handleCedulaSearch:', error);
+      setMessage({ text: `❌ Error al buscar usuario: ${error.message}`, type: 'error' });
+    } finally {
+      setIsSearching(false);
+    }
+  }, [GET_USER_BY_CEDULA_URL]);
+
+  // Función para precargar el formulario con los datos del usuario encontrado
+  const handlePreloadUser = useCallback(() => {
+    if (foundUser) {
+      dispatch({ 
+        type: 'SET_FORM_DATA', 
+        payload: {
+          ...formData, // Mantener los datos actuales del formulario
+          candidateName: foundUser.name || '',
+          candidateEmail: foundUser.email || '', 
+          whatsapp: foundUser.whatsapp || '',
+          phone: foundUser.phone || '',
+          sexo: foundUser.sexo || '',
+          dateBirth: foundUser.dateBirth ? foundUser.dateBirth.split('T')[0] : '', // Formato YYYY-MM-DD
+          candidateLocation: {
+            country: foundUser.location?.country || 'Colombia',
+            state: foundUser.location?.state || '',
+            city: foundUser.location?.city || '',
+          },
+          puestoVotacion: foundUser.location?.votingStation || '',
+        }
+      });
+      setMessage({ text: '✅ Datos del usuario precargados. Revisa y completa la información.', type: 'success' });
+      setFoundUser(null); // Ocultar la sugerencia después de precargar
+    }
+  }, [foundUser, formData]);
+
 
   const handleFileChange = (setter, previewSetter, file) => {
     if (file && file.type.startsWith('image/')) {
@@ -259,12 +246,9 @@ export default function NuevaCampanaPage() {
 
   const uploadImageToStorage = async (file) => {
     // IMPORTANTE: Aquí debes implementar tu lógica real para subir la imagen a Firebase Storage.
-    // 1. Obtener una referencia en Storage: ref(storage, `campaign_images/${Date.now()}_${file.name}`)
-    // 2. Subir el archivo: uploadBytes(storageRef, file)
-    // 3. Obtener la URL de descarga: getDownloadURL(snapshot.ref)
+    // Esta es una URL de ejemplo. Debes reemplazarla con la URL real de Firebase.
     console.log(`Simulando subida de ${file.name}...`)
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    // Esta es una URL de ejemplo. Debes reemplazarla con la URL real de Firebase.
     return `https://firebasestorage.googleapis.com/v0/b/micampanav2.appspot.com/o/images%2Fplaceholder.jpg?alt=media`
   }
 
@@ -285,16 +269,62 @@ export default function NuevaCampanaPage() {
       }
 
       // 2. Preparar el payload final para la API
+      // Asegurarse de que los objetos anidados existan y tengan la estructura correcta
       const finalPayload = {
-        ...formData,
-        media: {
+        campaignName: formData.campaignName,
+        type: formData.type,
+        scope: formData.scope,
+        candidateName: formData.candidateName,
+        candidateCedula: formData.candidateCedula,
+        candidateEmail: formData.candidateEmail,
+        candidatePassword: formData.candidatePassword, // La contraseña se hashea en el backend
+        whatsapp: formData.whatsapp,
+        phone: formData.phone,
+        sexo: formData.sexo,
+        dateBirth: formData.dateBirth, // Formato YYYY-MM-DD
+        puestoVotacion: formData.puestoVotacion,
+
+        location: { // Ubicación de la campaña
+          country: formData.location.country,
+          state: formData.location.state,
+          city: formData.location.city,
+        },
+        candidateLocation: { // Ubicación del candidato
+          country: formData.candidateLocation.country,
+          state: formData.candidateLocation.state,
+          city: formData.candidateLocation.city,
+        },
+        contactInfo: { // Contacto de la campaña
+          email: formData.contactInfo.email,
+          phone: formData.contactInfo.phone,
+          whatsapp: formData.contactInfo.whatsapp,
+          web: formData.contactInfo.web,
+          supportEmail: formData.contactInfo.supportEmail,
+          supportWhatsapp: formData.contactInfo.supportWhatsapp,
+        },
+        media: { // Media de la campaña
           logoUrl: logoUrl,
           bannerUrl: bannerUrl,
+        },
+        socialLinks: { // Redes sociales de la campaña
+          facebook: formData.socialLinks.facebook,
+          instagram: formData.socialLinks.instagram,
+          tiktok: formData.socialLinks.tiktok,
+          threads: formData.socialLinks.threads,
+          youtube: formData.socialLinks.youtube,
+          linkedin: formData.socialLinks.linkedin,
+          twitter: formData.socialLinks.twitter,
+        },
+        messagingOptions: { // Opciones de mensajería
+          email: formData.messagingOptions.email,
+          alerts: formData.messagingOptions.alerts,
+          sms: formData.messagingOptions.sms,
+          whatsappBusiness: formData.messagingOptions.whatsappBusiness,
         },
       }
 
       // 3. Obtener la URL de la función desde las variables de entorno
-      const createCampaignUrl = process.env.NEXT_PUBLIC_CREATE_CAMPAIGN_URL
+      const createCampaignUrl = CREATE_CAMPAIGN_URL; // Usar la constante importada
       if (!createCampaignUrl) {
         throw new Error(
           'La URL para crear campañas no está configurada en las variables de entorno.',
@@ -360,222 +390,50 @@ export default function NuevaCampanaPage() {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-6 animate-fade-in">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">
-              Información General de la Campaña
-            </h3>
-            <div>
-              <label
-                htmlFor="campaignName"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Nombre de la Campaña *
-              </label>
-              <input
-                type="text"
-                name="campaignName"
-                id="campaignName"
-                value={formData.campaignName}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="type"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Tipo *
-                </label>
-                <select
-                  id="type"
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                >
-                  <option value="concejo">Concejo</option>
-                  <option value="senado">Senado</option>
-                  <option value="alcaldia">Alcaldía</option>
-                  <option value="gobernacion">Gobernación</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="contactInfo.email"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Email de Contacto *
-                </label>
-                <input
-                  type="email"
-                  name="contactInfo.email"
-                  id="contactInfo.email"
-                  value={formData.contactInfo.email}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                htmlFor="contactInfo.phone"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Teléfono de Contacto *
-              </label>
-              <input
-                type="tel"
-                name="contactInfo.phone"
-                id="contactInfo.phone"
-                value={formData.contactInfo.phone}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-              />
-            </div>
-          </div>
+          <CampaignInfoStep
+            formData={formData}
+            handleInputChange={handleInputChange}
+            departamentos={departamentos}
+            ciudades={ciudades}
+            setDepartamentos={setDepartamentos} // Pasar el setter de departamentos
+            setCiudades={setCiudades}         // Pasar el setter de ciudades
+            setMessage={setMessage}
+            dispatch={dispatch}
+            GET_DEPARTMENTS_URL={GET_DEPARTMENTS_URL}
+            GET_CITIES_BY_DEPARTMENT_URL={GET_CITIES_BY_DEPARTMENT_URL}
+          />
         )
       case 2:
         return (
-          <div className="space-y-6 animate-fade-in">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">
-              Datos del Candidato
-            </h3>
-            <div>
-              <label
-                htmlFor="candidateName"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Nombre Completo del Candidato *
-              </label>
-              <input
-                type="text"
-                name="candidateName"
-                id="candidateName"
-                value={formData.candidateName}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="candidateCedula"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Cédula del Candidato *
-                </label>
-                <input
-                  type="text"
-                  name="candidateCedula"
-                  id="candidateCedula"
-                  value={formData.candidateCedula}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="candidateEmail"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Email del Candidato (para login) *
-                </label>
-                <input
-                  type="email"
-                  name="candidateEmail"
-                  id="candidateEmail"
-                  value={formData.candidateEmail}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                />
-              </div>
-            </div>
-            <div>
-              <label
-                htmlFor="candidatePassword"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Contraseña Inicial para el Candidato *
-              </label>
-              <input
-                type="password"
-                name="candidatePassword"
-                id="candidatePassword"
-                value={formData.candidatePassword}
-                onChange={handleInputChange}
-                required
-                className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-              />
-            </div>
-          </div>
+          <CandidateInfoStep
+            formData={formData}
+            handleInputChange={handleInputChange}
+            departamentos={departamentos}
+            candidateCiudades={candidateCiudades}
+            setCandidateCiudades={setCandidateCiudades} 
+            setMessage={setMessage}
+            dispatch={dispatch}
+            GET_CITIES_BY_DEPARTMENT_URL={GET_CITIES_BY_DEPARTMENT_URL}
+            GET_USER_BY_CEDULA_URL={GET_USER_BY_CEDULA_URL}
+            foundUser={foundUser}
+            isSearching={isSearching}
+            handleCedulaSearch={handleCedulaSearch}
+            handlePreloadUser={handlePreloadUser}
+          />
         )
       case 3:
         return (
-          <div className="space-y-6 animate-fade-in">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">
-              Identidad Visual y Redes
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <ImageUploader
-                label="Logo de la Campaña"
-                onFileChange={(file) =>
-                  handleFileChange(setLogoFile, setLogoPreview, file)
-                }
-                preview={logoPreview}
-              />
-              <ImageUploader
-                label="Banner de la Campaña"
-                onFileChange={(file) =>
-                  handleFileChange(setBannerFile, setBannerPreview, file)
-                }
-                preview={bannerPreview}
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="socialLinks.facebook"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  URL Facebook
-                </label>
-                <input
-                  type="url"
-                  name="socialLinks.facebook"
-                  id="socialLinks.facebook"
-                  value={formData.socialLinks.facebook}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                  placeholder="https://facebook.com/..."
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="socialLinks.instagram"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  URL Instagram
-                </label>
-                <input
-                  type="url"
-                  name="socialLinks.instagram"
-                  id="socialLinks.instagram"
-                  value={formData.socialLinks.instagram}
-                  onChange={handleInputChange}
-                  className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                  placeholder="https://instagram.com/..."
-                />
-              </div>
-            </div>
-          </div>
+          <MediaMessagingStep
+      formData={formData}
+      handleInputChange={handleInputChange}
+      setLogoFile={setLogoFile}
+      setBannerFile={setBannerFile}
+      logoPreview={logoPreview}
+      bannerPreview={bannerPreview}
+      handleFileChange={handleFileChange}
+      setLogoPreview={setLogoPreview} 
+      setBannerPreview={setBannerPreview} 
+    />
         )
       default:
         return null

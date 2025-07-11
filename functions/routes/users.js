@@ -8,12 +8,98 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { defineSecret } from 'firebase-functions/params'
 
-// Configuración para bcrypt
 const saltRounds = 10
 
-// Define el secreto como un parámetro de función para Cloud Functions v2.
-// SE HA CAMBIADO EL NOMBRE DEL SECRETO PARA EVITAR CONFLICTOS DE DESPLIEGUE.
 const JWT_SECRET_KEY_PARAM = defineSecret('BJS_JWT_SECRET_KEY')
+
+// Middleware de autorización para administradores
+// NOTA: Este middleware depende de 'jsonwebtoken' y de 'JWT_SECRET_KEY_PARAM'
+// que NO están importados/definidos en este archivo 'campaigns.js'.
+// Si esta función se utiliza fuera de 'variables.js', necesitarás importar/definir JWT_SECRET_KEY_PARAM y jwt aquí.
+const authorizeAdmin = async (req, res, next) => {
+  res.set('Access-Control-Allow-Origin', '*')
+  res.set(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  )
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('')
+    return
+  }
+
+  const idToken = req.headers.authorization?.split('Bearer ')[1]
+  if (!idToken) {
+    return res.status(401).json({
+      message: 'No autorizado: Token de autenticación no proporcionado.',
+    })
+  }
+
+  try {
+    // Si JWT_SECRET_KEY_PARAM y jwt no están definidos globalmente en este contexto de Firebase Functions
+    // o importados en este archivo, las siguientes líneas causarán un error.
+    // Asumiendo que se importarán o definirán si esta función se saca de variables.js
+    const jwtSecretValue = JWT_SECRET_KEY_PARAM.value() 
+
+    if (!jwtSecretValue) {
+      console.error(
+        'JWT_SECRET no configurado en Firebase Functions para authorizeAdmin.',
+      )
+      return res
+        .status(500)
+        .json({ message: 'Error de configuración del servidor.' })
+    }
+    const cleanedJwtSecret = jwtSecretValue.trim()
+
+    const decodedToken = jwt.verify(idToken, cleanedJwtSecret, {
+      algorithms: ['HS256'],
+    })
+    const userUid = decodedToken.uid
+    const userRole = decodedToken.role
+
+    if (!userUid) {
+      return res
+        .status(401)
+        .json({ message: 'Token inválido: UID no encontrado en el token.' })
+    }
+
+    if (userRole !== 'admin') {
+      return res.status(403).json({
+        message:
+          'Acceso denegado: Solo administradores pueden realizar esta acción.',
+      })
+    }
+
+    req.userUid = userUid
+    next()
+  } catch (error) {
+    console.error('Error de autorización (JWT):', error)
+    let errorMessage = 'No autorizado: Token inválido.'
+    if (error instanceof jwt.TokenExpiredError) {
+      errorMessage = 'No autorizado: Token expirado.'
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      errorMessage = `No autorizado: Token JWT inválido (${error.message}).`
+    }
+    return res.status(401).json({
+      message: errorMessage,
+      details: error.message,
+    })
+  }
+}
+
+// Middleware para configuración CORS de funciones públicas
+const setPublicCorsHeaders = (req, res, next) => {
+  res.set('Access-Control-Allow-Origin', '*')
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.set('Access-Control-Allow-Headers', 'Content-Type')
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('')
+    return
+  }
+  next()
+}
 
 // --- FUNCIÓN DE PRUEBA DE CONEXIÓN ---
 export const testUsersModuleConnection = functions.https.onRequest(
@@ -358,3 +444,67 @@ export const getSecureUsers = functions.https.onRequest(
     }
   },
 )
+
+// 14. OBTENER USUARIO POR CÉDULA (GET - Pública)
+export const getUserByCedula = functions.https.onRequest(async (req, res) => {
+  // Middleware para configuración CORS de funciones públicas
+  const setPublicCorsHeaders = (req, res, next) => {
+    res.set('Access-Control-Allow-Origin', '*')
+    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS')
+    res.set('Access-Control-Allow-Headers', 'Content-Type')
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('')
+      return
+    }
+    next()
+  }
+
+  setPublicCorsHeaders(req, res, async () => {
+    if (req.method !== 'GET') {
+      return res.status(405).send('Método no permitido. Solo GET.');
+    }
+
+    const cedula = req.query.cedula;
+
+    if (!cedula) {
+      return res.status(400).json({
+        message: 'Se requiere el número de cédula como parámetro (cedula).',
+      });
+    }
+
+    try {
+      const db = getFirestore(getApp());
+      // Buscar en la colección 'users' por el campo 'cedula'
+      const userSnapshot = await db.collection('users').where('cedula', '==', cedula).limit(1).get();
+
+      if (userSnapshot.empty) {
+        return res.status(200).json({ user: null, message: 'Usuario no encontrado por cédula.' });
+      }
+
+      const userData = userSnapshot.docs[0].data();
+      const userId = userSnapshot.docs[0].id;
+
+      // Opcional: Filtrar datos sensibles si userData contiene información que no debería ser pública
+      const publicUserData = {
+        id: userId,
+        name: userData.name,
+        email: userData.email,
+        cedula: userData.cedula,
+        role: userData.role,
+        location: userData.location || null,
+        campaignMemberships: userData.campaignMemberships || [],
+        // Puedes añadir más campos aquí si son relevantes para el frontend y no son sensibles
+      };
+
+      return res.status(200).json({ user: publicUserData, message: 'Usuario encontrado.' });
+
+    } catch (error) {
+      console.error('Error en getUserByCedula:', error);
+      return res.status(500).json({
+        message: 'Error interno del servidor al buscar usuario por cédula.',
+        error: error.message,
+      });
+    }
+  });
+});
