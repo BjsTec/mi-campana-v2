@@ -370,7 +370,7 @@ const CampaignTypesSection = ({
                 fields={campaignTypeFields}
                 onSave={onSaveCampaignType}
                 onToggleActive={onToggleCampaignTypeActive}
-                onDelete={onDeleteCampaignType}
+                // onDelete={onDeleteCampaignType}
               />
             ))}
           </tbody>

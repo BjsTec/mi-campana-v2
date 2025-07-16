@@ -8,7 +8,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react'
-import { useAuth } from '../../../../context/AuthContext' // Corregido: Se usa la ruta relativa
+import { useAuth } from '../../../../context/AuthContext'
 
 // Importar los componentes modulares
 import CampaignInfoStep from '@/components/admin/campaigns/CampaignInfoStep'
@@ -67,7 +67,7 @@ const MediaIcon = () => (
     />{' '}
   </svg>
 )
-const CheckCircleIcon = () => (
+const CheckCircleIconStep = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     className="h-6 w-6 text-green-500"
@@ -102,7 +102,6 @@ const ArrowRightIcon = () => (
   </svg>
 )
 const UploadIcon = () => (
-  // Se mantiene aquí si ImageUploader se mueve y usa este icono
   <svg
     xmlns="http://www.w3.org/2000/svg"
     className="h-10 w-10 text-gray-400"
@@ -123,8 +122,10 @@ const UploadIcon = () => (
 // --- Estado inicial del formulario, basado en el JSON de Postman y la estructura de la BD ---
 const initialState = {
   campaignName: '',
-  type: 'concejal', // Valor por defecto para el tipo de campaña
+  type: '', // Ahora puede ser vacío para forzar selección o tener un valor por defecto sensato
   scope: 'municipal', // Valor por defecto
+  planId: '', // Este aún se usa para la selección en el frontend
+  discountPercentage: 0, // Ahora es un número para el porcentaje de descuento
 
   // Datos del candidato (usuario)
   candidateName: '',
@@ -207,13 +208,13 @@ function formReducer(state, action) {
 
 // --- Componente principal de la página ---
 export default function NuevaCampanaPage() {
-  const { user } = useAuth()
+  const { user, idToken } = useAuth()
   const [formData, dispatch] = useReducer(formReducer, initialState)
   const [currentStep, setCurrentStep] = useState(1)
 
   // Estados para la UI
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState({ text: '', type: '' }) // 'success' o 'error'
+  const [message, setMessage] = useState({ text: '', type: '' })
 
   // Estados para previsualización de imágenes
   const [logoPreview, setLogoPreview] = useState('')
@@ -224,12 +225,17 @@ export default function NuevaCampanaPage() {
   // Estados para datos de ubicación
   const [departamentos, setDepartamentos] = useState([])
   const [ciudades, setCiudades] = useState([])
-  const [candidateCiudades, setCandidateCiudades] = useState([]) // Ciudades específicas para el candidato
+  const [candidateCiudades, setCandidateCiudades] = useState([])
+
+  // Estados para listas de tipos de campaña y planes de precios
+  const [campaignTypesList, setCampaignTypesList] = useState([])
+  const [pricingPlansList, setPricingPlansList] = useState([])
+  const [loadingLists, setLoadingLists] = useState(true)
 
   // Estados para la búsqueda de usuario por cédula
-  const [foundUser, setFoundUser] = useState(null) // Almacena el usuario encontrado
-  const [isSearching, setIsSearching] = useState(false) // Estado de carga de la búsqueda
-  const debounceTimeoutRef = useRef(null) // Para el debounce
+  const [foundUser, setFoundUser] = useState(null)
+  const [isSearching, setIsSearching] = useState(false)
+  const debounceTimeoutRef = useRef(null)
 
   // URL de tus Firebase Functions desde variables de entorno
   const CREATE_CAMPAIGN_URL = process.env.NEXT_PUBLIC_CREATE_CAMPAIGN_URL
@@ -237,10 +243,70 @@ export default function NuevaCampanaPage() {
   const GET_CITIES_BY_DEPARTMENT_URL =
     process.env.NEXT_PUBLIC_GET_CITIES_BY_DEPARTMENT_URL
   const GET_USER_BY_CEDULA_URL = process.env.NEXT_PUBLIC_GET_USER_BY_CEDULA_URL
+  const GET_PUBLIC_CAMPAIGN_TYPES_URL =
+    process.env.NEXT_PUBLIC_FN_GET_PUBLIC_CAMPAIGN_TYPES_URL
+  const GET_PUBLIC_PRICING_PLANS_URL =
+    process.env.NEXT_PUBLIC_FN_GET_PUBLIC_PRICING_PLANS_URL
+
+  // --- Carga inicial de listas de departamentos, tipos de campaña y planes de precios ---
+  useEffect(() => {
+    const fetchLists = async () => {
+      setLoadingLists(true)
+      try {
+        // Fetch Departamentos
+        if (!GET_DEPARTMENTS_URL)
+          throw new Error('URL para departamentos no configurada.')
+        const departmentsRes = await fetch(GET_DEPARTMENTS_URL)
+        if (!departmentsRes.ok)
+          throw new Error('Error al cargar departamentos.')
+        const departmentsData = await departmentsRes.json()
+        setDepartamentos(departmentsData)
+
+        // Fetch Tipos de Campaña
+        if (!GET_PUBLIC_CAMPAIGN_TYPES_URL)
+          throw new Error('URL para tipos de campaña no configurada.')
+        const campaignTypesRes = await fetch(GET_PUBLIC_CAMPAIGN_TYPES_URL)
+        if (!campaignTypesRes.ok)
+          throw new Error('Error al cargar tipos de campaña.')
+        const campaignTypesData = await campaignTypesRes.json()
+        setCampaignTypesList(
+          campaignTypesData.filter((type) => type.active) || [],
+        )
+
+        // Fetch Planes de Precios
+        if (!GET_PUBLIC_PRICING_PLANS_URL)
+          throw new Error('URL para planes de precios no configurada.')
+        const pricingPlansRes = await fetch(GET_PUBLIC_PRICING_PLANS_URL)
+        if (!pricingPlansRes.ok)
+          throw new Error('Error al cargar planes de precios.')
+        const pricingPlansData = await pricingPlansRes.json()
+        setPricingPlansList(pricingPlansData || [])
+      } catch (err) {
+        setMessage({
+          text: `Error al cargar listas: ${err.message}`,
+          type: 'error',
+        })
+        console.error('Error fetching initial lists:', err)
+      } finally {
+        setLoadingLists(false)
+      }
+    }
+
+    fetchLists()
+  }, [
+    GET_DEPARTMENTS_URL,
+    GET_PUBLIC_CAMPAIGN_TYPES_URL,
+    GET_PUBLIC_PRICING_PLANS_URL,
+  ])
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
-    const fieldValue = type === 'checkbox' ? checked : value
+    const fieldValue =
+      type === 'checkbox'
+        ? checked
+        : type === 'number'
+          ? parseFloat(value)
+          : value
 
     dispatch({
       type: 'UPDATE_FIELD',
@@ -248,30 +314,27 @@ export default function NuevaCampanaPage() {
       value: fieldValue,
     })
 
-    // Lógica de búsqueda por cédula con debounce (se mantiene aquí para pasar a CandidateInfoStep)
     if (name === 'candidateCedula') {
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current)
       }
       debounceTimeoutRef.current = setTimeout(() => {
         if (value.trim().length >= 7) {
-          // Mínimo 7 dígitos para buscar
           handleCedulaSearch(value.trim())
         } else {
-          setFoundUser(null) // Limpiar usuario encontrado si la cédula es muy corta
+          setFoundUser(null)
           setIsSearching(false)
-          setMessage({ text: '', type: '' }) // Limpiar mensaje de búsqueda
+          setMessage({ text: '', type: '' })
         }
-      }, 500) // Debounce de 500ms
+      }, 500)
     }
   }
 
-  // Función para buscar usuario por cédula
   const handleCedulaSearch = useCallback(
     async (cedula) => {
       setIsSearching(true)
-      setFoundUser(null) // Limpiar cualquier usuario previamente encontrado
-      setMessage({ text: '', type: '' }) // Limpiar mensajes anteriores
+      setFoundUser(null)
+      setMessage({ text: '', type: '' })
 
       try {
         if (!GET_USER_BY_CEDULA_URL) {
@@ -310,13 +373,12 @@ export default function NuevaCampanaPage() {
     [GET_USER_BY_CEDULA_URL],
   )
 
-  // Función para precargar el formulario con los datos del usuario encontrado
   const handlePreloadUser = useCallback(() => {
     if (foundUser) {
       dispatch({
         type: 'SET_FORM_DATA',
         payload: {
-          ...formData, // Mantener los datos actuales del formulario
+          ...formData,
           candidateName: foundUser.name || '',
           candidateEmail: foundUser.email || '',
           whatsapp: foundUser.whatsapp || '',
@@ -324,7 +386,7 @@ export default function NuevaCampanaPage() {
           sexo: foundUser.sexo || '',
           dateBirth: foundUser.dateBirth
             ? foundUser.dateBirth.split('T')[0]
-            : '', // Formato YYYY-MM-DD
+            : '',
           candidateLocation: {
             country: foundUser.location?.country || 'Colombia',
             state: foundUser.location?.state || '',
@@ -337,7 +399,7 @@ export default function NuevaCampanaPage() {
         text: '✅ Datos del usuario precargados. Revisa y completa la información.',
         type: 'success',
       })
-      setFoundUser(null) // Ocultar la sugerencia después de precargar
+      setFoundUser(null)
     }
   }, [foundUser, formData])
 
@@ -353,11 +415,9 @@ export default function NuevaCampanaPage() {
   }
 
   const uploadImageToStorage = async (file) => {
-    // IMPORTANTE: Aquí debes implementar tu lógica real para subir la imagen a Firebase Storage.
-    // Esta es una URL de ejemplo. Debes reemplazarla con la URL real de Firebase.
     console.log(`Simulando subida de ${file.name}...`)
     await new Promise((resolve) => setTimeout(resolve, 1000))
-    return `https://firebasestorage.googleapis.com/v0/b/micampanav2.appspot.com/o/images%2Fplaceholder.jpg?alt=media`
+    return `https://placehold.co/1200x300/000000/FFFFFF?text=${encodeURIComponent(file.name)}`
   }
 
   const handleSubmit = async (e) => {
@@ -366,7 +426,23 @@ export default function NuevaCampanaPage() {
     setMessage({ text: '', type: '' })
 
     try {
-      // 1. Subir imágenes si existen
+      // 1. Validar que planId ha sido seleccionado
+      if (!formData.planId) {
+        throw new Error('Por favor, selecciona un plan de campaña.')
+      }
+
+      // --- NUEVA LÓGICA AQUÍ: Obtener nombre y precio del plan seleccionado ---
+      const selectedPlan = pricingPlansList.find(
+        (plan) => plan.id === formData.planId,
+      )
+      if (!selectedPlan) {
+        throw new Error('El plan de campaña seleccionado no es válido.')
+      }
+      const planNameToSend = selectedPlan.name
+      const planPriceToSend = selectedPlan.price
+      // --- FIN NUEVA LÓGICA ---
+
+      // 2. Subir imágenes si existen
       let logoUrl = ''
       let bannerUrl = ''
       if (logoFile) {
@@ -376,36 +452,37 @@ export default function NuevaCampanaPage() {
         bannerUrl = await uploadImageToStorage(bannerFile)
       }
 
-      // 2. Preparar el payload final para la API
-      // Asegurarse de que los objetos anidados existan y tengan la estructura correcta
+      // 3. Preparar el payload final para la API
       const finalPayload = {
         campaignName: formData.campaignName,
         type: formData.type,
         scope: formData.scope,
+        // ¡CAMBIO AQUÍ! Enviar planName y planPrice en lugar de planId
+        planName: planNameToSend,
+        planPrice: planPriceToSend,
+        discountPercentage: formData.discountPercentage,
+
         candidateName: formData.candidateName,
         candidateCedula: formData.candidateCedula,
         candidateEmail: formData.candidateEmail,
-        candidatePassword: formData.candidatePassword, // La contraseña se hashea en el backend
+        candidatePassword: formData.candidatePassword,
         whatsapp: formData.whatsapp,
         phone: formData.phone,
         sexo: formData.sexo,
-        dateBirth: formData.dateBirth, // Formato YYYY-MM-DD
+        dateBirth: formData.dateBirth,
         puestoVotacion: formData.puestoVotacion,
 
         location: {
-          // Ubicación de la campaña
           country: formData.location.country,
           state: formData.location.state,
           city: formData.location.city,
         },
         candidateLocation: {
-          // Ubicación del candidato
           country: formData.candidateLocation.country,
           state: formData.candidateLocation.state,
           city: formData.candidateLocation.city,
         },
         contactInfo: {
-          // Contacto de la campaña
           email: formData.contactInfo.email,
           phone: formData.contactInfo.phone,
           whatsapp: formData.contactInfo.whatsapp,
@@ -414,12 +491,10 @@ export default function NuevaCampanaPage() {
           supportWhatsapp: formData.contactInfo.supportWhatsapp,
         },
         media: {
-          // Media de la campaña
           logoUrl: logoUrl,
           bannerUrl: bannerUrl,
         },
         socialLinks: {
-          // Redes sociales de la campaña
           facebook: formData.socialLinks.facebook,
           instagram: formData.socialLinks.instagram,
           tiktok: formData.socialLinks.tiktok,
@@ -429,7 +504,6 @@ export default function NuevaCampanaPage() {
           twitter: formData.socialLinks.twitter,
         },
         messagingOptions: {
-          // Opciones de mensajería
           email: formData.messagingOptions.email,
           alerts: formData.messagingOptions.alerts,
           sms: formData.messagingOptions.sms,
@@ -437,15 +511,13 @@ export default function NuevaCampanaPage() {
         },
       }
 
-      // 3. Obtener la URL de la función desde las variables de entorno
-      const createCampaignUrl = CREATE_CAMPAIGN_URL // Usar la constante importada
+      const createCampaignUrl = CREATE_CAMPAIGN_URL
       if (!createCampaignUrl) {
         throw new Error(
           'La URL para crear campañas no está configurada en las variables de entorno.',
         )
       }
 
-      // 4. Enviar los datos a la Cloud Function
       const response = await fetch(createCampaignUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -461,7 +533,6 @@ export default function NuevaCampanaPage() {
         )
       }
 
-      // 5. Éxito
       setMessage({
         text: `¡Éxito! Campaña "${finalPayload.campaignName}" creada.`,
         type: 'success',
@@ -483,7 +554,6 @@ export default function NuevaCampanaPage() {
   const nextStep = () => setCurrentStep((prev) => prev + 1)
   const prevStep = () => setCurrentStep((prev) => prev - 1)
 
-  // --- Renderizado condicional basado en permisos ---
   if (!user || user.role !== 'admin') {
     return (
       <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
@@ -500,6 +570,14 @@ export default function NuevaCampanaPage() {
     )
   }
 
+  if (loadingLists) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <p className="text-gray-700">Cargando datos iniciales...</p>
+      </div>
+    )
+  }
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -509,12 +587,14 @@ export default function NuevaCampanaPage() {
             handleInputChange={handleInputChange}
             departamentos={departamentos}
             ciudades={ciudades}
-            setDepartamentos={setDepartamentos} // Pasar el setter de departamentos
-            setCiudades={setCiudades} // Pasar el setter de ciudades
+            setDepartamentos={setDepartamentos}
+            setCiudades={setCiudades}
             setMessage={setMessage}
             dispatch={dispatch}
             GET_DEPARTMENTS_URL={GET_DEPARTMENTS_URL}
             GET_CITIES_BY_DEPARTMENT_URL={GET_CITIES_BY_DEPARTMENT_URL}
+            campaignTypesList={campaignTypesList}
+            pricingPlansList={pricingPlansList}
           />
         )
       case 2:
@@ -590,7 +670,7 @@ export default function NuevaCampanaPage() {
                       onClick={() => setCurrentStep(step.id)}
                       className="relative w-10 h-10 flex items-center justify-center bg-blue-600 rounded-full hover:bg-blue-700"
                     >
-                      <CheckCircleIcon className="w-8 h-8 text-white" />
+                      <CheckCircleIconStep className="w-8 h-8 text-white" />
                       <span className="sr-only">{step.name}</span>
                     </button>
                   </>
