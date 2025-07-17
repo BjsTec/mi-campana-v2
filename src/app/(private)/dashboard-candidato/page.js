@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react' // Asegúrate de importar todos los hooks que uses
 
 // Importar el contexto de autenticación
 import { useAuth } from '@/context/AuthContext'
@@ -473,7 +473,9 @@ const COLOMBIA_SVG_CONTENT = `<?xml version="1.0" encoding="UTF-8" standalone="n
     mapsvg:geoViewBox="-81.721283 12.590653 -66.868938 -4.237159"
     width="612.82184"
     height="693.68036"
-    viewBox="0 0 612.82184 693.68036" preserveAspectRatio="xMidYMid meet"> <path
+    viewBox="0 0 612.82184 693.68036"
+    preserveAspectRatio="xMidYMid meet">
+     <path
        d="m 303.16,543.59916 1.41,-0.35 0.82,-0.27 5.34,-1.93 6.54,-2.22 5.06,-1.68 2.87,-0.86 3.41,0.2 2.23,-0.04 0.93,0.48 2.8,1.76 1.81,2.72 3.76,0.43 4.06,-0.11 2.62,-0.02 2.8,2.12 0.76,0.56 1.48,0.68 4.61,-0.38 0.66,-1.18 0.38,-0.89 1.28,-1.33 1.5,0 0.93,0.55 1.02,1.24 0.51,1.04 1.14,0.31 1.1,0.05 1.26,-0.05 1.02,-0.3 1.22,-1.24 2.05,-0.29 1.23,1.48 1.54,1.76 3.67,2.2 1.22,0.07 0.76,-1.46 3.4,-3.61 1.68,-0.13 0.48,1.4 3.07,1.49 0.9,0 1.01,-0.48 1.3,-1.09 -0.13,-2.32 0.29,-0.84 0.74,-1.99 0.69,-1.4 0.49,-0.76 0.84,-0.93 5.51,-5.31 1.08,-0.51 1.13,-0.02 1.12,0.23 2.4,0.65 1.8,0.11 1.53,-1.11 0.8,-1.2 0.56,-0.97 0.38,-0.79 0.52,-1.01 0.46,-0.84 0.74,-0.97 3.44,-2.82 4.09,-4.34 1.61,-1.9 0.5,-1.18 -0.22,-1.64 0.76,-0.62 3.04,0.14 1.89,0.93 0.98,0.75 8.52,5.18 4.11,1.3 1.58,-0.65 2.08,2.2 1.04,1.96 1.69,7.58 1.62,2.64 3.01,-1.22 0.7,-1.33 10.41,3.36 1.61,1.66 0.6,0.94 1.32,1.24 2.75,0.9 1.46,-0.33 -0.72,-1.21 2.46,-1.85 2.02,1.06 0.71,0.92 -1.5,5.54 0.06,4.82 -1.33,2.12 0.06,1.57 1.04,0.9 0.95,0.98 0.34,1.76 -1.08,0.84 -1.42,0.83 -0.27,0.89 0.32,0.98 0.51,0.86 5.07,4.02 1.15,0.09 0.84,-0.36 0.69,-0.77 0.32,-0.95 -0.6,-0.61 -1.19,-0.3 -0.59,-0.66 0.06,-0.84 0.65,-0.88 1.36,-0.88 5.83,-0.39 0.2,1.52 -1.12,3.18 0.29,0.84 1.36,0.23 0.82,-0.3 2.85,-1.32 4.23,-1.02 3.25,2.81 -0.06,0.91 0.78,3.54 6.72,-0.9 -0.14,-3.16 1.01,-2.19 0.44,0.95 0.8,3.72 0.9,4.68 0.47,3.76 -0.51,1.78 -2.54,5.92 -2.88,15.9 -2.95,16.26 -0.56,3.08 -0.75,3.93 -0.39,2.14 -6.5,36.27 -3.66,20.56 -2.53,11.98 -0.56,1.01 0.01,-1.13 -1.32,-1.37 -1.34,-0.91 -0.81,-0.54 -3.39,-2.8 -0.54,-0.89 -0.33,-0.78 -0.34,-1.06 -0.42,-1.27 -0.79,-1.54 -2.17,-2.72 -3.65,-2.95 -0.77,-0.38 -0.85,-0.09 -1.82,0.6 -0.72,0.56 -2.29,1.39 -0.88,0.38 -1.12,0 -3.28,-1.22 -4.8,-2.04 2.14,-3.36 1.84,-2.82 2.54,-3.92 4.89,-7.55 1.44,-2.24 14.21,-22.11 -1.28,-2.34 -0.91,0.13 -3.05,-2.36 -0.59,-1.42 -0.41,-1.6 -3.15,-2.83 -1.66,-0.36 -0.83,0.23 -0.91,0.56 -7.69,-0.75 -0.74,-0.39 -2.77,-3.39 -0.33,-1.76 -8.3,-5.44 -4.84,2.17 -5.14,1.37 -3.58,2 -7.16,-0.56 -2.08,-2.69 -4.45,-1.92 -2.33,0.09 -4.02,-0.48 -0.41,-1.18 0.04,-1.21 -0.41,-0.77 -1.18,0.46 -3.57,2.94 -2.59,3.67 -0.76,2.35 -1.72,0.05 -2.09,-0.39 -3.62,1.57 -6.49,3.73 -2.97,-0.3 -1.16,-0.35 -5.07,-1.7 -5.75,-1.4 -3.84,1.34 -5.41,2.05 -2.77,0.67 -0.85,-2.16 -1.32,-2.2 -1.67,0.07 -1.15,0.36 -2.92,-1.6 -1.27,-1 -0.44,-0.75 -0.68,-3.38 1.26,-0.58 0.97,-1.3 0.8,-2.24 -1.32,-9.09 -1.75,-3.05 -2.65,-1.75 -1.72,1.6 -2.39,1.15 -4.93,-2.34 -3.05,-2.03 -0.7,-0.76 0.84,-3.85 0.42,-0.73 1.23,-1.08 -1.23,-2.36 -1.78,-2.42 -0.94,-1.04 -0.19,-1.29 -0.34,-2.51 -4.03,-3.72 -2.45,-0.22 -1.62,0.44 -3.66,-1.01 -1.11,-2.32 -8.65,-5.56 -5.67,-1.55 -1.04,-0.9 -0.6,-1.07 -1.13,-2.31 0.76,-1.29 0.68,-1.85 -1.75,-1.8 -1.07,-1.15 -0.94,-3.08 -0.79,-3 z"
        title="Amazonas"
        id="CO-AMA" />
@@ -746,10 +748,11 @@ const ColombiaMap = ({ onDepartmentClick, selectedDepartment }) => {
 }
 
 export default function PanoramaElectoralPage() {
-  // === HOOKS Y VARIABLES DE ESTADO/DERIVADAS DEBEN DECLARARSE PRIMERO ===
+  // === TODOS LOS HOOKS Y VARIABLES DERIVADAS DEBEN DECLARARSE AL PRINCIPIO Y DE FORMA INCONDICIONAL ===
   const { user, isLoading: authLoading } = useAuth()
   const [selectedDepartment, setSelectedDepartment] = useState(null)
 
+  // Los useCallback también son hooks y deben ir al nivel superior
   const handleDepartmentClick = useCallback((departmentId) => {
     setSelectedDepartment(departmentId)
   }, [])
@@ -758,16 +761,16 @@ export default function PanoramaElectoralPage() {
     setSelectedDepartment(null)
   }, [])
 
+  // currentDepartment es una variable derivada del estado, debe ir después de useState y antes de retornos condicionales
   const currentDepartment = selectedDepartment
     ? colombiaMapData.departamentos.find((d) => d.id === selectedDepartment)
     : null
-  // =====================================================================
 
   // Simula que los datos siempre están cargados para el mockup
   const dataLoading = false // Mantener como false para el mockup
 
-  // Implementamos una comprobación de rol a nivel de página para mayor seguridad
-  // ESTAS COMPROBACIONES VIENEN DESPUÉS DE LA DECLARACIÓN DE TODOS LOS HOOKS.
+  // === AHORA SÍ, LAS COMPROBACIONES CONDICIONALES PUEDEN RETORNAR UI ===
+  // Estas comprobaciones vienen DESPUÉS de la declaración de TODOS los hooks.
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-neutral-100 text-neutral-600">
