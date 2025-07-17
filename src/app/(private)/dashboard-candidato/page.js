@@ -19,7 +19,7 @@ import {
 } from 'chart.js'
 
 // Registrar los componentes necesarios de Chart.js
-// Es crucial registrar solo una vez para evitar advertencias en consola
+// Es crucial registrar esto una sola vez para evitar advertencias en consola en desarrollo.
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -32,13 +32,13 @@ ChartJS.register(
 
 // Iconos de Heroicons
 import {
-  MapPinIcon, // Para el mapa o ubicación
-  UsersIcon, // Votos totales
-  ChartBarIcon, // Votos potenciales
-  HandRaisedIcon, // Promesas
-  ChatBubbleBottomCenterTextIcon, // Votos de opinión
-  GlobeAmericasIcon, // Para Colombia
-  ChevronLeftIcon, // Para volver
+  MapPinIcon,
+  UsersIcon,
+  ChartBarIcon,
+  HandRaisedIcon,
+  ChatBubbleBottomCenterTextIcon,
+  GlobeAmericasIcon,
+  ChevronLeftIcon,
 } from '@heroicons/react/24/outline'
 
 // --- MOCKUP DATA: Datos simulados para el Panorama Electoral ---
@@ -472,8 +472,8 @@ const COLOMBIA_SVG_CONTENT = `<?xml version="1.0" encoding="UTF-8" standalone="n
     xmlns="http://www.w3.org/2000/svg"
     mapsvg:geoViewBox="-81.721283 12.590653 -66.868938 -4.237159"
     width="612.82184"
-    height="693.68036">
-     <path
+    height="693.68036"
+    viewBox="0 0 612.82184 693.68036" preserveAspectRatio="xMidYMid meet"> <path
        d="m 303.16,543.59916 1.41,-0.35 0.82,-0.27 5.34,-1.93 6.54,-2.22 5.06,-1.68 2.87,-0.86 3.41,0.2 2.23,-0.04 0.93,0.48 2.8,1.76 1.81,2.72 3.76,0.43 4.06,-0.11 2.62,-0.02 2.8,2.12 0.76,0.56 1.48,0.68 4.61,-0.38 0.66,-1.18 0.38,-0.89 1.28,-1.33 1.5,0 0.93,0.55 1.02,1.24 0.51,1.04 1.14,0.31 1.1,0.05 1.26,-0.05 1.02,-0.3 1.22,-1.24 2.05,-0.29 1.23,1.48 1.54,1.76 3.67,2.2 1.22,0.07 0.76,-1.46 3.4,-3.61 1.68,-0.13 0.48,1.4 3.07,1.49 0.9,0 1.01,-0.48 1.3,-1.09 -0.13,-2.32 0.29,-0.84 0.74,-1.99 0.69,-1.4 0.49,-0.76 0.84,-0.93 5.51,-5.31 1.08,-0.51 1.13,-0.02 1.12,0.23 2.4,0.65 1.8,0.11 1.53,-1.11 0.8,-1.2 0.56,-0.97 0.38,-0.79 0.52,-1.01 0.46,-0.84 0.74,-0.97 3.44,-2.82 4.09,-4.34 1.61,-1.9 0.5,-1.18 -0.22,-1.64 0.76,-0.62 3.04,0.14 1.89,0.93 0.98,0.75 8.52,5.18 4.11,1.3 1.58,-0.65 2.08,2.2 1.04,1.96 1.69,7.58 1.62,2.64 3.01,-1.22 0.7,-1.33 10.41,3.36 1.61,1.66 0.6,0.94 1.32,1.24 2.75,0.9 1.46,-0.33 -0.72,-1.21 2.46,-1.85 2.02,1.06 0.71,0.92 -1.5,5.54 0.06,4.82 -1.33,2.12 0.06,1.57 1.04,0.9 0.95,0.98 0.34,1.76 -1.08,0.84 -1.42,0.83 -0.27,0.89 0.32,0.98 0.51,0.86 5.07,4.02 1.15,0.09 0.84,-0.36 0.69,-0.77 0.32,-0.95 -0.6,-0.61 -1.19,-0.3 -0.59,-0.66 0.06,-0.84 0.65,-0.88 1.36,-0.88 5.83,-0.39 0.2,1.52 -1.12,3.18 0.29,0.84 1.36,0.23 0.82,-0.3 2.85,-1.32 4.23,-1.02 3.25,2.81 -0.06,0.91 0.78,3.54 6.72,-0.9 -0.14,-3.16 1.01,-2.19 0.44,0.95 0.8,3.72 0.9,4.68 0.47,3.76 -0.51,1.78 -2.54,5.92 -2.88,15.9 -2.95,16.26 -0.56,3.08 -0.75,3.93 -0.39,2.14 -6.5,36.27 -3.66,20.56 -2.53,11.98 -0.56,1.01 0.01,-1.13 -1.32,-1.37 -1.34,-0.91 -0.81,-0.54 -3.39,-2.8 -0.54,-0.89 -0.33,-0.78 -0.34,-1.06 -0.42,-1.27 -0.79,-1.54 -2.17,-2.72 -3.65,-2.95 -0.77,-0.38 -0.85,-0.09 -1.82,0.6 -0.72,0.56 -2.29,1.39 -0.88,0.38 -1.12,0 -3.28,-1.22 -4.8,-2.04 2.14,-3.36 1.84,-2.82 2.54,-3.92 4.89,-7.55 1.44,-2.24 14.21,-22.11 -1.28,-2.34 -0.91,0.13 -3.05,-2.36 -0.59,-1.42 -0.41,-1.6 -3.15,-2.83 -1.66,-0.36 -0.83,0.23 -0.91,0.56 -7.69,-0.75 -0.74,-0.39 -2.77,-3.39 -0.33,-1.76 -8.3,-5.44 -4.84,2.17 -5.14,1.37 -3.58,2 -7.16,-0.56 -2.08,-2.69 -4.45,-1.92 -2.33,0.09 -4.02,-0.48 -0.41,-1.18 0.04,-1.21 -0.41,-0.77 -1.18,0.46 -3.57,2.94 -2.59,3.67 -0.76,2.35 -1.72,0.05 -2.09,-0.39 -3.62,1.57 -6.49,3.73 -2.97,-0.3 -1.16,-0.35 -5.07,-1.7 -5.75,-1.4 -3.84,1.34 -5.41,2.05 -2.77,0.67 -0.85,-2.16 -1.32,-2.2 -1.67,0.07 -1.15,0.36 -2.92,-1.6 -1.27,-1 -0.44,-0.75 -0.68,-3.38 1.26,-0.58 0.97,-1.3 0.8,-2.24 -1.32,-9.09 -1.75,-3.05 -2.65,-1.75 -1.72,1.6 -2.39,1.15 -4.93,-2.34 -3.05,-2.03 -0.7,-0.76 0.84,-3.85 0.42,-0.73 1.23,-1.08 -1.23,-2.36 -1.78,-2.42 -0.94,-1.04 -0.19,-1.29 -0.34,-2.51 -4.03,-3.72 -2.45,-0.22 -1.62,0.44 -3.66,-1.01 -1.11,-2.32 -8.65,-5.56 -5.67,-1.55 -1.04,-0.9 -0.6,-1.07 -1.13,-2.31 0.76,-1.29 0.68,-1.85 -1.75,-1.8 -1.07,-1.15 -0.94,-3.08 -0.79,-3 z"
        title="Amazonas"
        id="CO-AMA" />
@@ -589,6 +589,7 @@ const getDepartmentIdFromSvgId = (svgId) => {
   const departmentCode = svgId.substring(3).toLowerCase() // Ej: 'ANT' -> 'ant'
 
   // Mapeo específico para algunos IDs si no son directamente el nombre
+  // Asegúrate de que este mapeo sea exhaustivo y correcto para todos los IDs de tu SVG
   const idMap = {
     ama: 'amazonas',
     ant: 'antioquia',
@@ -604,29 +605,27 @@ const getDepartmentIdFromSvgId = (svgId) => {
     cho: 'choco',
     cor: 'cordoba',
     cun: 'cundinamarca',
-    dc: 'distrito-capital-de-bogota', // Ajusta si tu data tiene un ID diferente para Bogotá D.C.
+    dc: 'distrito-capital-de-bogota', // Si el ID del SVG es CO-DC
     gua: 'guainia',
-    guv: 'guaviare', // El SVG tiene GUV, tu data tiene GUAVIARE, lo pongo igual para que se reconozca.
+    guv: 'guaviare', // El SVG tiene GUV, tu data tiene GUAVIARE
     hui: 'huila',
-    lag: 'la-guajira',
+    lag: 'la-guajira', // El SVG tiene LAG, tu data tiene LA-GUAJIRA
     mag: 'magdalena',
     met: 'meta',
-    nsa: 'norte-de-santander',
+    nsa: 'norte-de-santander', // El SVG tiene NSA, tu data tiene NORTE-DE-SANTANDER
     put: 'putumayo',
     qui: 'quindio',
     ris: 'risaralda',
-    sap: 'san-andres-providencia-y-santa-catalina',
-    san: 'santander', // El SVG tiene SAN, tu data tiene SANTANDER, lo pongo igual para que se reconozca.
+    sap: 'san-andres-providencia-y-santa-catalina', // El SVG tiene SAP
+    san: 'santander', // El SVG tiene SAN, tu data tiene SANTANDER
     suc: 'sucre',
     tol: 'tolima',
-    vac: 'valle-del-cauca',
+    vac: 'valle-del-cauca', // El SVG tiene VAC
     vid: 'vichada',
     vau: 'vaupes',
-    // Asegúrate de que todos los IDs de tu SVG tengan una entrada aquí
-    // Si hay otros IDs en tu SVG (ej. para islas, etc.) que no corresponden a departamentos,
-    // no necesitas incluirlos, el filtro los ignorará.
+    // Añade más mapeos si encuentras discrepancias entre IDs de SVG y IDs en tu `colombiaMapData.departamentos`
   }
-  return idMap[departmentCode] || departmentCode // Retorna el mapeo o el código en minúsculas
+  return idMap[departmentCode] || departmentCode // Retorna el mapeo o el código en minúsculas si no hay mapeo específico
 }
 
 // Componente para el Mapa de Colombia (usando el SVG real)
@@ -710,51 +709,65 @@ const ColombiaMap = ({ onDepartmentClick, selectedDepartment }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md border border-neutral-200 h-[500px] flex items-center justify-center relative overflow-hidden">
       <div className="relative w-full h-full flex items-center justify-center">
-        <div className="w-full h-full flex items-center justify-center">
-          {/* dangerouslySetInnerHTML es necesario para inyectar el SVG dinámicamente */}
-          <svg
-            dangerouslySetInnerHTML={{ __html: styledSvgContent }}
-            onClick={handleSvgClick}
-            // Las propiedades width/height/viewBox ya vienen en el SVG, pero puedes añadirlas aquí si el SVG no las tiene
-            // className para el estilo general del SVG y manejo del cursor
-            className="h-full w-full object-contain cursor-pointer"
-            // Puedes añadir clases CSS globales para los estados hover/active de los paths aquí,
-            // o definirlas en tu global.css
-          ></svg>
-        </div>
+        {/* dangerouslySetInnerHTML es necesario para inyectar el SVG dinámicamente */}
+        <svg
+          dangerouslySetInnerHTML={{ __html: styledSvgContent }}
+          onClick={handleSvgClick}
+          // ESTO ES CLAVE PARA QUE EL MAPA NO SE CORTE Y ESCALE CORRECTAMENTE
+          viewBox="0 0 612.82184 693.68036"
+          preserveAspectRatio="xMidYMid meet" // Asegura que el SVG mantenga su relación de aspecto
+          className="h-full w-full object-contain cursor-pointer"
+          // Puedes añadir clases CSS globales para los estados hover/active de los paths aquí,
+          // o definirlas en tu global.css (ej: svg path:hover { opacity: 0.8; })
+        ></svg>
+      </div>
 
-        {/* Leyenda de colores del mapa */}
-        <div className="absolute bottom-4 right-4 bg-neutral-50 p-3 rounded-md text-sm text-neutral-700 shadow-inner">
-          <p className="font-semibold mb-1">Leyenda:</p>
-          <div className="flex items-center gap-2">
-            <span
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: chartBrandColors.primaryDefault }}
-            ></span>
-            <span>Seleccionado</span>
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <span
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: chartBrandColors.primaryLight }}
-            ></span>
-            <span>Departamento (Sin seleccionar)</span>
-          </div>
-          {/* Añade más entradas de leyenda si usas una paleta de colores más rica */}
+      {/* Leyenda de colores del mapa */}
+      <div className="absolute bottom-4 right-4 bg-neutral-50 p-3 rounded-md text-sm text-neutral-700 shadow-inner">
+        <p className="font-semibold mb-1">Leyenda:</p>
+        <div className="flex items-center gap-2">
+          <span
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: chartBrandColors.primaryDefault }}
+          ></span>
+          <span>Seleccionado</span>
         </div>
+        <div className="flex items-center gap-2 mt-1">
+          <span
+            className="w-3 h-3 rounded-full"
+            style={{ backgroundColor: chartBrandColors.primaryLight }}
+          ></span>
+          <span>Departamento (Sin seleccionar)</span>
+        </div>
+        {/* Añade más entradas de leyenda si usas una paleta de colores más rica */}
       </div>
     </div>
   )
 }
 
 export default function PanoramaElectoralPage() {
+  // === HOOKS Y VARIABLES DE ESTADO/DERIVADAS DEBEN DECLARARSE PRIMERO ===
   const { user, isLoading: authLoading } = useAuth()
   const [selectedDepartment, setSelectedDepartment] = useState(null)
 
+  const handleDepartmentClick = useCallback((departmentId) => {
+    setSelectedDepartment(departmentId)
+  }, [])
+
+  const handleBackToColombia = useCallback(() => {
+    setSelectedDepartment(null)
+  }, [])
+
+  const currentDepartment = selectedDepartment
+    ? colombiaMapData.departamentos.find((d) => d.id === selectedDepartment)
+    : null
+  // =====================================================================
+
   // Simula que los datos siempre están cargados para el mockup
-  const dataLoading = false
+  const dataLoading = false // Mantener como false para el mockup
 
   // Implementamos una comprobación de rol a nivel de página para mayor seguridad
+  // ESTAS COMPROBACIONES VIENEN DESPUÉS DE LA DECLARACIÓN DE TODOS LOS HOOKS.
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-neutral-100 text-neutral-600">
@@ -778,28 +791,13 @@ export default function PanoramaElectoralPage() {
     )
   }
 
-  // === CORRECCIÓN CLAVE: Mover la declaración de currentDepartment (y sus dependencias) aquí. ===
-  // Esto asegura que 'currentDepartment' esté disponible cuando se creen los objetos de datos para los gráficos.
-  const handleDepartmentClick = useCallback((departmentId) => {
-    setSelectedDepartment(departmentId)
-  }, [])
-
-  const handleBackToColombia = useCallback(() => {
-    setSelectedDepartment(null)
-  }, [])
-
-  const currentDepartment = selectedDepartment
-    ? colombiaMapData.departamentos.find((d) => d.id === selectedDepartment)
-    : null
-  // =============================================================================================
-
   // --- Datos para los gráficos (Mockup Data) ---
-  // Ahora globalVotosData puede acceder a currentDepartment sin problemas
+  // Estos objetos de datos se definen después de que `currentDepartment` esté disponible.
   const globalVotosData = {
     labels: ['Votos Totales', 'Votos Potenciales', 'Promesas de Voto'],
     datasets: [
       {
-        label: 'Cantidad', // Cambiado de 'Conteo' para ser más descriptivo
+        label: 'Cantidad',
         data: [
           currentDepartment?.votos || colombiaMapData.meta.totalVotos,
           currentDepartment?.potenciales ||
@@ -877,28 +875,6 @@ export default function PanoramaElectoralPage() {
         },
       },
     },
-  }
-
-  // ... (resto del código del componente es el mismo) ...
-
-  if (dataLoading) {
-    return (
-      <div className="p-4 sm:p-6 lg:p-8 bg-neutral-50 min-h-screen">
-        <h1 className="text-xl sm:text-3xl font-bold text-neutral-800 mb-4 sm:mb-6 animate-pulse">
-          Cargando Panorama Electoral...
-        </h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
-      </div>
-    )
   }
 
   return (
