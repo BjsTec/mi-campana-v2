@@ -1,4 +1,4 @@
-import React, { useState } from 'react' // Asegúrate de importar useState
+import { useState } from 'react' // Asegúrate de importar useState directamente
 import Image from 'next/image' // Importar el componente Image de Next.js
 import Link from 'next/link' // Importar el componente Link de Next.js
 import { PencilIcon } from '@heroicons/react/24/solid' // Para el ícono de edición
@@ -38,6 +38,14 @@ export default function CampaignDetailDisplay({
   isEditingName, // Recibido de CampaignDetailPage
   isEditingPlanPrice, // Recibido de CampaignDetailPage
 }) {
+  // === CORRECCIÓN CLAVE: Mover los useState AL PRINCIPIO del componente ===
+  // Estados para controlar si las imágenes han fallado
+  // Esto es crucial para evitar el bucle de re-renderizado en caso de error de carga de imagen.
+  const [bannerError, setBannerError] = useState(false)
+  const [logoError, setLogoError] = useState(false)
+  // ======================================================================
+
+  // La comprobación condicional va DESPUÉS de la declaración de todos los hooks
   if (!campaign) {
     return (
       <div className="text-center py-8 text-neutral-500">
@@ -45,11 +53,6 @@ export default function CampaignDetailDisplay({
       </div>
     )
   }
-
-  // Estados para controlar si las imágenes han fallado
-  // Esto es crucial para evitar el bucle de re-renderizado en caso de error de carga de imagen.
-  const [bannerError, setBannerError] = useState(false)
-  const [logoError, setLogoError] = useState(false)
 
   const currentStatusText = campaign.status === 'activo' ? 'Activo' : 'Inactivo'
   const toggleButtonText =
