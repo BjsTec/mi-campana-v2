@@ -11,7 +11,7 @@ module.exports = {
   rules: {
     // Mantén esta regla deshabilitada si te causó problemas de compatibilidad
     "node/handle-callback-err": "off",
-
+    "import/order": "off",
     // Reglas específicas de React para Next.js 17+
     "react/react-in-jsx-scope": "off",
     "react/jsx-uses-react": "off"
