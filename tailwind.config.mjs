@@ -37,4 +37,18 @@ export default {
     },
   },
   plugins: [],
+  keyframes: {
+    'pulse-slow': {
+      '0%, 100%': { opacity: '0.2' },
+      '50%': { opacity: '0.4' },
+    },
+    'fade-in': {
+      '0%': { opacity: '0' },
+      '100%': { opacity: '1' },
+    },
+  },
+  animation: {
+    'pulse-slow': 'pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+    'fade-in': 'fade-in 1s ease-out forwards',
+  },
 }
