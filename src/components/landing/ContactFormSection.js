@@ -10,6 +10,7 @@ export default function ContactFormSection() {
     phone: '',
     interestedIn: '',
     message: '',
+    // 'source' se elimina de aquí ya que se asume que es 'web'
   })
   const [status, setStatus] = useState('') // 'success', 'error', 'loading', ''
 
@@ -26,23 +27,39 @@ export default function ContactFormSection() {
     setStatus('loading')
 
     try {
-      // Aquí iría la lógica para enviar el formulario.
-      // Por ahora, simularemos una llamada a una API.
-      // En el futuro, podrías enviar esto a una Firebase Function o a un servicio de email.
-      console.log('Datos del formulario:', formData)
+      // URL de tu Firebase Function submitContactForm
+      const response = await fetch(
+        'https://us-central1-micampanav2.cloudfunctions.net/submitContactForm',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          // Enviamos los datos del formulario, añadiendo 'source: "Web"' implícitamente
+          body: JSON.stringify({ ...formData, source: 'Web' }),
+        },
+      )
 
-      // Simular un envío exitoso
-      await new Promise((resolve) => setTimeout(resolve, 1500))
-      setStatus('success')
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        interestedIn: '',
-        message: '',
-      }) // Limpiar formulario
+      const result = await response.json()
+
+      if (response.ok) {
+        setStatus('success')
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          interestedIn: '',
+          message: '',
+        }) // Limpiar formulario
+      } else {
+        setStatus('error')
+        console.error(
+          'Error al enviar el formulario:',
+          result.message || 'Error desconocido',
+        )
+      }
     } catch (error) {
-      console.error('Error al enviar el formulario:', error)
+      console.error('Error de red o inesperado al enviar el formulario:', error)
       setStatus('error')
     }
   }
@@ -153,6 +170,8 @@ export default function ContactFormSection() {
             </div>
           </div>
 
+          {/* Campo 'source' eliminado del JSX */}
+
           <div className="mb-6">
             <label
               htmlFor="message"
@@ -176,8 +195,8 @@ export default function ContactFormSection() {
               type="submit"
               disabled={status === 'loading'}
               className={`
-                bg-primary-DEFAULT text-neutral-50 px-10 py-4 rounded-full font-bold text-lg 
-                hover:bg-primary-dark transition-all duration-300 shadow-xl transform hover:scale-105
+                bg-secondary-DEFAULT text-primary-dark px-12 py-4 rounded-full font-bold text-lg 
+                shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105
                 ${status === 'loading' ? 'opacity-70 cursor-not-allowed' : ''}
               `}
             >

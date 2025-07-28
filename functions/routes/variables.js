@@ -713,3 +713,236 @@ export const getCitiesByDepartment = functions.https.onRequest((req, res) => {
     }
   })
 })
+
+// 14. registro formulario de contacto (POST - Pública para la Home)
+export const submitContactForm = functions.https.onRequest(async (req, res) => {
+  // Aplicar el middleware CORS para permitir solicitudes desde el frontend
+  publicCors(req, res, async () => {
+    // Solo permitir solicitudes POST
+    if (req.method !== 'POST') {
+      return res.status(405).send('Método no permitido. Solo POST.')
+    }
+
+    // Extraer datos del cuerpo de la solicitud
+    // Añadido 'source' para saber cómo nos conoció el cliente
+    const { name, email, phone, interestedIn, message, source } = req.body
+
+    // 1. Validación básica de los campos recibidos
+    if (!name || !email || !interestedIn || !message) {
+      return res
+        .status(400)
+        .json({
+          message:
+            'Faltan campos obligatorios (nombre, email, interés, mensaje).',
+        })
+    }
+
+    try {
+      const db = getFirestore(getApp()) // Obtener la instancia de Firestore de Firebase Admin
+
+      // 2. Crear un nuevo documento en la colección 'leads' de Firestore
+      const newLead = {
+        name: name,
+        email: email,
+        phone: phone || null, // El teléfono es opcional
+        interestedIn: interestedIn,
+        message: message,
+        source: source || null, // Nuevo campo: cómo nos conoció (opcional por ahora)
+        timestamp: new Date(), // Registrar la fecha y hora de la solicitud
+        status: 'nuevo', // Estado inicial del lead para tu seguimiento
+      }
+
+      await db.collection('leads').add(newLead) // Usar .add() para que Firestore genere un ID automático
+
+      // 3. Enviar una respuesta de éxito al frontend
+      return res.status(200).json({
+        message:
+          'Tu mensaje ha sido enviado con éxito. Nos pondremos en contacto contigo pronto.',
+        leadId: newLead.id, // Firestore genera el ID después de .add()
+      })
+    } catch (error) {
+      // 4. Manejo de errores
+      console.error('Error al procesar el formulario de contacto:', error)
+      return res.status(500).json({
+        message:
+          'Hubo un error al enviar tu mensaje. Por favor, inténtalo de nuevo más tarde.',
+        error: error.message,
+      })
+    }
+  })
+})
+
+// 15. OBTENER CLIENTES POTENCIALES LIST (GET - Protegida para el panel de administración)
+export const getLeads = functions.https.onRequest(
+  { secrets: ['BJS_JWT_SECRET_KEY'] }, // Declara el secreto aquí si authorizeAdmin lo usa
+  async (req, res) => {
+    // authorizeAdmin ya maneja CORS para funciones protegidas
+    authorizeAdmin(req, res, async () => {
+      if (req.method !== 'GET') {
+        return res.status(405).send('Método no permitido. Solo GET.')
+      }
+
+      try {
+        const db = getFirestore(getApp())
+        let leadsRef = db.collection('leads')
+
+        // Filtrar por estado si se proporciona el parámetro 'status'
+        const statusFilter = req.query.status
+        if (statusFilter) {
+          leadsRef = leadsRef.where('status', '==', statusFilter)
+        }
+
+        // Puedes añadir ordenación por timestamp o nombre si lo deseas
+        leadsRef = leadsRef.orderBy('timestamp', 'desc')
+
+        const snapshot = await leadsRef.get()
+        const leads = []
+        snapshot.forEach((doc) => {
+          leads.push({ id: doc.id, ...doc.data() })
+        })
+
+        return res.status(200).json(leads)
+      } catch (error) {
+        console.error('Error en getLeads:', error)
+        return res.status(500).json({
+          message:
+            'Error interno del servidor al obtener clientes potenciales.',
+          error: error.message,
+        })
+      }
+    })
+  },
+)
+
+// 16. OBTENER CLIENTE POTENCIAL POR ID (GET - Protegida para el panel de administración)
+export const getLeadById = functions.https.onRequest(
+  { secrets: ['BJS_JWT_SECRET_KEY'] },
+  async (req, res) => {
+    authorizeAdmin(req, res, async () => {
+      if (req.method !== 'GET') {
+        return res.status(405).send('Método no permitido. Solo GET.')
+      }
+
+      const leadId = req.query.id // Esperamos el ID como parámetro de consulta
+
+      if (!leadId) {
+        return res
+          .status(400)
+          .json({ message: 'Se requiere el ID del cliente potencial.' })
+      }
+
+      try {
+        const db = getFirestore(getApp())
+        const leadDocRef = db.collection('leads').doc(leadId)
+        const leadDoc = await leadDocRef.get()
+
+        if (!leadDoc.exists) {
+          return res
+            .status(404)
+            .json({ message: 'Cliente potencial no encontrado.' })
+        }
+
+        return res.status(200).json({ id: leadDoc.id, ...leadDoc.data() })
+      } catch (error) {
+        console.error('Error en getLeadById:', error)
+        return res.status(500).json({
+          message:
+            'Error interno del servidor al obtener el cliente potencial.',
+          error: error.message,
+        })
+      }
+    })
+  },
+)
+
+// 17. ACTUALIZAR CLIENTE POTENCIAL (POST o PATCH - Protegida para el panel de administración)
+export const updateLead = functions.https.onRequest(
+  { secrets: ['BJS_JWT_SECRET_KEY'] },
+  async (req, res) => {
+    authorizeAdmin(req, res, async () => {
+      if (req.method !== 'POST' && req.method !== 'PATCH') {
+        // Permitir POST o PATCH
+        return res.status(405).send('Método no permitido. Solo POST o PATCH.')
+      }
+
+      const { id, updates, newNote } = req.body // 'updates' para campos generales, 'newNote' para añadir al historial
+      const adminUid = req.userUid // UID del administrador que realiza la acción (viene de authorizeAdmin)
+
+      if (!id || (!updates && !newNote)) {
+        return res
+          .status(400)
+          .json({
+            message: 'Se requiere ID y datos para actualizar o una nueva nota.',
+          })
+      }
+
+      if (!adminUid) {
+        // Esto no debería pasar si authorizeAdmin funciona correctamente, pero es una buena salvaguarda
+        return res
+          .status(401)
+          .json({
+            message: 'No autorizado: UID del administrador no disponible.',
+          })
+      }
+
+      try {
+        const db = getFirestore(getApp())
+        const leadDocRef = db.collection('leads').doc(id)
+        const leadDoc = await leadDocRef.get()
+
+        if (!leadDoc.exists) {
+          return res
+            .status(404)
+            .json({ message: 'Cliente potencial no encontrado.' })
+        }
+
+        let currentData = leadDoc.data()
+        let updatedData = { ...currentData, ...updates } // Aplicar actualizaciones generales
+
+        // Si hay una nueva nota, añadirla al array 'notes'
+        if (newNote && typeof newNote === 'string' && newNote.trim() !== '') {
+          const noteEntry = {
+            text: newNote.trim(),
+            timestamp: new Date(),
+            adminId: adminUid,
+          }
+          // Asegurarse de que 'notes' sea un array
+          updatedData.notes = Array.isArray(currentData.notes)
+            ? [...currentData.notes, noteEntry]
+            : [noteEntry]
+        }
+
+        // Si se actualiza el status, también podrías registrarlo en las notas automáticamente
+        if (
+          updates &&
+          updates.status &&
+          updates.status !== currentData.status
+        ) {
+          const statusChangeNote = {
+            text: `Estado cambiado de '${currentData.status || 'N/A'}' a '${updates.status}'`,
+            timestamp: new Date(),
+            adminId: adminUid,
+            type: 'status_change', // Tipo de nota especial
+          }
+          updatedData.notes = Array.isArray(updatedData.notes)
+            ? [...updatedData.notes, statusChangeNote]
+            : [statusChangeNote]
+        }
+
+        await leadDocRef.set(updatedData, { merge: true }) // Usar set con merge para actualizar
+
+        return res.status(200).json({
+          message: 'Cliente potencial actualizado exitosamente.',
+          updatedLeadId: id,
+        })
+      } catch (error) {
+        console.error('Error en updateLead:', error)
+        return res.status(500).json({
+          message:
+            'Error interno del servidor al actualizar el cliente potencial.',
+          error: error.message,
+        })
+      }
+    })
+  },
+)

@@ -240,6 +240,12 @@ export default function ExternalClientDashboardLayout({ children }) {
                     Inicio
                   </Link>
                   <Link
+                    href="/dashboard-admin/potenciales"
+                    className="flex items-center px-3 py-2 rounded-md hover:bg-white/20 font-medium"
+                  >
+                    Clientes
+                  </Link>
+                  <Link
                     href="/dashboard-admin/nueva-campana"
                     className="flex items-center px-3 py-2 rounded-md hover:bg-white/20 font-medium"
                   >
