@@ -729,12 +729,10 @@ export const submitContactForm = functions.https.onRequest(async (req, res) => {
 
     // 1. Validación básica de los campos recibidos
     if (!name || !email || !interestedIn || !message) {
-      return res
-        .status(400)
-        .json({
-          message:
-            'Faltan campos obligatorios (nombre, email, interés, mensaje).',
-        })
+      return res.status(400).json({
+        message:
+          'Faltan campos obligatorios (nombre, email, interés, mensaje).',
+      })
     }
 
     try {
@@ -869,20 +867,16 @@ export const updateLead = functions.https.onRequest(
       const adminUid = req.userUid // UID del administrador que realiza la acción (viene de authorizeAdmin)
 
       if (!id || (!updates && !newNote)) {
-        return res
-          .status(400)
-          .json({
-            message: 'Se requiere ID y datos para actualizar o una nueva nota.',
-          })
+        return res.status(400).json({
+          message: 'Se requiere ID y datos para actualizar o una nueva nota.',
+        })
       }
 
       if (!adminUid) {
         // Esto no debería pasar si authorizeAdmin funciona correctamente, pero es una buena salvaguarda
-        return res
-          .status(401)
-          .json({
-            message: 'No autorizado: UID del administrador no disponible.',
-          })
+        return res.status(401).json({
+          message: 'No autorizado: UID del administrador no disponible.',
+        })
       }
 
       try {

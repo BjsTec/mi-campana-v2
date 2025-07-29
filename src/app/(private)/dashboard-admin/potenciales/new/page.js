@@ -1,24 +1,35 @@
 // src/app/(private)/dashboard-admin/potenciales/new/page.js
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { useAuth } from '../../../../../context/AuthContext'; // Ajusta la ruta si es necesario
-import { useRouter } from 'next/navigation'; // Para la navegación programática
-import Link from 'next/link'; // Para el botón de regreso
+import React, { useState } from 'react'
+import { useAuth } from '../../../../../context/AuthContext' // Ajusta la ruta si es necesario
+import { useRouter } from 'next/navigation' // Para la navegación programática
+import Link from 'next/link' // Para el botón de regreso
 
 // Define function URLs from environment variables
-const ADD_LEAD_URL = process.env.NEXT_PUBLIC_ADD_LEAD_URL;
+const ADD_LEAD_URL = process.env.NEXT_PUBLIC_ADD_LEAD_URL
 
 // Icono de regreso
 const BackIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 mr-2"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M10 19l-7-7m0 0l7-7m-7 7h18"
+    />
   </svg>
-);
+)
 
 export default function NewLeadPage() {
-  const { idToken, authLoading } = useAuth();
-  const router = useRouter();
+  const { idToken, authLoading } = useAuth()
+  const router = useRouter()
 
   const [formData, setFormData] = useState({
     name: '',
@@ -29,53 +40,58 @@ export default function NewLeadPage() {
     source: 'Manual (Admin)', // Default para leads creados por admin
     status: 'nuevo', // Default para estado inicial
     initialNotes: '', // Campo para notas iniciales
-  });
-  const [status, setStatus] = useState(''); // 'success', 'error', 'loading', ''
+  })
+  const [status, setStatus] = useState('') // 'success', 'error', 'loading', ''
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
-    }));
-  };
+    }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setStatus('loading');
+    e.preventDefault()
+    setStatus('loading')
 
     if (authLoading || !idToken) {
-      setStatus('error');
-      console.error('Error: No autenticado para añadir cliente potencial.');
-      return;
+      setStatus('error')
+      console.error('Error: No autenticado para añadir cliente potencial.')
+      return
     }
 
     try {
       const response = await fetch(ADD_LEAD_URL, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${idToken}`,
+          Authorization: `Bearer ${idToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
-      });
+      })
 
-      const result = await response.json();
+      const result = await response.json()
 
       if (response.ok) {
-        setStatus('success');
+        setStatus('success')
         // Opcional: Redirigir a la lista de leads o al detalle del lead recién creado
-        setTimeout(() => router.push('/dashboard-admin/potenciales'), 1500); 
+        setTimeout(() => router.push('/dashboard-admin/potenciales'), 1500)
       } else {
-        setStatus('error');
-        console.error('Error al añadir cliente potencial:', result.message || 'Error desconocido');
+        setStatus('error')
+        console.error(
+          'Error al añadir cliente potencial:',
+          result.message || 'Error desconocido',
+        )
       }
-
     } catch (error) {
-      console.error('Error de red o inesperado al añadir cliente potencial:', error);
-      setStatus('error');
+      console.error(
+        'Error de red o inesperado al añadir cliente potencial:',
+        error,
+      )
+      setStatus('error')
     }
-  };
+  }
 
   // Opciones para el campo "Interesado en"
   const interestedInOptions = [
@@ -88,7 +104,7 @@ export default function NewLeadPage() {
     { value: 'edil', label: 'Campaña de Edil' },
     { value: 'equipo_de_trabajo', label: 'Plan Equipo de Trabajo (Gratis)' },
     { value: 'consulta_general', label: 'Consulta General' },
-  ];
+  ]
 
   // Opciones para el campo "Fuente" (cómo se obtuvo el lead)
   const sourceOptions = [
@@ -98,7 +114,7 @@ export default function NewLeadPage() {
     { value: 'llamada_fria', label: 'Llamada en Frío' },
     { value: 'base_de_datos_antigua', label: 'Base de Datos Antigua' },
     { value: 'otro', label: 'Otro' },
-  ];
+  ]
 
   // Opciones para el campo "Estado Inicial"
   const statusOptions = [
@@ -106,7 +122,7 @@ export default function NewLeadPage() {
     { value: 'contactado', label: 'Contactado' },
     { value: 'en_seguimiento', label: 'En Seguimiento' },
     { value: 'descartado', label: 'Descartado' },
-  ];
+  ]
 
   if (authLoading) {
     return (
@@ -114,18 +130,25 @@ export default function NewLeadPage() {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-DEFAULT"></div>
         <p className="ml-4">Cargando...</p>
       </div>
-    );
+    )
   }
 
   if (!idToken) {
     return (
       <div className="p-8 bg-neutral-100 min-h-screen flex items-center justify-center">
         <div className="bg-error text-white p-4 rounded-md shadow-md">
-          <p>No autenticado. Por favor, inicia sesión para acceder a esta página.</p>
-          <button onClick={() => router.push('/login')} className="mt-4 bg-white text-error px-4 py-2 rounded-md hover:bg-neutral-100">Ir a Iniciar Sesión</button>
+          <p>
+            No autenticado. Por favor, inicia sesión para acceder a esta página.
+          </p>
+          <button
+            onClick={() => router.push('/login')}
+            className="mt-4 bg-white text-error px-4 py-2 rounded-md hover:bg-neutral-100"
+          >
+            Ir a Iniciar Sesión
+          </button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -133,9 +156,11 @@ export default function NewLeadPage() {
       <div className="container mx-auto max-w-4xl bg-white rounded-lg shadow-xl p-8">
         {/* Encabezado y botón de regreso */}
         <div className="flex justify-between items-center mb-6 border-b pb-4">
-          <h1 className="text-3xl font-bold text-primary-dark">Crear Nuevo Cliente Potencial</h1>
-          <Link 
-            href="/dashboard-admin/potenciales" 
+          <h1 className="text-3xl font-bold text-primary-dark">
+            Crear Nuevo Cliente Potencial
+          </h1>
+          <Link
+            href="/dashboard-admin/potenciales"
             className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-200"
             style={{ backgroundColor: '#D1D5DB', color: '#1F2937' }} // Inline style for solid color
           >
@@ -146,7 +171,12 @@ export default function NewLeadPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="name" className="block text-neutral-800 text-sm font-bold mb-2">Nombre Completo <span className="text-red-500">*</span></label>
+              <label
+                htmlFor="name"
+                className="block text-neutral-800 text-sm font-bold mb-2"
+              >
+                Nombre Completo <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 id="name"
@@ -158,7 +188,12 @@ export default function NewLeadPage() {
               />
             </div>
             <div>
-              <label htmlFor="email" className="block text-neutral-800 text-sm font-bold mb-2">Correo Electrónico <span className="text-red-500">*</span></label>
+              <label
+                htmlFor="email"
+                className="block text-neutral-800 text-sm font-bold mb-2"
+              >
+                Correo Electrónico <span className="text-red-500">*</span>
+              </label>
               <input
                 type="email"
                 id="email"
@@ -173,7 +208,12 @@ export default function NewLeadPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="phone" className="block text-neutral-800 text-sm font-bold mb-2">Número de Teléfono (Opcional)</label>
+              <label
+                htmlFor="phone"
+                className="block text-neutral-800 text-sm font-bold mb-2"
+              >
+                Número de Teléfono (Opcional)
+              </label>
               <input
                 type="tel"
                 id="phone"
@@ -184,7 +224,12 @@ export default function NewLeadPage() {
               />
             </div>
             <div>
-              <label htmlFor="interestedIn" className="block text-neutral-800 text-sm font-bold mb-2">Interesado en <span className="text-red-500">*</span></label>
+              <label
+                htmlFor="interestedIn"
+                className="block text-neutral-800 text-sm font-bold mb-2"
+              >
+                Interesado en <span className="text-red-500">*</span>
+              </label>
               <select
                 id="interestedIn"
                 name="interestedIn"
@@ -204,7 +249,12 @@ export default function NewLeadPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label htmlFor="source" className="block text-neutral-800 text-sm font-bold mb-2">Fuente</label>
+              <label
+                htmlFor="source"
+                className="block text-neutral-800 text-sm font-bold mb-2"
+              >
+                Fuente
+              </label>
               <select
                 id="source"
                 name="source"
@@ -220,7 +270,12 @@ export default function NewLeadPage() {
               </select>
             </div>
             <div>
-              <label htmlFor="status" className="block text-neutral-800 text-sm font-bold mb-2">Estado Inicial</label>
+              <label
+                htmlFor="status"
+                className="block text-neutral-800 text-sm font-bold mb-2"
+              >
+                Estado Inicial
+              </label>
               <select
                 id="status"
                 name="status"
@@ -238,7 +293,12 @@ export default function NewLeadPage() {
           </div>
 
           <div>
-            <label htmlFor="message" className="block text-neutral-800 text-sm font-bold mb-2">Mensaje Inicial (Opcional)</label>
+            <label
+              htmlFor="message"
+              className="block text-neutral-800 text-sm font-bold mb-2"
+            >
+              Mensaje Inicial (Opcional)
+            </label>
             <textarea
               id="message"
               name="message"
@@ -251,7 +311,12 @@ export default function NewLeadPage() {
           </div>
 
           <div>
-            <label htmlFor="initialNotes" className="block text-neutral-800 text-sm font-bold mb-2">Notas Adicionales (Opcional)</label>
+            <label
+              htmlFor="initialNotes"
+              className="block text-neutral-800 text-sm font-bold mb-2"
+            >
+              Notas Adicionales (Opcional)
+            </label>
             <textarea
               id="initialNotes"
               name="initialNotes"
@@ -274,7 +339,9 @@ export default function NewLeadPage() {
               `}
               style={{ backgroundColor: '#3084F2', color: '#FFFFFF' }} // Inline style for solid color and white text
             >
-              {status === 'loading' ? 'Creando Cliente...' : 'Crear Cliente Potencial'}
+              {status === 'loading'
+                ? 'Creando Cliente...'
+                : 'Crear Cliente Potencial'}
             </button>
           </div>
 
@@ -285,11 +352,12 @@ export default function NewLeadPage() {
           )}
           {status === 'error' && (
             <p className="text-error text-center mt-4 font-semibold">
-              Hubo un error al crear el cliente potencial. Por favor, inténtalo de nuevo.
+              Hubo un error al crear el cliente potencial. Por favor, inténtalo
+              de nuevo.
             </p>
           )}
         </form>
       </div>
     </div>
-  );
+  )
 }

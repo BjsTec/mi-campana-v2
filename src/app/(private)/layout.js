@@ -258,6 +258,12 @@ export default function ExternalClientDashboardLayout({ children }) {
                     Lista de Campañas
                   </Link>
                   <Link
+                    href="/dashboard-admin/users-list"
+                    className="flex items-center px-3 py-2 rounded-md hover:bg-white/20 font-medium"
+                  >
+                    Lista de usuarios
+                  </Link>
+                  <Link
                     href="/dashboard-admin/variables"
                     className="flex items-center px-3 py-2 rounded-md hover:bg-white/20 font-medium"
                   >
