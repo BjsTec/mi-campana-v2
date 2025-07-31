@@ -438,6 +438,7 @@ export const loginWithEmail = functions.https.onRequest(
         'candidato',
         'manager',
         'ring',
+        'anillo',
         'voter',
         'votante', // Si se permite login directo a public_lead, ajustar según sea necesario
       ]

@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Variables CSS para modo claro/oscuro */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -14,10 +15,23 @@
   }
 }
 
+/* Aplicación de las tipografías globales usando las variables CSS de Next.js/Google Fonts */
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    var(--font-open-sans), sans-serif; /* <-- ¡CORREGIDO: Open Sans para el cuerpo! */
+}
+
+/* Aplica Montserrat a los elementos de título para jerarquía */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family:
+    var(--font-montserrat), sans-serif; /* <-- ¡AÑADIDO: Montserrat para títulos! */
 }
 
 /* --- Estilos para ocultar los botones de aumentar/reducir en input type="number" --- */

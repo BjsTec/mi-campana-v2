@@ -1308,11 +1308,9 @@ export const updateCampaignMembership = functions.https.onRequest(
         )
 
         if (membershipIndex === -1) {
-          return res
-            .status(404)
-            .json({
-              message: 'Membresía de campaña no encontrada para este usuario.',
-            })
+          return res.status(404).json({
+            message: 'Membresía de campaña no encontrada para este usuario.',
+          })
         }
 
         const currentMembership = campaignMemberships[membershipIndex]
@@ -1339,12 +1337,10 @@ export const updateCampaignMembership = functions.https.onRequest(
             // Solo si solo actualiza votoPromesa
             isAuthorized = true
           } else {
-            return res
-              .status(403)
-              .json({
-                message:
-                  'Acceso denegado: Solo puedes actualizar tu propio "votoPromesa".',
-              })
+            return res.status(403).json({
+              message:
+                'Acceso denegado: Solo puedes actualizar tu propio "votoPromesa".',
+            })
           }
         }
         // Si no es admin y no es el propio usuario, debe ser un superior actualizando un subordinado
@@ -1377,12 +1373,10 @@ export const updateCampaignMembership = functions.https.onRequest(
           }
           if (!isAuthorized) {
             // Si ya no se autorizó por las condiciones anteriores
-            return res
-              .status(403)
-              .json({
-                message:
-                  'Acceso denegado: Solo el usuario o su superior directo pueden actualizar esta membresía.',
-              })
+            return res.status(403).json({
+              message:
+                'Acceso denegado: Solo el usuario o su superior directo pueden actualizar esta membresía.',
+            })
           }
         }
 
@@ -1462,12 +1456,10 @@ export const submitDirectVote = functions.https.onRequest(
           typeof votesCount !== 'number' ||
           votesCount <= 0
         ) {
-          return res
-            .status(400)
-            .json({
-              message:
-                'campaignId y votesCount (número positivo) son requeridos.',
-            })
+          return res.status(400).json({
+            message:
+              'campaignId y votesCount (número positivo) son requeridos.',
+          })
         }
 
         const userDocRef = db.collection('users').doc(reportingUserUid)
@@ -1489,12 +1481,10 @@ export const submitDirectVote = functions.https.onRequest(
           membershipIndex === -1 ||
           campaignMemberships[membershipIndex].status !== 'activo'
         ) {
-          return res
-            .status(403)
-            .json({
-              message:
-                'No eres un miembro activo de esta campaña para registrar votos.',
-            })
+          return res.status(403).json({
+            message:
+              'No eres un miembro activo de esta campaña para registrar votos.',
+          })
         }
 
         const currentMembership = campaignMemberships[membershipIndex]
