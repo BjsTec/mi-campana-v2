@@ -1,4 +1,3 @@
-// src/app/(private)/dashboard-candidato/editar-campana/page.js
 'use client'
 import { useState, useEffect, Fragment } from 'react'
 import { useAuth } from '@/context/AuthContext'
@@ -86,6 +85,60 @@ const GlobeIcon = () => (
 )
 // --- FIN: Iconos SVG ---
 
+/**
+ * Función utilitaria para aplanar un objeto anidado.
+ * Convierte { a: { b: 'value' } } en { 'a.b': 'value' }
+ * @param {object} obj - El objeto a aplanar.
+ * @param {string} parentKey - Prefijo para las claves (usado en recursión).
+ * @returns {object} El objeto aplanado.
+ */
+const flattenObject = (obj, parentKey = '') => {
+  let flattened = {}
+  for (let key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      const newKey = parentKey ? `${parentKey}.${key}` : key
+      if (
+        typeof obj[key] === 'object' &&
+        obj[key] !== null &&
+        !Array.isArray(obj[key])
+      ) {
+        Object.assign(flattened, flattenObject(obj[key], newKey))
+      } else {
+        flattened[newKey] = obj[key]
+      }
+    }
+  }
+  return flattened
+}
+
+/**
+ * Función utilitaria para "desaplanar" un objeto.
+ * Convierte { 'a.b': 'value' } en { a: { b: 'value' } }
+ * @param {object} flatObject - El objeto aplanado.
+ * @returns {object} El objeto anidado.
+ */
+const unflattenObject = (flatObject) => {
+  const result = {}
+  for (const key in flatObject) {
+    if (Object.prototype.hasOwnProperty.call(flatObject, key)) {
+      const parts = key.split('.')
+      let current = result
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i]
+        if (i === parts.length - 1) {
+          current[part] = flatObject[key]
+        } else {
+          if (!current[part] || typeof current[part] !== 'object') {
+            current[part] = {}
+          }
+          current = current[part]
+        }
+      }
+    }
+  }
+  return result
+}
+
 // Componente de la página para gestionar la campaña
 export default function ManageCampaignPage() {
   const { user, activeCampaign, campaignLoading, refreshActiveCampaign } =
@@ -97,24 +150,56 @@ export default function ManageCampaignPage() {
   const [success, setSuccess] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // CONSOLE.LOG 1: Estado inicial del usuario y carga de campaña
+  useEffect(() => {
+    console.log('--- Estado Inicial de ManageCampaignPage ---')
+    console.log('Usuario (user):', user)
+    console.log('Cargando Campaña (campaignLoading):', campaignLoading)
+    console.log('Campaña Activa (activeCampaign):', activeCampaign)
+  }, [user, campaignLoading, activeCampaign])
+
   // Efecto para rellenar el formulario cuando la campaña activa (del contexto) cambia
   useEffect(() => {
     if (activeCampaign) {
-      setFormData({
-        'contactInfo.email': activeCampaign.contactInfo?.email || '',
-        'contactInfo.phone': activeCampaign.contactInfo?.phone || '',
-        'socialLinks.facebook': activeCampaign.socialLinks?.facebook || '',
-        'socialLinks.twitter': activeCampaign.socialLinks?.twitter || '',
-        'colors.primary': activeCampaign.colors?.primary || '#3084F2',
-        'colors.accent': activeCampaign.colors?.accent || '#FFFFFF',
+      console.log(
+        'activeCampaign detectada, rellenando formData:',
+        activeCampaign,
+      )
+      // Usar flattenObject para inicializar formData con la estructura de puntos
+      const initialFormData = {
+        ...flattenObject(activeCampaign.contactInfo || {}),
+        ...flattenObject(activeCampaign.socialLinks || {}),
+        ...flattenObject(activeCampaign.media || {}), // Asegúrate de incluir media si se va a editar
+        ...flattenObject(activeCampaign.colors || {}), // Asegúrate de incluir colors si se va a editar
         status: activeCampaign.status || 'privado',
-      })
+        campaignName: activeCampaign.campaignName || '', // Añadir campaignName
+        scope: activeCampaign.scope || '', // Añadir scope
+        'location.country': activeCampaign.location?.country || 'Colombia', // Añadir location
+        'location.state': activeCampaign.location?.state || '',
+        'location.city': activeCampaign.location?.city || '',
+        // Añadir otros campos editables si los hay, como messagingOptions
+        'messagingOptions.email':
+          activeCampaign.messagingOptions?.email ?? true,
+        'messagingOptions.alerts':
+          activeCampaign.messagingOptions?.alerts ?? true,
+        'messagingOptions.sms': activeCampaign.messagingOptions?.sms ?? false,
+        'messagingOptions.whatsappBusiness':
+          activeCampaign.messagingOptions?.whatsappBusiness ?? false,
+      }
+      setFormData(initialFormData)
+      console.log('formData después de rellenar:', initialFormData)
+    } else {
+      console.log(
+        'activeCampaign es null o undefined. No se puede rellenar formData.',
+      )
+      setFormData({}) // Limpiar formData si no hay campaña activa
     }
-  }, [activeCampaign])
+  }, [activeCampaign]) // Dependencia: activeCampaign
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+    console.log(`Campo cambiado: ${name}, Nuevo valor: ${value}`)
   }
 
   const handleStatusChange = (newStatus) => {
@@ -122,6 +207,10 @@ export default function ManageCampaignPage() {
       ...prev,
       status: newStatus ? 'publico' : 'privado',
     }))
+    console.log(
+      'Estado de campaña cambiado a:',
+      newStatus ? 'publico' : 'privado',
+    )
   }
 
   const handleSubmit = async (e) => {
@@ -129,31 +218,59 @@ export default function ManageCampaignPage() {
     setIsSubmitting(true)
     setError('')
     setSuccess('')
+
+    console.log('Iniciando handleSubmit...')
+    console.log('Datos a enviar (formData):', formData)
+    console.log('ID de Campaña:', activeCampaign?.id)
+    console.log('UID de Usuario:', user?.uid)
+
     try {
       const updateCampaignUrl = process.env.NEXT_PUBLIC_UPDATE_CAMPAIGN_URL
-      if (!updateCampaignUrl)
+      if (!updateCampaignUrl) {
+        console.error('Error: URL de actualización no configurada.')
         throw new Error('URL de actualización no configurada.')
+      }
+      console.log('URL de actualización:', updateCampaignUrl)
+
+      // Transformar formData a la estructura anidada esperada por el backend
+      const updatesPayload = unflattenObject(formData)
+      console.log('Updates Payload (después de unflatten):', updatesPayload)
+
+      const payload = {
+        campaignId: activeCampaign.id,
+        // El backend ya extrae el userUid del token, no es necesario enviarlo explícitamente en el body
+        // callingUserUid: user.uid, // Eliminar esta línea
+        updates: updatesPayload, // Usar el objeto transformado
+      }
+      console.log('Payload final enviado a la API:', payload)
 
       const response = await fetch(updateCampaignUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          campaignId: activeCampaign.id,
-          callingUserUid: user.uid,
-          updates: formData,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user?.idToken}`, // Asegúrate de enviar el token de autorización
+        },
+        body: JSON.stringify(payload),
       })
 
       const result = await response.json()
-      if (!response.ok) throw new Error(result.message)
+      console.log('Respuesta de la API:', result)
+
+      if (!response.ok) {
+        console.error('Error en la respuesta de la API:', result.message)
+        throw new Error(result.message || 'Error al actualizar la campaña.')
+      }
 
       setSuccess('¡Perfil actualizado!')
+      console.log('Actualización exitosa. Refrescando campaña...')
       await refreshActiveCampaign() // Avisa al contexto que recargue los datos
       setIsEditing(false)
     } catch (err) {
+      console.error('Error durante el submit:', err.message)
       setError(err.message)
     } finally {
       setIsSubmitting(false)
+      console.log('handleSubmit finalizado.')
     }
   }
 
@@ -412,7 +529,7 @@ function EditView({
               type="email"
               name="contactInfo.email"
               id="contactInfo.email"
-              value={formData['contactInfo.email']}
+              value={formData['contactInfo.email'] || ''}
               onChange={handleInputChange}
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
@@ -428,7 +545,7 @@ function EditView({
               type="tel"
               name="contactInfo.phone"
               id="contactInfo.phone"
-              value={formData['contactInfo.phone']}
+              value={formData['contactInfo.phone'] || ''}
               onChange={handleInputChange}
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
@@ -436,10 +553,10 @@ function EditView({
         </div>
       </div>
       <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
-        <h2 className="text-xl font-semibold text-gray-800 mb-5 flex items-center">
+        <b className="text-xl font-semibold text-gray-800 mb-5 flex items-center">
           <SocialIcon />
           Redes Sociales
-        </h2>
+        </b>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label
@@ -452,7 +569,7 @@ function EditView({
               type="url"
               name="socialLinks.facebook"
               id="socialLinks.facebook"
-              value={formData['socialLinks.facebook']}
+              value={formData['socialLinks.facebook'] || ''}
               onChange={handleInputChange}
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
@@ -468,7 +585,7 @@ function EditView({
               type="url"
               name="socialLinks.twitter"
               id="socialLinks.twitter"
-              value={formData['socialLinks.twitter']}
+              value={formData['socialLinks.twitter'] || ''}
               onChange={handleInputChange}
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
@@ -492,7 +609,7 @@ function EditView({
               type="color"
               name="colors.primary"
               id="colors.primary"
-              value={formData['colors.primary']}
+              value={formData['colors.primary'] || '#3084F2'}
               onChange={handleInputChange}
               className="mt-1 block w-full h-12 border-gray-300 rounded-md shadow-sm cursor-pointer"
             />
@@ -508,11 +625,229 @@ function EditView({
               type="color"
               name="colors.accent"
               id="colors.accent"
-              value={formData['colors.accent']}
+              value={formData['colors.accent'] || '#FFFFFF'}
               onChange={handleInputChange}
               className="mt-1 block w-full h-12 border-gray-300 rounded-md shadow-sm cursor-pointer"
             />
           </div>
+        </div>
+      </div>
+      {/* Nuevos campos de Campaña (campaignName, scope, location) */}
+      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+        <h2 className="text-xl font-semibold text-gray-800 mb-5 flex items-center">
+          <GlobeIcon />{' '}
+          {/* Reutilizando el icono, puedes crear uno específico si quieres */}
+          Información General de la Campaña
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label
+              htmlFor="campaignName"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Nombre de la Campaña
+            </label>
+            <input
+              type="text"
+              name="campaignName"
+              id="campaignName"
+              value={formData['campaignName'] || ''}
+              onChange={handleInputChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="scope"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Alcance (Scope)
+            </label>
+            <input
+              type="text"
+              name="scope"
+              id="scope"
+              value={formData['scope'] || ''}
+              onChange={handleInputChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="location.country"
+              className="block text-sm font-medium text-gray-700"
+            >
+              País
+            </label>
+            <input
+              type="text"
+              name="location.country"
+              id="location.country"
+              value={formData['location.country'] || ''}
+              onChange={handleInputChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="location.state"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Departamento
+            </label>
+            <input
+              type="text"
+              name="location.state"
+              id="location.state"
+              value={formData['location.state'] || ''}
+              onChange={handleInputChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="location.city"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Ciudad
+            </label>
+            <input
+              type="text"
+              name="location.city"
+              id="location.city"
+              value={formData['location.city'] || ''}
+              onChange={handleInputChange}
+              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+      {/* Nuevos campos de Opciones de Mensajería */}
+      <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+        <h2 className="text-xl font-semibold text-gray-800 mb-5 flex items-center">
+          <ContactIcon />{' '}
+          {/* Reutilizando el icono, puedes crear uno específico si quieres */}
+          Opciones de Mensajería
+        </h2>
+        <div className="space-y-4">
+          <Switch.Group as="div" className="flex items-center justify-between">
+            <span className="flex-grow flex flex-col">
+              <Switch.Label
+                as="span"
+                className="text-sm font-medium text-gray-900"
+                passive
+              >
+                Email
+              </Switch.Label>
+              <Switch.Description as="span" className="text-sm text-gray-500">
+                Permitir envío de correos electrónicos.
+              </Switch.Description>
+            </span>
+            <Switch
+              checked={formData['messagingOptions.email'] ?? false}
+              onChange={(checked) =>
+                handleInputChange({
+                  target: { name: 'messagingOptions.email', value: checked },
+                })
+              }
+              className={`${(formData['messagingOptions.email'] ?? false) ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+            >
+              <span
+                aria-hidden="true"
+                className={`${(formData['messagingOptions.email'] ?? false) ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+              />
+            </Switch>
+          </Switch.Group>
+
+          <Switch.Group as="div" className="flex items-center justify-between">
+            <span className="flex-grow flex flex-col">
+              <Switch.Label
+                as="span"
+                className="text-sm font-medium text-gray-900"
+                passive
+              >
+                Alertas
+              </Switch.Label>
+              <Switch.Description as="span" className="text-sm text-gray-500">
+                Permitir envío de alertas en la aplicación.
+              </Switch.Description>
+            </span>
+            <Switch
+              checked={formData['messagingOptions.alerts'] ?? false}
+              onChange={(checked) =>
+                handleInputChange({
+                  target: { name: 'messagingOptions.alerts', value: checked },
+                })
+              }
+              className={`${(formData['messagingOptions.alerts'] ?? false) ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+            >
+              <span
+                aria-hidden="true"
+                className={`${(formData['messagingOptions.alerts'] ?? false) ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+              />
+            </Switch>
+          </Switch.Group>
+
+          <Switch.Group as="div" className="flex items-center justify-between">
+            <span className="flex-grow flex flex-col">
+              <Switch.Label
+                as="span"
+                className="text-sm font-medium text-gray-900"
+                passive
+              >
+                SMS
+              </Switch.Label>
+              <Switch.Description as="span" className="text-sm text-gray-500">
+                Permitir envío de mensajes SMS.
+              </Switch.Description>
+            </span>
+            <Switch
+              checked={formData['messagingOptions.sms'] ?? false}
+              onChange={(checked) =>
+                handleInputChange({
+                  target: { name: 'messagingOptions.sms', value: checked },
+                })
+              }
+              className={`${(formData['messagingOptions.sms'] ?? false) ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+            >
+              <span
+                aria-hidden="true"
+                className={`${(formData['messagingOptions.sms'] ?? false) ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+              />
+            </Switch>
+          </Switch.Group>
+
+          <Switch.Group as="div" className="flex items-center justify-between">
+            <span className="flex-grow flex flex-col">
+              <Switch.Label
+                as="span"
+                className="text-sm font-medium text-gray-900"
+                passive
+              >
+                WhatsApp Business
+              </Switch.Label>
+              <Switch.Description as="span" className="text-sm text-gray-500">
+                Permitir comunicación a través de WhatsApp Business.
+              </Switch.Description>
+            </span>
+            <Switch
+              checked={formData['messagingOptions.whatsappBusiness'] ?? false}
+              onChange={(checked) =>
+                handleInputChange({
+                  target: {
+                    name: 'messagingOptions.whatsappBusiness',
+                    value: checked,
+                  },
+                })
+              }
+              className={`${(formData['messagingOptions.whatsappBusiness'] ?? false) ? 'bg-blue-600' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+            >
+              <span
+                aria-hidden="true"
+                className={`${(formData['messagingOptions.whatsappBusiness'] ?? false) ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+              />
+            </Switch>
+          </Switch.Group>
         </div>
       </div>
       <div className="flex items-center justify-end gap-4">
