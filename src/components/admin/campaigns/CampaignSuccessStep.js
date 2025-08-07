@@ -14,7 +14,7 @@ const CampaignSuccessStep = ({
     <div className="text-center p-6 bg-white rounded-lg">
       <CheckCircleIcon className="mx-auto h-16 w-16 text-green-500" />
       <h3 className="mt-4 text-xl font-semibold text-gray-900">
-        ¡Campaña "{campaignName}" Creada con Éxito!
+        ¡Campaña {campaignName} Creada con Exito!
       </h3>
       <p className="mt-2 text-sm text-gray-500">
         La campaña ha sido configurada y el perfil del candidato principal ha

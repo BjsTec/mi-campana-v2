@@ -62,12 +62,12 @@ const IconButton = ({
       {...props}
     >
       {/* Si hay estado de carga, puedes añadir un spinner si es relevante */}
-      {loading ? (
+      {/* {loading ? (
         // Asumiendo que también tienes Loader2 de lucide-react para loading spinner
-        <Loader2 className={`animate-spin ${iconSizeClasses}`} />
-      ) : (
-        <IconComponent className={iconSizeClasses} />
-      )}
+        // <Loader2 className={`animate-spin ${iconSizeClasses}`} />
+      ) : ( */}
+      <IconComponent className={iconSizeClasses} />
+      {/* )} */}
     </button>
   )
 }
