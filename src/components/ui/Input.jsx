@@ -1,77 +1,59 @@
 // src/components/ui/Input.jsx
-'use client' // Componente de cliente
+'use client'
 
-import React, { useState } from 'react'
-import { Eye, EyeOff } from 'lucide-react' // Íconos de ojo para mostrar/ocultar contraseña
+import React from 'react'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 
-const Input = ({
+export default function Input({
   label,
   id,
   name,
   type = 'text',
   value,
   onChange,
+  required = false,
   placeholder = '',
-  error = '', // Mensaje de error para mostrar
+  error = '',
   disabled = false,
   readOnly = false,
-  required = false,
-  className = '', // Clases para el input en sí
-  labelClassName = '', // Clases para la etiqueta
-  containerClassName = '', // Clases para el div contenedor (label + input)
-  IconComponent = null, // Componente de ícono opcional (ej. Search)
-  iconPosition = 'left', // Posición del ícono: 'left' o 'right'
-  showPasswordToggle = false, // Habilitar el botón de mostrar/ocultar contraseña (solo para type="password")
-  inputMode, // Para teclados móviles (ej. "numeric", "email")
-  step, // Para input type="number"
-  min, // Para input type="number"
-  max, // Para input type="number"
-  ...props // Todas las demás props estándar de input
-}) => {
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
-
-  // Determina el tipo de input real si hay toggle de contraseña
+  className = '',
+  labelClassName = '',
+  containerClassName = '',
+  IconComponent = null,
+  iconPosition = 'left',
+  showPasswordToggle = false,
+  inputMode,
+  step,
+  min,
+  max,
+  ...props
+}) {
+  const [isPasswordVisible, setIsPasswordVisible] = React.useState(false)
   const inputType = type === 'password' && isPasswordVisible ? 'text' : type
 
-  const baseInputClasses =
-    'block w-full px-4 py-2 border rounded-md shadow-sm focus:outline-none transition-colors duration-200'
-
+  const baseInputClasses = 'block w-full px-4 py-2 border rounded-md shadow-sm focus:outline-none transition-colors duration-200'
   const colorClasses = error
-    ? 'border-error-500 focus:ring-error-500 focus:border-error-500 text-error-800'
-    : 'border-neutral-300 focus:ring-primary-500 focus:border-primary-500 text-neutral-800'
-
-  const disabledClasses = disabled
-    ? 'bg-neutral-100 cursor-not-allowed opacity-70'
-    : ''
-
+    ? 'border-red-500 focus:ring-red-500 focus:border-red-500 text-red-800'
+    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-gray-900'
+  const disabledClasses = disabled ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''
   const iconWrapperClasses = IconComponent
-    ? `relative ${iconPosition === 'left' ? 'pl-10' : 'pr-10'}` // Padding para el icono
+    ? `relative ${iconPosition === 'left' ? 'pl-10' : 'pr-10'}`
     : ''
-
-  const iconClasses = IconComponent
-    ? 'w-5 h-5 text-neutral-500 absolute top-1/2 -translate-y-1/2'
-    : ''
-  const iconPositionClasses = IconComponent
-    ? iconPosition === 'left'
-      ? 'left-3'
-      : 'right-3'
-    : ''
+  const iconClasses = IconComponent ? 'w-5 h-5 text-gray-500 absolute top-1/2 -translate-y-1/2' : ''
+  const iconPositionClasses = IconComponent ? (iconPosition === 'left' ? 'left-3' : 'right-3') : ''
 
   return (
     <div className={`mb-4 ${containerClassName}`}>
       {label && (
         <label
           htmlFor={id || name}
-          className={`block text-sm font-medium text-neutral-600 mb-1 ${labelClassName}`}
+          className={`block text-sm font-medium text-gray-700 mb-1 ${labelClassName}`}
         >
           {label}
-          {required && <span className="text-error-500 ml-1">*</span>}
         </label>
       )}
       <div className="relative">
-        {IconComponent && (
-          <IconComponent className={`${iconClasses} ${iconPositionClasses}`} />
-        )}
+        {IconComponent && <IconComponent className={`${iconClasses} ${iconPositionClasses}`} />}
         <input
           id={id || name}
           name={name}
@@ -84,41 +66,24 @@ const Input = ({
           required={required}
           className={`${baseInputClasses} ${colorClasses} ${disabledClasses} ${iconWrapperClasses} ${className} ${type === 'password' && showPasswordToggle ? 'pr-10' : ''}`}
           aria-describedby={error ? `${id || name}-error` : undefined}
-          inputMode={inputMode}
-          step={step}
-          min={min}
-          max={max}
           {...props}
         />
-
         {type === 'password' && showPasswordToggle && (
           <button
             type="button"
             onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-600 hover:text-primary-DEFAULT focus:outline-none"
-            aria-label={
-              isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'
-            }
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-blue-600 focus:outline-none"
+            aria-label={isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
           >
             {isPasswordVisible ? (
-              <EyeOff className="w-5 h-5" />
+              <EyeSlashIcon className="w-5 h-5" />
             ) : (
-              <Eye className="w-5 h-5" />
+              <EyeIcon className="w-5 h-5" />
             )}
           </button>
         )}
       </div>
-      {error && (
-        <p
-          id={`${id || name}-error`}
-          className="mt-1 text-sm text-error-600"
-          role="alert"
-        >
-          {error}
-        </p>
-      )}
+      {error && <p id={`${id || name}-error`} className="mt-1 text-sm text-red-600" role="alert">{error}</p>}
     </div>
   )
 }
-
-export default Input

@@ -1,122 +1,24 @@
 // src/components/ui/Combobox.js
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+'use client'
 
-const Combobox = ({
+import React, { Fragment, useMemo } from 'react'
+import { Listbox, Transition } from '@headlessui/react'
+import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
+
+export default function Combobox({
   label,
   name,
+  options = [],
   value,
-  options,
   onChange,
-  placeholder,
+  placeholder = 'Selecciona una opción',
   required = false,
   disabled = false,
-}) => {
-  const [inputValue, setInputValue] = useState('')
-  const [filteredOptions, setFilteredOptions] = useState([])
-  const [isOpen, setIsOpen] = useState(false)
-  const [highlightedIndex, setHighlightedIndex] = useState(-1)
-  const inputRef = useRef(null)
-  const listRef = useRef(null)
-
-  // Sincronizar input con el valor externo (si el valor cambia desde fuera)
-  useEffect(() => {
-    const selectedOption = options.find((option) => option.id === value)
-    if (selectedOption) {
-      setInputValue(selectedOption.name)
-    } else if (value === '') {
-      setInputValue('') // Limpiar input si el valor externo es vacío
-    }
-  }, [value, options])
-
-  // Manejar el filtrado de opciones
-  useEffect(() => {
-    if (inputValue === '') {
-      setFilteredOptions(options)
-    } else {
-      setFilteredOptions(
-        options.filter((option) =>
-          option.name.toLowerCase().includes(inputValue.toLowerCase()),
-        ),
-      )
-    }
-    setHighlightedIndex(-1) // Reset highlight on filter change
-  }, [inputValue, options])
-
-  // Manejar cambios en el input
-  const handleInputChange = (e) => {
-    setInputValue(e.target.value)
-    setIsOpen(true)
-  }
-
-  // Manejar selección de una opción
-  const handleOptionClick = (option) => {
-    setInputValue(option.name)
-    onChange({ target: { name, value: option.id } }) // Simular evento para el reducer
-    setIsOpen(false)
-  }
-
-  // Manejar focus/blur para abrir/cerrar el dropdown
-  const handleInputFocus = () => {
-    setIsOpen(true)
-    setFilteredOptions(options) // Mostrar todas las opciones al enfocar
-  }
-
-  const handleInputBlur = (e) => {
-    // Retrasar el cierre para permitir el click en las opciones
-    setTimeout(() => {
-      if (
-        !listRef.current ||
-        !listRef.current.contains(document.activeElement)
-      ) {
-        setIsOpen(false)
-        // Si el valor del input no coincide con ninguna opción, restablecerlo
-        const selectedOption = options.find((option) => option.id === value)
-        if (!selectedOption || selectedOption.name !== inputValue) {
-          if (value) {
-            // Si ya hay un valor seleccionado, restaurar su nombre
-            setInputValue(selectedOption ? selectedOption.name : '')
-          } else {
-            // Si no hay valor seleccionado, limpiar el input
-            setInputValue('')
-          }
-        }
-      }
-    }, 100) // Pequeño retraso
-  }
-
-  // Manejar navegación con teclado
-  const handleKeyDown = (e) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setHighlightedIndex((prev) =>
-        prev < filteredOptions.length - 1 ? prev + 1 : prev,
-      )
-      if (listRef.current && listRef.current.children[highlightedIndex + 1]) {
-        listRef.current.children[highlightedIndex + 1].scrollIntoView({
-          block: 'nearest',
-        })
-      }
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0))
-      if (listRef.current && listRef.current.children[highlightedIndex - 1]) {
-        listRef.current.children[highlightedIndex - 1].scrollIntoView({
-          block: 'nearest',
-        })
-      }
-    } else if (e.key === 'Enter') {
-      e.preventDefault()
-      if (highlightedIndex !== -1 && filteredOptions[highlightedIndex]) {
-        handleOptionClick(filteredOptions[highlightedIndex])
-      } else if (inputValue && filteredOptions.length === 1) {
-        handleOptionClick(filteredOptions[0]) // Si solo hay una opción, seleccionarla
-      }
-      setIsOpen(false)
-    } else if (e.key === 'Escape') {
-      setIsOpen(false)
-      inputRef.current.blur()
-    }
-  }
+}) {
+  const selectedOption = useMemo(() => {
+    const option = options.find((o) => o.value === value)
+    return option ? option.label : placeholder
+  }, [options, value, placeholder])
 
   return (
     <div className="relative">
@@ -124,55 +26,53 @@ const Combobox = ({
         htmlFor={name}
         className="block text-sm font-medium text-gray-700 mb-1"
       >
-        {label} {required && <span className="text-red-500">*</span>}
+        {label}
+        {/* CORRECCIÓN: El asterisco se añade solo si el campo es requerido */}
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
-      <input
-        ref={inputRef}
-        type="text"
-        id={name}
-        name={name}
-        value={inputValue}
-        onChange={handleInputChange}
-        onFocus={handleInputFocus}
-        onBlur={handleInputBlur}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        required={required}
-        disabled={disabled}
-        autoComplete="off" // Deshabilitar autocompletado del navegador
-        className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-      />
-      {isOpen && filteredOptions.length > 0 && (
-        <ul
-          ref={listRef}
-          className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm"
-          tabIndex="-1" // Permite enfocar la lista para el blur
-        >
-          {filteredOptions.map((option, index) => (
-            <li
-              key={option.id}
-              className={`cursor-default select-none relative py-2 pl-3 pr-9 ${
-                index === highlightedIndex
-                  ? 'text-white bg-blue-600'
-                  : 'text-gray-900'
-              }`}
-              onClick={() => handleOptionClick(option)}
-              onMouseEnter={() => setHighlightedIndex(index)}
-              role="option"
-              aria-selected={index === highlightedIndex}
-            >
-              <span className="block truncate">{option.name}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {isOpen && filteredOptions.length === 0 && inputValue !== '' && (
-        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md py-2 px-3 text-sm text-gray-500">
-          No se encontraron resultados.
+      <Listbox value={value} onChange={(val) => onChange(val)} disabled={disabled}>
+        <div className="relative mt-1">
+          <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-gray-900 border border-gray-300">
+            <span className="block truncate">{selectedOption}</span>
+            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+              <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+            </span>
+          </Listbox.Button>
+          <Transition
+            as={Fragment}
+            leave="transition ease-in duration-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+              {options.map((option) => (
+                <Listbox.Option
+                  key={option.value}
+                  className={({ active }) =>
+                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                      active ? 'bg-blue-600 text-white' : 'text-gray-900'
+                    }`
+                  }
+                  value={option.value}
+                >
+                  {({ selected, active }) => (
+                    <>
+                      <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                        {option.label}
+                      </span>
+                      {selected && (
+                        <span className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-blue-600'}`}>
+                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Listbox.Option>
+              ))}
+            </Listbox.Options>
+          </Transition>
         </div>
-      )}
+      </Listbox>
     </div>
   )
 }
-
-export default Combobox

@@ -71,7 +71,70 @@ const authorizeAdmin = async (req, res, next) => {
     req.userUid = userUid
     next()
   } catch (error) {
-    console.error('Error de autorización (JWT):', error)
+    functions.logger.error('Error de autorización (JWT):', error) // CORREGIDO
+    let errorMessage = 'No autorizado: Token inválido.'
+    if (error instanceof jwt.TokenExpiredError) {
+      errorMessage = 'No autorizado: Token expirado.'
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      errorMessage = `No autorizado: Token JWT inválido (${error.message}).`
+    }
+    return res.status(401).json({
+      message: errorMessage,
+      details: error.message,
+    })
+  }
+}
+
+// Middleware de autenticación y adjuntar rol/UID a la solicitud (para funciones protegidas)
+// Este middleware verifica el token JWT y adjunta userUid, userRole y campaignMemberships
+// a la solicitud (req). La lógica de autorización específica por rol se hará en cada función.
+// Definido localmente para este archivo variables.js.
+const authenticateUserAndAttachRole = async (req, res, next) => {
+  // Configuración de CORS para este middleware
+  res.set('Access-Control-Allow-Origin', '*')
+  res.set(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  )
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('')
+    return
+  }
+
+  const idToken = req.headers.authorization?.split('Bearer ')[1]
+  if (!idToken) {
+    return res.status(401).json({
+      message: 'No autorizado: Token de autenticación no proporcionado.',
+    })
+  }
+
+  try {
+    const jwtSecretValue = JWT_SECRET_KEY_PARAM.value()
+
+    if (!jwtSecretValue) {
+      functions.logger.error(
+        // CORREGIDO: Usar functions.logger.error
+        'JWT_SECRET no configurado en Firebase Functions para authenticateUserAndAttachRole.',
+      )
+      return res
+        .status(500)
+        .json({ message: 'Error de configuración del servidor.' })
+    }
+    const cleanedJwtSecret = jwtSecretValue.trim()
+
+    const decodedToken = jwt.verify(idToken, cleanedJwtSecret, {
+      algorithms: ['HS256'],
+    })
+
+    req.userUid = decodedToken.uid // Adjunta el UID del usuario a la solicitud
+    req.userRole = decodedToken.role // Adjunta el rol del usuario a la solicitud
+    req.campaignMemberships = decodedToken.campaignMemberships || [] // Adjunta membresías
+
+    next()
+  } catch (error) {
+    functions.logger.error('Error de autenticación (JWT):', error) // CORREGIDO: Usar functions.logger.error
     let errorMessage = 'No autorizado: Token inválido.'
     if (error instanceof jwt.TokenExpiredError) {
       errorMessage = 'No autorizado: Token expirado.'
@@ -120,7 +183,7 @@ export const getActivePromoBonus = functions.https.onRequest(
 
         return res.status(200).json(null) // No hay bono activo o válido
       } catch (error) {
-        console.error('Error en getActivePromoBonus:', error)
+        functions.logger.error('Error en getActivePromoBonus:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al obtener el bono promocional.',
           error: error.message,
@@ -152,7 +215,7 @@ export const getPublicCampaignTypes = functions.https.onRequest(
 
         return res.status(200).json(publicTypes)
       } catch (error) {
-        console.error('Error en getPublicCampaignTypes:', error)
+        functions.logger.error('Error en getPublicCampaignTypes:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al obtener tipos de campaña.',
           error: error.message,
@@ -184,7 +247,7 @@ export const getPublicPricingPlans = functions.https.onRequest(
 
         return res.status(200).json(publicPlans)
       } catch (error) {
-        console.error('Error en getPublicPricingPlans:', error)
+        functions.logger.error('Error en getPublicPricingPlans:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al obtener planes de precios.',
           error: error.message,
@@ -227,7 +290,7 @@ export const getSystemVariables = functions.https.onRequest(
           return res.status(200).json(variables)
         }
       } catch (error) {
-        console.error('Error en getSystemVariables:', error)
+        functions.logger.error('Error en getSystemVariables:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al obtener variables.',
           error: error.message,
@@ -264,7 +327,7 @@ export const updateSystemVariable = functions.https.onRequest(
           variableName,
         })
       } catch (error) {
-        console.error('Error en updateSystemVariable:', error)
+        functions.logger.error('Error en updateSystemVariable:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al actualizar la variable.',
         })
@@ -354,7 +417,7 @@ export const addCampaignType = functions.https.onRequest(
           .status(201)
           .json({ message: 'Tipo de campaña añadido exitosamente.', newType })
       } catch (error) {
-        console.error('Error en addCampaignType:', error)
+        functions.logger.error('Error en addCampaignType:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al añadir tipo de campaña.',
         })
@@ -409,7 +472,7 @@ export const updateCampaignType = functions.https.onRequest(
           updatedType: types[index],
         })
       } catch (error) {
-        console.error('Error en updateCampaignType:', error)
+        functions.logger.error('Error en updateCampaignType:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al actualizar tipo de campaña.',
         })
@@ -465,7 +528,7 @@ export const deleteCampaignType = functions.https.onRequest(
           deletedId: id,
         })
       } catch (error) {
-        console.error('Error en deleteCampaignType:', error)
+        functions.logger.error('Error en deleteCampaignType:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al eliminar tipo de campaña.',
         })
@@ -521,7 +584,7 @@ export const addPricingPlan = functions.https.onRequest(
           .status(201)
           .json({ message: 'Plan de precios añadido exitosamente.', newPlan })
       } catch (error) {
-        console.error('Error en addPricingPlan:', error)
+        functions.logger.error('Error en addPricingPlan:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al añadir plan de precios.',
         })
@@ -576,7 +639,7 @@ export const updatePricingPlan = functions.https.onRequest(
           updatedPlan: plans[index],
         })
       } catch (error) {
-        console.error('Error en updatePricingPlan:', error)
+        functions.logger.error('Error en updatePricingPlan:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al actualizar plan de precios.',
         })
@@ -630,7 +693,7 @@ export const deletePricingPlan = functions.https.onRequest(
           deletedId: id,
         })
       } catch (error) {
-        console.error('Error en deletePricingPlan:', error)
+        functions.logger.error('Error en deletePricingPlan:', error) // CORREGIDO
         return res.status(500).json({
           message: 'Error interno del servidor al eliminar plan de precios.',
         })
@@ -662,7 +725,7 @@ export const getDepartments = functions.https.onRequest(async (req, res) => {
 
       return res.status(200).json(departments)
     } catch (error) {
-      console.error('Error en getDepartments:', error)
+      functions.logger.error('Error en getDepartments:', error) // CORREGIDO
       return res.status(500).json({
         message: 'Error interno del servidor al obtener departamentos.',
         error: error.message,
@@ -705,7 +768,7 @@ export const getCitiesByDepartment = functions.https.onRequest((req, res) => {
 
       return res.status(200).json(cities)
     } catch (error) {
-      console.error('Error en getCitiesByDepartment:', error)
+      functions.logger.error('Error en getCitiesByDepartment:', error) // CORREGIDO
       return res.status(500).json({
         message: 'Error interno del servidor al obtener ciudades.',
         error: error.message,
@@ -759,8 +822,10 @@ export const submitContactForm = functions.https.onRequest(async (req, res) => {
         leadId: newLead.id, // Firestore genera el ID después de .add()
       })
     } catch (error) {
-      // 4. Manejo de errores
-      console.error('Error al procesar el formulario de contacto:', error)
+      functions.logger.error(
+        'Error al procesar el formulario de contacto:',
+        error,
+      ) // CORREGIDO
       return res.status(500).json({
         message:
           'Hubo un error al enviar tu mensaje. Por favor, inténtalo de nuevo más tarde.',
@@ -801,7 +866,7 @@ export const getLeads = functions.https.onRequest(
 
         return res.status(200).json(leads)
       } catch (error) {
-        console.error('Error en getLeads:', error)
+        functions.logger.error('Error en getLeads:', error) // CORREGIDO
         return res.status(500).json({
           message:
             'Error interno del servidor al obtener clientes potenciales.',
@@ -842,7 +907,7 @@ export const getLeadById = functions.https.onRequest(
 
         return res.status(200).json({ id: leadDoc.id, ...leadDoc.data() })
       } catch (error) {
-        console.error('Error en getLeadById:', error)
+        functions.logger.error('Error en getLeadById:', error) // CORREGIDO
         return res.status(500).json({
           message:
             'Error interno del servidor al obtener el cliente potencial.',
@@ -930,7 +995,7 @@ export const updateLead = functions.https.onRequest(
           updatedLeadId: id,
         })
       } catch (error) {
-        console.error('Error en updateLead:', error)
+        functions.logger.error('Error en updateLead:', error) // CORREGIDO
         return res.status(500).json({
           message:
             'Error interno del servidor al actualizar el cliente potencial.',

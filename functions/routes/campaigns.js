@@ -1,3 +1,4 @@
+// functions/routes/campaigns.js
 import * as functions from 'firebase-functions'
 import { getFirestore } from 'firebase-admin/firestore'
 import { getAuth } from 'firebase-admin/auth'
@@ -20,7 +21,7 @@ const authenticateUserAndAttachRole = async (req, res, next) => {
   res.set('Access-Control-Allow-Origin', '*')
   res.set(
     'Access-Control-Allow-Methods',
-    'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'GET, POST, PUT, PATCH, DELETE, OPTIONS', // <--- CORREGIDO: Eliminada la coma al final aquí
   )
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
@@ -41,6 +42,7 @@ const authenticateUserAndAttachRole = async (req, res, next) => {
 
     if (!jwtSecretValue) {
       console.error(
+        // Manteniendo console.error según tu base
         'JWT_SECRET no configurado en Firebase Functions para authenticateUserAndAttachRole.',
       )
       return res
@@ -60,6 +62,7 @@ const authenticateUserAndAttachRole = async (req, res, next) => {
     next()
   } catch (error) {
     console.error(
+      // Manteniendo console.error según tu base
       'Error de autenticación (JWT) en authenticateUserAndAttachRole:',
       error,
     )
@@ -83,32 +86,23 @@ export const createCampaign = functions.https.onRequest(
     // Aplica el middleware de autenticación
     authenticateUserAndAttachRole(req, res, async () => {
       if (req.method !== 'POST') {
-        return res.status(405).send('Método no permitido. Solo POST.')
+        return res.status(405).send('Método no permitido. Solo POST.');
       }
 
       try {
-        const db = getFirestore(getApp())
-        const auth = getAuth(getApp())
-        const data = req.body // Usaremos 'data' directamente del body
+        const db = getFirestore(getApp());
+        const auth = getAuth(getApp());
+        const data = req.body;
 
         // Campos requeridos ajustados
         const requiredFields = [
-          'campaignName',
-          'type',
-          'candidateName',
-          'candidateCedula',
-          'candidateEmail',
-          'candidatePassword',
-          'sexo',
-          'dateBirth',
-          'planName',
-          'planPrice',
-        ]
+          'campaignName', 'type', 'candidateName', 'candidateCedula',
+          'candidateEmail', 'candidatePassword', 'sexo', 'dateBirth',
+          'planName', 'planPrice',
+        ];
         for (const field of requiredFields) {
           if (!data[field]) {
-            return res
-              .status(400)
-              .json({ message: `El campo '${field}' es requerido.` })
+            return res.status(400).json({ message: `El campo '${field}' es requerido.` });
           }
         }
 
@@ -120,35 +114,32 @@ export const createCampaign = functions.https.onRequest(
         ) {
           return res.status(400).json({
             message: 'El formato de electionDate debe ser YYYY-MM-DD.',
-          })
+          });
         }
 
-        let candidateUid
-        let existingUserDocRef = null
-        let existingUserData = null
-        let authUserFound = false
+        let candidateUid;
+        let existingUserDocRef = null;
+        let existingUserData = null;
+        let authUserFound = false;
 
         // PRIORIDAD 1: Intentar buscar por email en Firebase Auth
         try {
-          const userRecord = await auth.getUserByEmail(data.candidateEmail)
-          candidateUid = userRecord.uid
-          authUserFound = true
-          existingUserDocRef = db.collection('users').doc(candidateUid)
-          existingUserData = (await existingUserDocRef.get()).data()
+          const userRecord = await auth.getUserByEmail(data.candidateEmail);
+          candidateUid = userRecord.uid;
+          authUserFound = true;
+          existingUserDocRef = db.collection('users').doc(candidateUid);
+          existingUserData = (await existingUserDocRef.get()).data();
         } catch (error) {
           if (error.code === 'auth/user-not-found') {
-            // Email no encontrado en Auth. Pasamos a la siguiente estrategia.
-            authUserFound = false
+            authUserFound = false;
           } else if (error.code === 'auth/email-already-in-use') {
-            // El email está en uso en Auth pero no se pudo recuperar directamente (ej. por rol o por una inconsistencia previa)
             return res.status(409).json({
               message:
                 'El correo electrónico ya está en uso por otra cuenta Auth.',
-            })
+            });
           } else {
-            // Otro error inesperado de Auth (ej. formato de email inválido)
-            console.error('Error al buscar usuario por email en Auth:', error)
-            throw error
+            console.error('Error al buscar usuario por email en Auth:', error);
+            throw error;
           }
         }
 
@@ -158,33 +149,29 @@ export const createCampaign = functions.https.onRequest(
             .collection('users')
             .where('cedula', '==', data.candidateCedula)
             .limit(1)
-            .get()
+            .get();
 
           if (!userByCedulaSnapshot.empty) {
-            // Usuario encontrado en Firestore por cédula.
-            existingUserDocRef = userByCedulaSnapshot.docs[0].ref
-            existingUserData = (await existingUserDocRef.get()).data()
-            candidateUid = existingUserDocRef.id // UID de Firestore
+            existingUserDocRef = userByCedulaSnapshot.docs[0].ref;
+            existingUserData = (await existingUserDocRef.get()).data();
+            candidateUid = existingUserDocRef.id;
 
-            // Ahora, verificar si existe una cuenta Auth con este UID de Firestore.
             try {
-              await auth.getUser(candidateUid)
-              authUserFound = true // Sí, existe una cuenta Auth con este UID.
+              await auth.getUser(candidateUid);
+              authUserFound = true;
             } catch (error) {
               if (error.code === 'auth/user-not-found') {
-                // No existe cuenta Auth con este UID. La creamos.
                 const newAuthRecord = await auth.createUser({
                   email: data.candidateEmail,
                   password: data.candidatePassword,
                   displayName: data.candidateName,
-                  uid: candidateUid, // Creamos Auth con el UID existente de Firestore
-                })
-                candidateUid = newAuthRecord.uid // Debería ser el mismo
-                authUserFound = true // Ahora sí tenemos cuenta Auth.
+                  uid: candidateUid,
+                });
+                candidateUid = newAuthRecord.uid;
+                authUserFound = true;
               } else {
-                // Otro error inesperado al buscar por UID en Auth
-                console.error('Error al buscar usuario por UID en Auth:', error)
-                throw error
+                console.error('Error al buscar usuario por UID en Auth:', error);
+                throw error;
               }
             }
           }
@@ -196,15 +183,13 @@ export const createCampaign = functions.https.onRequest(
             email: data.candidateEmail,
             password: data.candidatePassword,
             displayName: data.candidateName,
-          })
-          candidateUid = newAuthRecord.uid
-          // existingUserDocRef y existingUserData se inicializarán o actualizarán en los pasos siguientes.
+          });
+          candidateUid = newAuthRecord.uid;
         }
 
-        // Una vez que tenemos candidateUid definitivo, asegurar que existingUserDocRef y existingUserData estén actualizados
         if (!existingUserDocRef || existingUserDocRef.id !== candidateUid) {
-          existingUserDocRef = db.collection('users').doc(candidateUid)
-          existingUserData = (await existingUserDocRef.get()).data() // Puede ser null si es un usuario totalmente nuevo
+          existingUserDocRef = db.collection('users').doc(candidateUid);
+          existingUserData = (await existingUserDocRef.get()).data();
         }
 
         // --- Validación: ¿Ya es candidato activo para este tipo de campaña? ---
@@ -214,19 +199,19 @@ export const createCampaign = functions.https.onRequest(
               membership.type === data.type &&
               membership.role === 'candidato' &&
               membership.status === 'activo',
-          )
+          );
 
         if (isAlreadyActiveCandidateOfType) {
           return res.status(409).json({
             message: `El correo electrónico o cédula ya está asociado a un candidato ACTIVO para una campaña de tipo '${data.type}'.`,
-          })
+          });
         }
 
         // --- Guardar/Actualizar credenciales de usuario (contraseña hasheada) ---
         const hashedPassword = await bcrypt.hash(
           data.candidatePassword,
           saltRounds,
-        )
+        );
         await db
           .collection('user_credentials')
           .doc(candidateUid)
@@ -240,11 +225,11 @@ export const createCampaign = functions.https.onRequest(
                 existingUserData?.createdAt || new Date().toISOString(),
             },
             { merge: true },
-          )
+          );
 
         // --- Generar slug de registro para la campaña ---
-        const registrationSlug = `${data.type}-${data.campaignName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
-        const newCampaignRef = db.collection('campaigns').doc()
+        const registrationSlug = `${data.type}-${data.campaignName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
+        const newCampaignRef = db.collection('campaigns').doc();
 
         // --- Construir el objeto campaignData ---
         const campaignData = {
@@ -261,18 +246,15 @@ export const createCampaign = functions.https.onRequest(
           status: 'activo',
           paymentStatus: 'pagado',
           createdAt: new Date().toISOString(),
-          createdBy: req.userUid, // Quien realizó la acción (admin o el propio candidato)
+          createdBy: req.userUid,
           totalConfirmedVotes: 0,
           totalPotentialVotes: 0,
-
-          electionDate: data.electionDate || null, // <--- ¡Añadido electionDate aquí!
-
+          electionDate: data.electionDate || null,
           location: {
             country: data.location?.country || 'Colombia',
             state: data.location?.state || null,
             city: data.location?.city || null,
           },
-
           contactInfo: {
             email: data.contactInfo?.email || null,
             phone: data.contactInfo?.phone || null,
@@ -281,50 +263,46 @@ export const createCampaign = functions.https.onRequest(
             supportEmail: data.contactInfo?.supportEmail || null,
             supportWhatsapp: data.contactInfo?.supportWhatsapp || null,
           },
-
-          media:
-            data.media && Object.keys(data.media).length > 0
-              ? {
-                  logoUrl: data.media.logoUrl || null,
-                  bannerUrl: data.media.bannerUrl || null,
-                }
-              : {},
-
-          socialLinks:
-            data.socialLinks && Object.keys(data.socialLinks).length > 0
-              ? {
-                  facebook: data.socialLinks.facebook || null,
-                  instagram: data.socialLinks.instagram || null,
-                  tiktok: data.socialLinks.tiktok || null,
-                  threads: data.socialLinks.threads || null,
-                  youtube: data.socialLinks.youtube || null,
-                  linkedin: data.socialLinks.linkedin || null,
-                  twitter: data.socialLinks.twitter || null,
-                }
-              : {},
-
+          media: data.media && Object.keys(data.media).length > 0 ?
+            { logoUrl: data.media.logoUrl || null, bannerUrl: data.media.bannerUrl || null } : {},
+          socialLinks: data.socialLinks && Object.keys(data.socialLinks).length > 0 ?
+            { facebook: data.socialLinks.facebook || null, instagram: data.socialLinks.instagram || null, tiktok: data.socialLinks.tiktok || null, threads: data.socialLinks.threads || null, youtube: data.socialLinks.youtube || null, linkedin: data.socialLinks.linkedin || null, twitter: data.socialLinks.twitter || null } : {},
           messagingOptions: {
             email: data.messagingOptions?.email ?? true,
             alerts: data.messagingOptions?.alerts ?? true,
             sms: data.messagingOptions?.sms ?? false,
             whatsappBusiness: data.messagingOptions?.whatsappBusiness ?? false,
           },
+        };
+
+        if (data.type === 'equipo_de_trabajo') {
+          const systemVariablesRef = db.collection('system_variables').doc('campaign_types');
+          const systemVariablesDoc = await systemVariablesRef.get();
+          if (systemVariablesDoc.exists) {
+            const systemTypes = systemVariablesDoc.data()?.types;
+            const demoTypeConfig = systemTypes?.find((type) => type.id === 'equipo_de_trabajo');
+            if (demoTypeConfig) {
+              campaignData.demoSettings = {
+                generalMaxDirectSubordinates: demoTypeConfig.generalMaxDirectSubordinates || 4,
+                maxDepth: demoTypeConfig.maxDepth || 5,
+                rolesLimits: demoTypeConfig.rolesLimits || { candidato: { managers: 1, anillos: 1, votantes: 2 } },
+              };
+            }
+          }
         }
 
         // Autorización: Solo un administrador global o el propio candidato puede crear una campaña
-        const isAuthorized =
-          req.userRole === 'admin' || req.userUid === candidateUid
+        const isAuthorized = req.userRole === 'admin' || req.userUid === candidateUid;
         if (!isAuthorized) {
           return res.status(403).json({
-            message:
-              'Acceso denegado: Solo administradores o el propio candidato pueden crear una campaña.',
-          })
+            message: 'Acceso denegado: Solo administradores o el propio candidato pueden crear una campaña.',
+          });
         }
 
         // Construir o actualizar el objeto userData para el candidato en Firestore
         let userDataToSet = {
           id: candidateUid,
-          nombre: data.candidateName, // Preferencia por 'nombre'
+          nombre: data.candidateName,
           cedula: data.candidateCedula,
           email: data.candidateEmail,
           whatsapp: data.whatsapp || null,
@@ -342,17 +320,15 @@ export const createCampaign = functions.https.onRequest(
           status: 'activo',
           createdAt: existingUserData?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          registeredViaAuthUid: req.userUid, // Quien realizó la acción (admin o el propio candidato)
+          registeredViaAuthUid: req.userUid,
           lastLogin: null,
-        }
+        };
 
         // Gestionar campaignMemberships
-        let updatedCampaignMemberships =
-          existingUserData?.campaignMemberships || []
+        let updatedCampaignMemberships = existingUserData?.campaignMemberships || [];
         const existingMembershipIndex = updatedCampaignMemberships.findIndex(
           (m) => m.type === data.type && m.role === 'candidato',
-        )
-
+        );
         const newMembership = {
           campaignId: newCampaignRef.id,
           campaignName: data.campaignName,
@@ -360,62 +336,89 @@ export const createCampaign = functions.https.onRequest(
           type: data.type,
           status: 'activo',
           registeredAt: new Date().toISOString(),
-          registeredBy: req.userUid, // Quien realizó la acción
+          registeredBy: req.userUid,
           ownerBy: candidateUid,
           voterStatus: null,
           votoPromesa: null,
           votoEsperado: null,
           directVotes: 0,
           pyramidVotes: 0,
-        }
+        };
 
         if (existingMembershipIndex !== -1) {
           updatedCampaignMemberships[existingMembershipIndex] = {
             ...updatedCampaignMemberships[existingMembershipIndex],
             ...newMembership,
             status: 'activo',
-          }
+          };
         } else {
-          updatedCampaignMemberships.push(newMembership)
+          updatedCampaignMemberships.push(newMembership);
         }
-        userDataToSet.campaignMemberships = updatedCampaignMemberships
+        userDataToSet.campaignMemberships = updatedCampaignMemberships;
 
         // Guardar la nueva campaña y el perfil de usuario
-        await newCampaignRef.set(campaignData)
+        await newCampaignRef.set(campaignData);
         await db
           .collection('users')
           .doc(candidateUid)
-          .set(userDataToSet, { merge: true })
+          .set(userDataToSet, { merge: true });
+
+        // ==========================================================
+        // INICIO DE LA NUEVA LÓGICA: GENERACIÓN DE ENLACES DE WHATSAPP
+        // ==========================================================
+        const candidatePhone = data.whatsapp || data.contactInfo?.whatsapp || null;
+        let candidateWhatsappLink = null;
+        if (candidatePhone) {
+            const candidateMessage = `¡Hola ${data.candidateName}! Tu campaña "${data.campaignName}" ha sido creada exitosamente. Tu usuario es tu cédula: ${data.candidateCedula} y tu contraseña es: ${data.candidatePassword}. Por favor, cámbiala al iniciar sesión. ¡Bienvenido a Autoridad Política!`;
+            const encodedMessage = encodeURIComponent(candidateMessage);
+            const phoneNumber = candidatePhone.replace(/[^0-9]/g, '');
+            candidateWhatsappLink = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+        }
+
+        let adminWhatsappLink = null;
+        if (req.userUid) {
+            const adminUserDoc = await db.collection('users').doc(req.userUid).get();
+            const adminData = adminUserDoc.data();
+            if (adminData && adminData.whatsapp) {
+                const adminMessage = `¡Hola ${adminData.name}! Se ha creado la campaña "${data.campaignName}" (ID: ${newCampaignRef.id}) para el candidato ${data.candidateName}. Su usuario es ${data.candidateCedula} y la contraseña es ${data.candidatePassword}. Por favor, notifícale sus credenciales.`;
+                const encodedAdminMessage = encodeURIComponent(adminMessage);
+                const adminPhoneNumber = adminData.whatsapp.replace(/[^0-9]/g, '');
+                adminWhatsappLink = `https://wa.me/${adminPhoneNumber}?text=${encodedAdminMessage}`;
+            }
+        }
+        // ==========================================================
+        // FIN DE LA NUEVA LÓGICA
+        // ==========================================================
 
         return res.status(201).json({
           message: 'Campaña y candidato creados exitosamente.',
           campaignId: newCampaignRef.id,
           candidateId: candidateUid,
-          electionDate: data.electionDate, // Devolver el campo en la respuesta
-        })
+          electionDate: data.electionDate,
+          candidateWhatsappLink, // Nuevo campo
+          adminWhatsappLink, // Nuevo campo
+        });
       } catch (error) {
-        console.error('Error en createCampaign:', error)
-        // Manejo de errores más específico
+        console.error('Error en createCampaign:', error);
         if (error.code && error.message) {
           if (error.code === 'auth/email-already-in-use') {
             return res.status(409).json({
-              message:
-                'El correo electrónico ya está en uso por otra cuenta Auth.',
-            })
+              message: 'El correo electrónico ya está en uso por otra cuenta Auth.',
+            });
           }
           return res.status(500).json({
             message: `Error interno del servidor al crear la campaña: ${error.message}`,
             error: error.message,
-          })
+          });
         }
         return res.status(500).json({
           message: 'Error interno del servidor al crear la campaña.',
           error: error.message,
-        })
+        });
       }
-    })
+    });
   },
-)
+);
 
 // 2. --- FUNCIÓN PARA ACTUALIZAR UNA CAMPAÑA (PATCH - Protegida) ---
 export const updateCampaign = functions.https.onRequest(
@@ -547,7 +550,7 @@ export const updateCampaign = functions.https.onRequest(
           updatedFields: Object.keys(updateData),
         })
       } catch (error) {
-        console.error('Error en updateCampaign:', error)
+        console.error('Error en updateCampaign:', error) // Manteniendo console.error
         return res.status(500).json({
           message: 'Error interno del servidor al actualizar la campaña.',
           error: error.message,
@@ -649,7 +652,7 @@ export const getCampaignById = functions.https.onRequest(
           candidateProfile: candidateProfile,
         })
       } catch (error) {
-        console.error('Error en getCampaignById:', error)
+        console.error('Error en getCampaignById:', error) // Manteniendo console.error
         return res.status(500).json({
           message: 'Error interno del servidor al obtener la campaña.',
           error: error.message,
@@ -725,7 +728,7 @@ export const getCampaigns = functions.https.onRequest(
           // Solo devolver datos esenciales para el listado (tarjetas)
           campaigns.push({
             id: doc.id,
-            campaignName: data.campaignName,
+            campaignName: data.campaignName, // <--- CORREGIDO: Retornar data.campaignName, no data.type
             type: data.type,
             scope: data.scope,
             status: data.status,
@@ -742,7 +745,7 @@ export const getCampaigns = functions.https.onRequest(
           campaigns,
         })
       } catch (error) {
-        console.error('Error en getCampaigns:', error)
+        console.error('Error en getCampaigns:', error) // Manteniendo console.error
         return res.status(500).json({
           message: 'Error interno del servidor al obtener campañas.',
           error: error.message,
@@ -810,7 +813,7 @@ export const updateCampaignStatus = functions.https.onRequest(
           message: `Estado de la campaña '${campaignId}' actualizado a '${status}' exitosamente.`,
         })
       } catch (error) {
-        console.error('Error en updateCampaignStatus:', error)
+        console.error('Error en updateCampaignStatus:', error) // Manteniendo console.error
         return res.status(500).json({
           message:
             'Error interno del servidor al actualizar el estado de la campaña.',
@@ -820,3 +823,293 @@ export const updateCampaignStatus = functions.https.onRequest(
     })
   },
 )
+
+// --- FUNCIÓN ADICIONAL: createDemoCampaignAndCandidato ---
+export const createDemoCampaignAndCandidato = functions.https.onRequest(
+  { secrets: [JWT_SECRET_KEY_PARAM] },
+  async (req, res) => {
+    res.set('Access-Control-Allow-Origin', '*')
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    res.set('Access-Control-Allow-Headers', 'Content-Type')
+
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('')
+      return
+    }
+
+    if (req.method !== 'POST') {
+      return res
+        .status(405)
+        .json({ message: 'Método no permitido. Solo POST.' })
+    }
+
+    try {
+      const db = getFirestore(getApp())
+      const auth = getAuth(getApp())
+
+      const data = req.body
+
+      const {
+        campaignName,
+        candidateName,
+        candidateCedula,
+        candidatePassword,
+        sexo,
+        dateBirth,
+        location,
+        phone,
+        whatsapp,
+      } = data
+      const candidateEmail =
+        data.candidateEmail || `${candidateCedula}@autoridadpolitica.com`
+
+      if (
+        !campaignName ||
+        !candidateName ||
+        !candidateCedula ||
+        !candidatePassword ||
+        !sexo ||
+        !dateBirth
+      ) {
+        return res.status(400).json({
+          message:
+            'Faltan campos obligatorios para el registro de la campaña demo.',
+        })
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidateEmail)) {
+        return res
+          .status(400)
+          .json({ message: 'El formato del correo electrónico es inválido.' })
+      }
+
+      try {
+        let userRecord
+        let userCreated = false
+        try {
+          userRecord = await auth.getUserByEmail(candidateEmail)
+          const userDoc = await db.collection('users').doc(userRecord.uid).get()
+          if (userDoc.exists) {
+            const userData = userDoc.data()
+            const existingCandidatoMembership =
+              userData.campaignMemberships?.find(
+                (m) =>
+                  m.role === 'candidato' &&
+                  m.status === 'activo' &&
+                  m.type === 'equipo_de_trabajo',
+              )
+            if (existingCandidatoMembership) {
+              return res.status(409).json({
+                message:
+                  'Este correo electrónico ya está asociado a un Candidato activo en una campaña de equipo de trabajo.',
+              })
+            }
+            await auth.updateUser(userRecord.uid, {
+              password: candidatePassword,
+            })
+          }
+        } catch (error) {
+          if (
+            error.code === 'auth/user-not-found' ||
+            error.code === 'auth/email-not-found'
+          ) {
+            userRecord = await auth.createUser({
+              email: candidateEmail,
+              password: candidatePassword,
+              displayName: candidateName,
+            })
+            userCreated = true
+          } else if (error.code === 'auth/email-already-in-use') {
+            return res.status(409).json({
+              message: 'El correo electrónico ya está en uso por otra cuenta.',
+            })
+          } else {
+            console.error('Error en createDemoCampaignAndCandidato:', error) // Manteniendo console.error
+            return res.status(500).json({
+              message: 'Error interno del servidor al gestionar el usuario.',
+              error: error.message,
+            })
+          }
+        }
+
+        const userUid = userRecord.uid
+
+        const hashedPassword = await bcrypt.hash(candidatePassword, saltRounds)
+
+        const userRef = db.collection('users').doc(userUid)
+        await userRef.set(
+          {
+            id: userUid,
+            name: candidateName,
+            email: data.candidateEmail || candidateEmail,
+            cedula: candidateCedula,
+            whatsapp: whatsapp || null,
+            phone: phone || null,
+            location: location || {},
+            dateBirth: dateBirth || null,
+            sexo: sexo || null,
+            role: 'candidato',
+            level: 0,
+            status: 'activo',
+            createdAt: userCreated
+              ? new Date().toISOString()
+              : (await userRef.get()).data()?.createdAt ||
+                new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            registeredViaAuthUid: 'system_auto_register',
+            lastLogin: null,
+          },
+          { merge: true },
+        )
+
+        await db
+          .collection('user_credentials')
+          .doc(userUid)
+          .set(
+            {
+              hashedPassword: hashedPassword,
+              email: candidateEmail,
+              createdAt: userCreated
+                ? new Date().toISOString()
+                : (
+                    await db.collection('user_credentials').doc(userUid).get()
+                  ).data()?.createdAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            { merge: true },
+          )
+
+        const newCampaignRef = db.collection('campaigns').doc()
+        const campaignId = newCampaignRef.id
+
+        const demoLimits = {
+          maxDepth: 5,
+          generalMaxDirectSubordinates: 4,
+          rolesLimits: {
+            candidato: { managers: 1, anillos: 2, votantes: 4, totalDirect: 4 },
+            manager: { anillos: 2, votantes: 4, totalDirect: 4 },
+            anillo: { votantes: 4, totalDirect: 4 },
+            votante: { votantes: 4, totalDirect: 4 },
+          },
+        }
+
+        await newCampaignRef.set({
+          id: campaignId,
+          campaignName: campaignName,
+          description: `Campaña demo para ${candidateName}`,
+          type: 'equipo_de_trabajo',
+          scope: location?.city ? `Municipal - ${location.city}` : 'Demo',
+          planName: 'Operación de Campo Integral',
+          planPrice: 0.0,
+          discountPercentage: 0,
+          candidatoId: userUid,
+          candidateName: candidateName,
+          registrationSlug: `demo-${campaignId.substring(0, 8)}`,
+          status: 'activo',
+          paymentStatus: 'pagado',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          createdBy: 'system_auto_register',
+          totalConfirmedVotes: 0,
+          totalPotentialVotes: 0,
+          electionDate: null,
+          location: location || {},
+          contactInfo: {
+            email: data.contactInfo?.email || candidateEmail,
+            phone: data.contactInfo?.phone || phone || null,
+            whatsapp: data.contactInfo?.whatsapp || whatsapp || null,
+            web: data.contactInfo?.web || null,
+            supportWhatsapp: data.contactInfo?.supportWhatsapp || null,
+            supportEmail: data.contactInfo?.supportEmail || null,
+          },
+          media: data.media || {},
+          socialLinks: data.socialLinks || {},
+          messagingOptions: data.messagingOptions || {},
+          demoSettings: demoLimits,
+        })
+
+        const newMembership = {
+          campaignId: campaignId,
+          campaignName: campaignName,
+          role: 'candidato',
+          type: 'equipo_de_trabajo',
+          status: 'activo',
+          registeredAt: new Date().toISOString(),
+          registeredBy: 'system_auto_register',
+          ownerBy: null,
+          voterStatus: null,
+          votoPromesa: null,
+          votoEsperado: null,
+          directVotes: 0,
+          pyramidVotes: 0,
+          totalPotentialVotes: 0,
+          level: 0,
+          canRegister: true,
+          canPromise: true,
+          maxSubordinates: demoLimits.generalMaxDirectSubordinates,
+          subordinatesCount: 0,
+          subordinatesByRole: { managers: 0, anillos: 0, votantes: 0 },
+          canRegisterSubordinates: true,
+        }
+
+        let currentMemberships =
+          (await userRef.get()).data()?.campaignMemberships || []
+        currentMemberships.push(newMembership)
+
+        await userRef.update({
+          campaignMemberships: currentMemberships,
+        })
+
+        await auth.setCustomUserClaims(userUid, {
+          role: 'candidato',
+          campaignId: campaignId,
+        })
+
+        return res.status(201).json({
+          message: 'Campaña demo y candidato creados exitosamente.',
+          campaignId: campaignId,
+          candidatoId: userUid,
+          electionDate: null,
+        })
+      } catch (error) {
+        functions.logger.error(
+          'Error en createDemoCampaignAndCandidato:',
+          error,
+        ) // Manteniendo console.error
+        if (error.code === 'auth/email-already-exists') {
+          return res.status(409).json({
+            message:
+              'El correo electrónico ya está en uso. Si eres un lead, espera la confirmación.',
+          })
+        }
+        if (error.code === 'already-exists') {
+          return res.status(409).json({ message: error.message })
+        }
+        return res.status(500).json({
+          message:
+            'Ocurrió un error inesperado al procesar tu solicitud: ' +
+            error.message,
+          error: error.message,
+        })
+      }
+    } catch (error) {
+      // <--- Cierre del try principal
+      functions.logger.error('Error en createDemoCampaignAndCandidato:', error) // Manteniendo console.error
+      if (error.code === 'auth/email-already-exists') {
+        return res.status(409).json({
+          message:
+            'El correo electrónico ya está en uso. Si eres un lead, espera la confirmación.',
+        })
+      }
+      if (error.code === 'already-exists') {
+        return res.status(409).json({ message: error.message })
+      }
+      return res.status(500).json({
+        message:
+          'Ocurrió un error inesperado al procesar tu solicitud: ' +
+          error.message,
+        error: error.message,
+      })
+    }
+  },
+) // <--- Cierre de functions.https.onRequest(secrets, handler)

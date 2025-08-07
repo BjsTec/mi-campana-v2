@@ -35,7 +35,6 @@ export async function POST(request) {
     })
 
     const firebaseDaCta = await firebaseResponse.json()
-    console.log(firebaseDaCta)
 
     // 5. Manejar la respuesta de la Firebase Function
     if (!firebaseResponse.ok) {

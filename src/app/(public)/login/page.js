@@ -46,7 +46,6 @@ export default function LoginPage() {
 
     try {
       const loginFunctionUrl = process.env.NEXT_PUBLIC_LOGIN_WITH_EMAIL_URL
-
       if (!loginFunctionUrl) {
         throw new Error(
           'La URL de la función de login no está configurada (NEXT_PUBLIC_LOGIN_WITH_EMAIL_URL).',
@@ -58,12 +57,10 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: cedula, clave: password }),
       })
-
       const data = await response.json()
 
       if (response.ok) {
-        const { idToken, user: userDataFromFunction } = data
-
+        const { idToken, ...userDataFromFunction } = data
         if (!idToken) {
           throw new Error('El servidor no proporcionó un token de sesión.')
         }
@@ -73,7 +70,6 @@ export default function LoginPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ idToken }),
         })
-
         if (!cookieResponse.ok) {
           const errorData = await cookieResponse.json()
           throw new Error(
@@ -82,14 +78,33 @@ export default function LoginPage() {
         }
 
         const decodedUserData = jwtDecode(idToken)
-        console.log(
-          'Login Exitoso! Datos de usuario decodificados:',
-          decodedUserData,
-        )
-
         login(decodedUserData, idToken)
 
-        window.location.href = '/dashboard-test'
+        let redirectPath = '/registro-exitoso' // Ruta de fallback por defecto
+
+        switch (decodedUserData?.role) {
+          case 'admin':
+            redirectPath = '/dashboard-admin/home-wm'
+            break
+          case 'candidato':
+            // CORRECCIÓN: Apunta a la raíz del directorio del candidato.
+            redirectPath = '/dashboard-candidato'
+            break
+          case 'manager':
+            redirectPath = '/dashboard-manager/panel'
+            break
+          case 'anillo':
+            redirectPath = '/dashboard-anillo/panel'
+            break
+          case 'votante':
+            redirectPath = '/dashboard-votante/panel'
+            break
+          default:
+            redirectPath = '/registro-exitoso'
+            break
+        }
+
+        window.location.href = redirectPath
       } else {
         throw new Error(data.message || 'Error desconocido al iniciar sesión.')
       }

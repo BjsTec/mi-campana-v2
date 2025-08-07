@@ -15,9 +15,7 @@ const FormGroup = ({
   required = false, // Indica si el campo es requerido (añade un *)
   ...props // Cualquier otra prop que quieras pasar al div contenedor
 }) => {
-  // Clases base para el mensaje de error
   const baseErrorClasses = 'mt-1 text-sm text-error-600'
-  // Clases base para el texto de ayuda
   const baseHelpTextClasses = 'mt-1 text-sm text-neutral-500'
 
   return (
@@ -28,10 +26,11 @@ const FormGroup = ({
           className={`block text-sm font-medium text-neutral-600 mb-1 ${labelClassName}`}
         >
           {label}
+          {/* CORRECCIÓN: El asterisco se añade solo si el campo es requerido */}
           {required && <span className="text-error-500 ml-1">*</span>}
         </label>
       )}
-      {children} {/* Aquí se renderizará tu componente Input, Select, etc. */}
+      {children}
       {error && (
         <p
           id={`${htmlFor}-error`}
@@ -41,10 +40,7 @@ const FormGroup = ({
           {error}
         </p>
       )}
-      {!error &&
-        helpText && ( // Muestra el texto de ayuda solo si no hay error
-          <p className={baseHelpTextClasses}>{helpText}</p>
-        )}
+      {!error && helpText && <p className={baseHelpTextClasses}>{helpText}</p>}
     </div>
   )
 }

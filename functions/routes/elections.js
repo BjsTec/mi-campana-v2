@@ -1,19 +1,22 @@
 import * as functions from 'firebase-functions'
-import { getFirestore, FieldValue } from 'firebase-admin/firestore' // Asegúrate de importar FieldValue
+import { getFirestore, FieldValue } from 'firebase-admin/firestore' // Asegúrate de importar FieldValue si es necesario
 import { getAuth } from 'firebase-admin/auth'
-import { getApp } from 'firebase-admin/app'
+import { getApp } from 'firebase-admin/app' // getApp es de firebase-admin/app (CORREGIDO)
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { defineSecret } from 'firebase-functions/params'
 
 // Secreto para firmar y verificar los JSON Web Tokens (JWT)
+// Definido localmente para este archivo, siguiendo el principio de independencia
 const JWT_SECRET_KEY_PARAM = defineSecret('BJS_JWT_SECRET_KEY')
 
 // Número de rondas de sal para bcrypt
-const saltRounds = 10
+const saltRounds = 10 // Definido localmente para este archivo
 
 // Middleware de autenticación y adjuntar rol/UID a la solicitud
+// Definido localmente para este archivo, siguiendo el principio de independencia
 const authenticateUserAndAttachRole = async (req, res, next) => {
+  // Configuración de CORS para este middleware
   res.set('Access-Control-Allow-Origin', '*')
   res.set(
     'Access-Control-Allow-Methods',
@@ -37,7 +40,8 @@ const authenticateUserAndAttachRole = async (req, res, next) => {
     const jwtSecretValue = JWT_SECRET_KEY_PARAM.value()
 
     if (!jwtSecretValue) {
-      console.error(
+      functions.logger.error(
+        // CORREGIDO: Usar functions.logger.error
         'JWT_SECRET no configurado en Firebase Functions para authenticateUserAndAttachRole.',
       )
       return res
@@ -50,13 +54,13 @@ const authenticateUserAndAttachRole = async (req, res, next) => {
       algorithms: ['HS256'],
     })
 
-    req.userUid = decodedToken.uid
-    req.userRole = decodedToken.role
-    req.campaignMemberships = decodedToken.campaignMemberships || []
+    req.userUid = decodedToken.uid // Adjunta el UID del usuario a la solicitud
+    req.userRole = decodedToken.role // Adjunta el rol del usuario a la solicitud
+    req.campaignMemberships = decodedToken.campaignMemberships || [] // Adjunta membresías
 
     next()
   } catch (error) {
-    console.error('Error de autenticación (JWT):', error)
+    functions.logger.error('Error de autenticación (JWT):', error) // CORREGIDO: Usar functions.logger.error
     let errorMessage = 'No autorizado: Token inválido.'
     if (error instanceof jwt.TokenExpiredError) {
       errorMessage = 'No autorizado: Token expirado.'
@@ -71,6 +75,7 @@ const authenticateUserAndAttachRole = async (req, res, next) => {
 }
 
 // Función auxiliar para generar una contraseña aleatoria
+// Mantenida localmente para este archivo
 const generateRandomPassword = (length = 10) => {
   const chars =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+'
@@ -81,7 +86,8 @@ const generateRandomPassword = (length = 10) => {
   return password
 }
 
-// Función auxiliar para propagar votos potenciales a través de la pirámide (CORREGIDA Y ÚNICA)
+// Función auxiliar para propagar votos potenciales a través de la pirámide
+// Mantenida localmente para este archivo
 async function propagatePotentialVotes(db, campaignId, userId, changeAmount) {
   try {
     let currentUserId = userId
@@ -90,7 +96,8 @@ async function propagatePotentialVotes(db, campaignId, userId, changeAmount) {
       const userDoc = await userDocRef.get()
 
       if (!userDoc.exists) {
-        console.warn(
+        functions.logger.warn(
+          // Usar functions.logger.warn
           `Usuario ${currentUserId} no encontrado durante la propagación.`,
         )
         break // Salir si el usuario no existe
@@ -103,7 +110,8 @@ async function propagatePotentialVotes(db, campaignId, userId, changeAmount) {
       )
 
       if (membershipIndex === -1) {
-        console.warn(
+        functions.logger.warn(
+          // Usar functions.logger.warn
           `Membresía de campaña ${campaignId} no encontrada para el usuario ${currentUserId} durante la propagación.`,
         )
         break // Salir si la membresía no existe
@@ -112,7 +120,6 @@ async function propagatePotentialVotes(db, campaignId, userId, changeAmount) {
       const currentMembership = campaignMemberships[membershipIndex]
 
       // Actualizar el totalPotentialVotes del miembro actual
-      // Esto es si cada nivel de la pirámide debe sumar los potenciales de sus subordinados
       currentMembership.totalPotentialVotes =
         (currentMembership.totalPotentialVotes || 0) + changeAmount
       campaignMemberships[membershipIndex] = currentMembership // Actualizar el objeto en el array
@@ -121,40 +128,41 @@ async function propagatePotentialVotes(db, campaignId, userId, changeAmount) {
         campaignMemberships: campaignMemberships,
         updatedAt: new Date().toISOString(),
       })
-      console.log(
+      functions.logger.log(
+        // Usar functions.logger.log
         `Usuario ${currentUserId}: totalPotentialVotes actualizado en ${changeAmount}.`,
       )
 
       // Mover al padre para la siguiente iteración
       currentUserId = currentMembership.ownerBy // Usar ownerBy para subir por la pirámide
-      // Si el ownerBy es el propio Candidato, su parentId/ownerBy será null o su propio UID si es la raíz
-      // El bucle terminará cuando currentUserId sea null/undefined
       if (currentUserId === userData.id && userData.role === 'candidato') {
         // Si es el candidato y su ownerBy es él mismo, el bucle termina después de actualizarlo
         currentUserId = null
       }
     }
 
-    // Al final, actualizar el totalPotentialVotes de la campaña principal (si no se hizo ya recursivamente a través del Candidato)
-    // Si el Candidato es el 'ownerBy' de los managers, esta línea de código no debería ser necesaria
-    // si la propagación es hasta el candidato y el candidato está en la campaña.
-    // Pero lo dejamos para asegurar que el total en la campaña se actualice.
+    // Al final, actualizar el totalPotentialVotes de la campaña principal
     const campaignRef = db.collection('campaigns').doc(campaignId)
     await campaignRef.update({
       totalPotentialVotes: FieldValue.increment(changeAmount),
       updatedAt: new Date().toISOString(),
     })
-    console.log(
+    functions.logger.log(
+      // Usar functions.logger.log
       `Campaña ${campaignId}: totalPotentialVotes final actualizado en ${changeAmount}.`,
     )
   } catch (error) {
-    console.error('Error durante la propagación de votos potenciales:', error)
+    functions.logger.error(
+      'Error durante la propagación de votos potenciales:',
+      error,
+    ) // Usar functions.logger.error
     throw error // Relanzar el error para que la función que la llamó lo maneje
   }
 }
 
-// Función auxiliar para propagar Votos Reales (directVotes y pyramidVotes)
-async function propagateRealVotes(db, campaignId, userId, changeAmount) {
+// Función auxiliar para propagar Votos Reales (directVotes y pyramidVotes) - ¡Ahora exportada!
+export async function propagateRealVotes(db, campaignId, userId, changeAmount) {
+  // <--- CORREGIDO: Añadido 'export'
   try {
     // 1. Actualizar el totalConfirmedVotes de la campaña principal
     const campaignRef = db.collection('campaigns').doc(campaignId)
@@ -162,7 +170,8 @@ async function propagateRealVotes(db, campaignId, userId, changeAmount) {
       totalConfirmedVotes: FieldValue.increment(changeAmount),
       updatedAt: new Date().toISOString(),
     })
-    console.log(
+    functions.logger.log(
+      // Usar functions.logger.log
       `Campaña ${campaignId}: totalConfirmedVotes actualizado en ${changeAmount}.`,
     )
 
@@ -173,7 +182,8 @@ async function propagateRealVotes(db, campaignId, userId, changeAmount) {
       const userDoc = await userDocRef.get()
 
       if (!userDoc.exists) {
-        console.warn(
+        functions.logger.warn(
+          // Usar functions.logger.warn
           `Usuario ${currentUserId} no encontrado durante la propagación de votos reales.`,
         )
         break
@@ -186,7 +196,8 @@ async function propagateRealVotes(db, campaignId, userId, changeAmount) {
       )
 
       if (membershipIndex === -1) {
-        console.warn(
+        functions.logger.warn(
+          // Usar functions.logger.warn
           `Membresía de campaña ${campaignId} no encontrada para el usuario ${currentUserId} durante la propagación de votos reales.`,
         )
         break
@@ -204,18 +215,22 @@ async function propagateRealVotes(db, campaignId, userId, changeAmount) {
         campaignMemberships: campaignMemberships,
         updatedAt: new Date().toISOString(),
       })
-      console.log(
+      functions.logger.log(
+        // Usar functions.logger.log
         `Usuario ${currentUserId}: pyramidVotes actualizado en ${changeAmount}.`,
       )
 
       // Mover al padre para la siguiente iteración
       currentUserId = currentMembership.ownerBy
       if (currentUserId === userData.id && userData.role === 'candidato') {
-        currentUserId = null
+        currentUserId = null // Terminar el bucle si es el candidato raíz
       }
     }
   } catch (error) {
-    console.error('Error durante la propagación de votos reales:', error)
+    functions.logger.error(
+      'Error durante la propagación de votos reales:',
+      error,
+    ) // Usar functions.logger.error
     throw error
   }
 }
@@ -225,13 +240,13 @@ export const submitEscrutinioResult = functions.https.onRequest(
   { secrets: [JWT_SECRET_KEY_PARAM] },
   async (req, res) => {
     // Aplica el middleware de autenticación
-    authenticateUserAndAttachRole(req, res, async () => {
+    await authenticateUserAndAttachRole(req, res, async () => {
       if (req.method !== 'POST') {
         return res.status(405).send('Método no permitido. Solo POST.')
       }
 
       try {
-        const db = getFirestore(getApp())
+        const db = getFirestore(getApp()) // Inicializa Firestore
         const {
           campaignId,
           pollingStationId,
@@ -283,14 +298,13 @@ export const submitEscrutinioResult = functions.https.onRequest(
         }
 
         // --- Lógica de Autorización para Escrutador ---
-        // Verificar que el usuario tenga una asignación activa y esté habilitado para reportar
         const escrutadorAssignmentRef = db
           .collection('escrutador_assignments')
           .where('escrutadorUid', '==', escrutadorUid)
           .where('campaignId', '==', campaignId)
           .where('pollingStationId', '==', pollingStationId)
           .where('mesaNumber', '==', mesaNumber)
-          .where('status', 'in', ['assigned', 'active']) // Puede ser 'assigned' o 'active'
+          .where('status', 'in', ['assigned', 'active'])
           .where('canReport', '==', true)
           .limit(1)
 
@@ -309,23 +323,19 @@ export const submitEscrutinioResult = functions.https.onRequest(
 
         let isAuthorized = false
         if (escrutadorRole === 'admin') {
-          isAuthorized = true // Un admin puede reportar sin asignación explícita
+          isAuthorized = true
         } else if (!assignmentSnapshot.empty) {
           const assignmentData = assignmentSnapshot.docs[0].data()
-          // Verificar que la fecha actual esté cerca de la fecha de la elección para permitir reportes
           const today = new Date().toISOString().slice(0, 10)
-          // Permitir reporte solo el día de la elección o un rango cercano (ej. +/- 1 día)
           const electionDay =
             assignmentData.electionDate || electionDateCampaign
 
-          // Lógica para rango de fechas (ej. día de la elección +/- 1 día)
           const electionDateTime = new Date(electionDay)
           const todayDateTime = new Date(today)
           const diffTime = Math.abs(electionDateTime - todayDateTime)
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
           if (diffDays <= 1) {
-            // Permite reportar el día anterior, el mismo día y el día siguiente
             isAuthorized = true
           } else {
             return res.status(403).json({
@@ -341,7 +351,6 @@ export const submitEscrutinioResult = functions.https.onRequest(
           })
         }
 
-        // 2. Guardar el resultado del escrutinio
         const newResultRef = db.collection('escrutinioResults').doc()
         const escrutinioData = {
           id: newResultRef.id,
@@ -351,23 +360,20 @@ export const submitEscrutinioResult = functions.https.onRequest(
           votesCollected: votesCollected,
           photoEvidenceUrl: photoEvidenceUrl,
           escrutadorUid: escrutadorUid,
-          escrutadorRole: escrutadorRole, // Rol del usuario que reporta
-          reportedAt: new Date().toISOString(), // Hora de registro automática
+          escrutadorRole: escrutadorRole,
+          reportedAt: new Date().toISOString(),
           location: {
-            // Geolocalización
             latitude: latitude || null,
             longitude: longitude || null,
           },
-          status: 'pending_verification', // Estado inicial del reporte
+          status: 'pending_verification',
         }
         await newResultRef.set(escrutinioData)
 
-        // 3. Actualizar los totales de votos en la campaña (para monitoreo en tiempo real)
         const campaignRef = db.collection('campaigns').doc(campaignId)
         await db.runTransaction(async (transaction) => {
           const campaignDoc = await transaction.get(campaignRef)
           if (!campaignDoc.exists) {
-            // Si la campaña desapareció entre la verificación y la transacción, es un error.
             throw new Error(
               'La campaña asociada no existe durante la transacción.',
             )
@@ -390,7 +396,7 @@ export const submitEscrutinioResult = functions.https.onRequest(
           votesCollected: votesCollected,
         })
       } catch (error) {
-        console.error('Error en submitEscrutinioResult:', error)
+        functions.logger.error('Error en submitEscrutinioResult:', error) // Usar functions.logger.error
         return res.status(500).json({
           message:
             'Error interno del servidor al registrar resultado de escrutinio.',
@@ -402,8 +408,6 @@ export const submitEscrutinioResult = functions.https.onRequest(
 )
 
 // 2. --- FUNCIÓN PARA ASIGNAR UN ROL DE ESCRUTADOR A UN USUARIO (POST - Protegida) ---
-// Permite a un administrador o miembro de campaña autorizado asignar a un usuario como escrutador
-// para un puesto de votación y mesa específicos.
 export const assignEscrutadorAssignment = functions.https.onRequest(
   { secrets: [JWT_SECRET_KEY_PARAM] },
   async (req, res) => {
@@ -417,18 +421,16 @@ export const assignEscrutadorAssignment = functions.https.onRequest(
         const {
           escrutadorUid,
           campaignId,
-          pollingStationId, // ID único del puesto de votación
-          pollingStationName, // Nombre del puesto de votación
-          mesaNumber, // Número de la mesa de votación
-          electionDate, // Fecha de la elección para esta asignación (YYYY-MM-DD)
-          // Detalles de ubicación del puesto de votación (para reportes geográficos)
+          pollingStationId,
+          pollingStationName,
+          mesaNumber,
+          electionDate,
           country,
           state,
           city,
-          canReport = false, // Permiso inicial para reportar (se habilita en capacitación)
+          canReport = false,
         } = req.body
 
-        // Validaciones básicas de campos requeridos para la asignación
         const requiredFields = [
           'escrutadorUid',
           'campaignId',
@@ -448,14 +450,12 @@ export const assignEscrutadorAssignment = functions.https.onRequest(
           }
         }
 
-        // Validación de formato de fecha
         if (!/^\d{4}-\d{2}-\d{2}$/.test(electionDate)) {
           return res.status(400).json({
             message: 'El formato de electionDate debe ser YYYY-MM-DD.',
           })
         }
 
-        // --- Autorización: Solo Admins, Candidatos, Gerentes y Anillos de la campaña pueden asignar escrutadores ---
         const callingUserRole = req.userRole
         const callingUserUid = req.userUid
         const callingUserCampaignMemberships = req.campaignMemberships
@@ -478,7 +478,6 @@ export const assignEscrutadorAssignment = functions.https.onRequest(
           })
         }
 
-        // Verificar que el escrutadorUid realmente existe
         const escrutadorDoc = await db
           .collection('users')
           .doc(escrutadorUid)
@@ -490,7 +489,6 @@ export const assignEscrutadorAssignment = functions.https.onRequest(
         }
         const escrutadorData = escrutadorDoc.data()
 
-        // Verificar que la campaña existe
         const campaignDoc = await db
           .collection('campaigns')
           .doc(campaignId)
@@ -501,14 +499,13 @@ export const assignEscrutadorAssignment = functions.https.onRequest(
             .json({ message: 'La campaña especificada no existe.' })
         }
 
-        // Verificar si ya existe una asignación activa para este escrutador en esta mesa/campaña
         const existingAssignmentSnapshot = await db
           .collection('escrutador_assignments')
           .where('escrutadorUid', '==', escrutadorUid)
           .where('campaignId', '==', campaignId)
           .where('pollingStationId', '==', pollingStationId)
           .where('mesaNumber', '==', mesaNumber)
-          .where('electionDate', '==', electionDate) // Asegurar que no haya duplicados para la misma elección
+          .where('electionDate', '==', electionDate)
           .limit(1)
           .get()
 
@@ -519,12 +516,11 @@ export const assignEscrutadorAssignment = functions.https.onRequest(
           })
         }
 
-        // Crear la nueva asignación
         const newAssignmentRef = db.collection('escrutador_assignments').doc()
         const assignmentData = {
           id: newAssignmentRef.id,
           escrutadorUid: escrutadorUid,
-          escrutadorName: escrutadorData.name || escrutadorData.nombre || 'N/A', // Nombre del escrutador
+          escrutadorName: escrutadorData.name || escrutadorData.nombre || 'N/A',
           escrutadorEmail: escrutadorData.email,
           campaignId: campaignId,
           campaignName: campaignDoc.data().campaignName,
@@ -535,11 +531,11 @@ export const assignEscrutadorAssignment = functions.https.onRequest(
           country: country,
           state: state,
           city: city,
-          canReport: canReport, // Se establece inicialmente aquí, se puede cambiar luego
+          canReport: canReport,
           assignedByUid: callingUserUid,
           assignedByRole: callingUserRole,
           assignedAt: new Date().toISOString(),
-          status: 'assigned', // 'assigned', 'active', 'completed', 'disabled'
+          status: 'assigned',
         }
 
         await newAssignmentRef.set(assignmentData)
@@ -552,7 +548,7 @@ export const assignEscrutadorAssignment = functions.https.onRequest(
           mesaNumber: mesaNumber,
         })
       } catch (error) {
-        console.error('Error en assignEscrutadorAssignment:', error)
+        functions.logger.error('Error en assignEscrutadorAssignment:', error) // Usar functions.logger.error
         return res.status(500).json({
           message: 'Error interno del servidor al asignar escrutador.',
           error: error.message,
@@ -563,7 +559,6 @@ export const assignEscrutadorAssignment = functions.https.onRequest(
 )
 
 // 3. --- FUNCIÓN PARA IMPORTAR MASIVAMENTE ESCRUTADORES (POST - Protegida por Admin/Campaña) ---
-// Permite cargar una lista de usuarios para ser creados/actualizados y asignados como escrutadores.
 export const bulkImportEscrutadores = functions.https.onRequest(
   { secrets: [JWT_SECRET_KEY_PARAM] },
   async (req, res) => {
@@ -575,12 +570,11 @@ export const bulkImportEscrutadores = functions.https.onRequest(
       try {
         const db = getFirestore(getApp())
         const auth = getAuth(getApp())
-        const { escrutadoresData, campaignId, electionDate } = req.body // escrutadoresData es un array de objetos
+        const { escrutadoresData, campaignId, electionDate } = req.body
         const callingUserUid = req.userUid
         const callingUserRole = req.userRole
         const callingUserCampaignMemberships = req.campaignMemberships
 
-        // Validaciones generales
         if (!Array.isArray(escrutadoresData) || escrutadoresData.length === 0) {
           return res.status(400).json({
             message: 'Se requiere un array no vacío de datos de escrutadores.',
@@ -598,7 +592,6 @@ export const bulkImportEscrutadores = functions.https.onRequest(
           })
         }
 
-        // Autorización: Solo Admins, Candidatos, Gerentes y Anillos de la campaña.
         const isAuthorized =
           callingUserRole === 'admin' ||
           callingUserCampaignMemberships.some(
@@ -617,7 +610,6 @@ export const bulkImportEscrutadores = functions.https.onRequest(
           })
         }
 
-        // Verificar que la campaña exista
         const campaignDoc = await db
           .collection('campaigns')
           .doc(campaignId)
@@ -635,7 +627,6 @@ export const bulkImportEscrutadores = functions.https.onRequest(
           details: [],
         }
 
-        // Iterar sobre cada escrutador en la lista
         for (const escrutador of escrutadoresData) {
           try {
             const {
@@ -652,7 +643,6 @@ export const bulkImportEscrutadores = functions.https.onRequest(
               mesaNumber,
             } = escrutador
 
-            // Validaciones por escrutador individual
             if (
               !name ||
               !email ||
@@ -670,9 +660,8 @@ export const bulkImportEscrutadores = functions.https.onRequest(
             let existingUserDocRef = null
             let existingUserData = null
             let authUserFound = false
-            let tempPasswordForNewUser = null // Variable para guardar la contraseña generada para nuevos Auth users
+            let tempPasswordForNewUser = null
 
-            // 1. Prioridad: Buscar usuario por email en Firebase Auth
             try {
               const userRecord = await auth.getUserByEmail(email)
               escrutadorUid = userRecord.uid
@@ -687,11 +676,10 @@ export const bulkImportEscrutadores = functions.https.onRequest(
                   `Email '${email}' ya está en uso en Firebase Auth.`,
                 )
               } else {
-                throw authError // Otros errores inesperados de Auth
+                throw authError
               }
             }
 
-            // 2. Si no se encontró por email, buscar por cédula en Firestore
             if (!authUserFound) {
               const userByCedulaSnapshot = await db
                 .collection('users')
@@ -705,16 +693,15 @@ export const bulkImportEscrutadores = functions.https.onRequest(
 
                 try {
                   await auth.getUser(escrutadorUid)
-                  authUserFound = true // Sí, existe cuenta Auth con este UID
+                  authUserFound = true
                 } catch (authErrorByUid) {
                   if (authErrorByUid.code === 'auth/user-not-found') {
-                    // No existe cuenta Auth con este UID. Crear una.
-                    tempPasswordForNewUser = generateRandomPassword() // Generate password here
+                    tempPasswordForNewUser = generateRandomPassword()
                     const newAuthRecord = await auth.createUser({
                       email: email,
-                      password: tempPasswordForNewUser, // Use generated password
+                      password: tempPasswordForNewUser,
                       displayName: name,
-                      uid: escrutadorUid, // Usar UID existente de Firestore
+                      uid: escrutadorUid,
                     })
                     escrutadorUid = newAuthRecord.uid
                     authUserFound = true
@@ -725,27 +712,24 @@ export const bulkImportEscrutadores = functions.https.onRequest(
               }
             }
 
-            // 3. Si aún no se encontró, crear usuario Auth completamente nuevo
             if (!authUserFound) {
-              tempPasswordForNewUser = generateRandomPassword() // Generate password here
+              tempPasswordForNewUser = generateRandomPassword()
               const newAuthRecord = await auth.createUser({
                 email: email,
-                password: tempPasswordForNewUser, // Use generated password
+                password: tempPasswordForNewUser,
                 displayName: name,
               })
               escrutadorUid = newAuthRecord.uid
             }
 
-            // Asegurar que existingUserDocRef y existingUserData estén correctos para el escrutadorUid final
             if (
               !existingUserDocRef ||
               existingUserDocRef.id !== escrutadorUid
             ) {
               existingUserDocRef = db.collection('users').doc(escrutadorUid)
-              existingUserData = (await existingUserDocRef.get()).data() // Puede ser null si es un usuario totalmente nuevo
+              existingUserData = (await existingUserDocRef.get()).data()
             }
 
-            // 4. Actualizar/Crear perfil de usuario en Firestore (collection 'users')
             let userProfileData = {
               id: escrutadorUid,
               name: name,
@@ -757,19 +741,18 @@ export const bulkImportEscrutadores = functions.https.onRequest(
                 country: country || 'Colombia',
                 state: state || null,
                 city: city || null,
-                votingStation: pollingStationName || null, // Usar nombre del puesto como votingStation
+                votingStation: pollingStationName || null,
               },
-              role: existingUserData?.role || 'votante', // Mantener rol existente o default a 'votante'
-              status: 'activo', // Los escrutadores son usuarios activos
+              role: existingUserData?.role || 'votante',
+              status: 'activo',
               createdAt:
                 existingUserData?.createdAt || new Date().toISOString(),
               updatedAt: new Date().toISOString(),
-              registeredViaAuthUid: callingUserUid, // Importado por admin/campaign user
+              registeredViaAuthUid: callingUserUid,
               lastLogin: existingUserData?.lastLogin || null,
               campaignMemberships: existingUserData?.campaignMemberships || [],
             }
 
-            // Si es un usuario existente, no sobrescribir su rol principal si ya es Candidato/Manager/Anillo/Admin
             if (existingUserData && existingUserData.id === escrutadorUid) {
               if (
                 ['candidato', 'manager', 'ring', 'admin'].includes(
@@ -782,13 +765,11 @@ export const bulkImportEscrutadores = functions.https.onRequest(
 
             await existingUserDocRef.set(userProfileData, { merge: true })
 
-            // 5. Si es un usuario nuevo de Auth, guardar la contraseña temporal
-            //    Ahora tempPasswordForNewUser está disponible y es la que se usó para crear el usuario Auth.
             if (tempPasswordForNewUser) {
               const hashedPassword = await bcrypt.hash(
                 tempPasswordForNewUser,
                 saltRounds,
-              ) // <-- Corregido aquí
+              )
               await db.collection('user_credentials').doc(escrutadorUid).set(
                 {
                   firebaseAuthUid: escrutadorUid,
@@ -799,11 +780,8 @@ export const bulkImportEscrutadores = functions.https.onRequest(
                 },
                 { merge: true },
               )
-              // NOTA: En un entorno real, enviar la contraseña temporal por email/SMS al escrutador
             }
 
-            // 6. Crear/Actualizar asignación de escrutador
-            // Buscar si ya existe una asignación activa para este escrutador en esta mesa/campaña
             const existingAssignmentSnapshot = await db
               .collection('escrutador_assignments')
               .where('escrutadorUid', '==', escrutadorUid)
@@ -816,7 +794,6 @@ export const bulkImportEscrutadores = functions.https.onRequest(
 
             let assignmentId
             if (!existingAssignmentSnapshot.empty) {
-              // Actualizar asignación existente
               const assignmentDocRef = existingAssignmentSnapshot.docs[0].ref
               assignmentId = assignmentDocRef.id
               await assignmentDocRef.update({
@@ -824,14 +801,13 @@ export const bulkImportEscrutadores = functions.https.onRequest(
                 country: country || 'Colombia',
                 state: state || null,
                 city: city || null,
-                canReport: true, // Asumimos que la importación masiva los habilita
+                canReport: true,
                 updatedAt: new Date().toISOString(),
                 assignedByUid: callingUserUid,
                 assignedByRole: callingUserRole,
-                status: 'active', // Marcar como activo si se actualiza
+                status: 'active',
               })
             } else {
-              // Crear nueva asignación
               const newAssignmentRef = db
                 .collection('escrutador_assignments')
                 .doc()
@@ -850,7 +826,7 @@ export const bulkImportEscrutadores = functions.https.onRequest(
                 country: country || 'Colombia',
                 state: state || null,
                 city: city || null,
-                canReport: true, // Se habilita por la importación masiva
+                canReport: true,
                 assignedByUid: callingUserUid,
                 assignedByRole: callingUserRole,
                 assignedAt: new Date().toISOString(),
@@ -875,6 +851,7 @@ export const bulkImportEscrutadores = functions.https.onRequest(
               message: error.message,
             })
             console.error(
+              // Manteniendo console.error
               `Error procesando escrutador ${escrutador.email || escrutador.cedula}:`,
               error.message,
             )
@@ -886,7 +863,7 @@ export const bulkImportEscrutadores = functions.https.onRequest(
           summary: results,
         })
       } catch (error) {
-        console.error('Error en bulkImportEscrutadores Cloud Function:', error)
+        console.error('Error en bulkImportEscrutadores Cloud Function:', error) // Manteniendo console.error
         return res.status(500).json({
           message: 'Error interno del servidor durante la importación masiva.',
           error: error.message,
@@ -897,7 +874,6 @@ export const bulkImportEscrutadores = functions.https.onRequest(
 )
 
 // 4. --- FUNCIÓN PARA EXPORTAR LISTA DE ESCRUTADORES (GET - Protegida) ---
-// Permite a usuarios autorizados descargar una lista de escrutadores de una campaña en formato CSV.
 export const exportEscrutadoresList = functions.https.onRequest(
   { secrets: [JWT_SECRET_KEY_PARAM] },
   async (req, res) => {
@@ -912,18 +888,16 @@ export const exportEscrutadoresList = functions.https.onRequest(
         const {
           campaignId,
           columns = 'escrutadorName,escrutadorEmail,cedula,city,state,pollingStationName,mesaNumber',
-        } = req.query // columnas separadas por coma
+        } = req.query
         const callingUserRole = req.userRole
         const callingUserCampaignMemberships = req.campaignMemberships
 
-        // Validaciones
         if (!campaignId) {
           return res
             .status(400)
             .json({ message: 'El ID de la campaña es requerido.' })
         }
 
-        // Autorización: Solo Admins, Candidatos, Gerentes, Anillos de la campaña pueden exportar.
         const isAuthorized =
           callingUserRole === 'admin' ||
           callingUserCampaignMemberships.some(
@@ -942,7 +916,6 @@ export const exportEscrutadoresList = functions.https.onRequest(
           })
         }
 
-        // Verificar que la campaña exista
         const campaignDoc = await db
           .collection('campaigns')
           .doc(campaignId)
@@ -951,7 +924,6 @@ export const exportEscrutadoresList = functions.https.onRequest(
           return res.status(404).json({ message: 'Campaña no encontrada.' })
         }
 
-        // Obtener asignaciones de escrutadores para la campaña
         const assignmentsSnapshot = await db
           .collection('escrutador_assignments')
           .where('campaignId', '==', campaignId)
@@ -965,7 +937,6 @@ export const exportEscrutadoresList = functions.https.onRequest(
 
         const escrutadores = assignmentsSnapshot.docs.map((doc) => doc.data())
 
-        // Procesar columnas seleccionadas
         const requestedColumns = columns.split(',').map((col) => col.trim())
         const defaultColumns = [
           'escrutadorName',
@@ -976,18 +947,15 @@ export const exportEscrutadoresList = functions.https.onRequest(
           'pollingStationName',
           'mesaNumber',
         ]
-        // Usar las columnas solicitadas o las por defecto si no se especificaron
         const finalColumns =
           requestedColumns.length > 0 && requestedColumns[0] !== ''
             ? requestedColumns
             : defaultColumns
 
         let csvContent = ''
-        // Añadir encabezados CSV
         csvContent +=
           finalColumns
             .map((col) => {
-              // Mapeo amigable para los encabezados si es necesario
               switch (col) {
                 case 'escrutadorName':
                   return 'Nombre Escrutador'
@@ -1009,20 +977,17 @@ export const exportEscrutadoresList = functions.https.onRequest(
                   return 'Asignado Por UID'
                 case 'status':
                   return 'Estado Asignación'
-                // Añadir otros mapeos si se necesitan más columnas
                 default:
-                  return col // Si no hay mapeo, usa el nombre de la columna directamente
+                  return col
               }
             })
             .map((header) => `"${header.replace(/"/g, '""')}"`)
             .join(',') + '\n'
 
-        // Añadir filas de datos
         escrutadores.forEach((escrutador) => {
           const row = finalColumns
             .map((col) => {
               let value
-              // Manejar campos anidados (ej. location.city)
               if (col.includes('.')) {
                 const parts = col.split('.')
                 let current = escrutador
@@ -1034,7 +999,7 @@ export const exportEscrutadoresList = functions.https.onRequest(
                   ) {
                     current = current[part]
                   } else {
-                    current = undefined // Campo no encontrado en el camino
+                    current = undefined
                     break
                   }
                 }
@@ -1043,7 +1008,6 @@ export const exportEscrutadoresList = functions.https.onRequest(
                 value = escrutador[col]
               }
 
-              // Asegurar que el valor sea una cadena y escapar comillas
               const stringValue =
                 value === null || value === undefined ? '' : String(value)
               return `"${stringValue.replace(/"/g, '""')}"`
@@ -1052,7 +1016,6 @@ export const exportEscrutadoresList = functions.https.onRequest(
           csvContent += row + '\n'
         })
 
-        // Configurar cabeceras de respuesta para descarga de archivo CSV
         res.set('Content-Type', 'text/csv; charset=utf-8')
         res.set(
           'Content-Disposition',
@@ -1060,7 +1023,7 @@ export const exportEscrutadoresList = functions.https.onRequest(
         )
         res.status(200).send(csvContent)
       } catch (error) {
-        console.error('Error en exportEscrutadoresList:', error)
+        functions.logger.error('Error en exportEscrutadoresList:', error) // CORREGIDO: Usar functions.logger.error
         return res.status(500).json({
           message:
             'Error interno del servidor al exportar la lista de escrutadores.',
@@ -1072,7 +1035,6 @@ export const exportEscrutadoresList = functions.https.onRequest(
 )
 
 // 5. --- FUNCIÓN PARA OBTENER LISTA DE ASIGNACIONES DE ESCRUTADORES (GET - Protegida) ---
-// Permite a usuarios autorizados obtener asignaciones de escrutadores para una campaña, con filtros.
 export const getEscrutadorAssignments = functions.https.onRequest(
   { secrets: [JWT_SECRET_KEY_PARAM] },
   async (req, res) => {
@@ -1097,14 +1059,12 @@ export const getEscrutadorAssignments = functions.https.onRequest(
         const callingUserRole = req.userRole
         const callingUserCampaignMemberships = req.campaignMemberships
 
-        // Validaciones básicas
         if (!campaignId) {
           return res
             .status(400)
             .json({ message: 'El ID de la campaña es requerido.' })
         }
 
-        // Autorización: Solo Admins o miembros activos de la campaña pueden ver sus asignaciones.
         const isAuthorized =
           callingUserRole === 'admin' ||
           callingUserCampaignMemberships.some(
@@ -1118,7 +1078,6 @@ export const getEscrutadorAssignments = functions.https.onRequest(
           })
         }
 
-        // Verificar que la campaña exista
         const campaignDoc = await db
           .collection('campaigns')
           .doc(campaignId)
@@ -1131,7 +1090,6 @@ export const getEscrutadorAssignments = functions.https.onRequest(
           .collection('escrutador_assignments')
           .where('campaignId', '==', campaignId)
 
-        // Aplicar filtros opcionales
         if (status)
           assignmentsQuery = assignmentsQuery.where('status', '==', status)
         if (pollingStationId)
@@ -1162,7 +1120,6 @@ export const getEscrutadorAssignments = functions.https.onRequest(
           )
         }
 
-        // Paginación
         if (limit)
           assignmentsQuery = assignmentsQuery.limit(parseInt(limit, 10))
         if (offset)
@@ -1176,7 +1133,7 @@ export const getEscrutadorAssignments = functions.https.onRequest(
           assignments: assignments,
         })
       } catch (error) {
-        console.error('Error en getEscrutadorAssignments:', error)
+        console.error('Error en getEscrutadorAssignments:', error) // Manteniendo console.error
         return res.status(500).json({
           message:
             'Error interno del servidor al obtener asignaciones de escrutadores.',
@@ -1188,7 +1145,6 @@ export const getEscrutadorAssignments = functions.https.onRequest(
 )
 
 // 6. --- FUNCIÓN PARA ELIMINAR UNA ASIGNACIÓN DE ESCRUTADOR (DELETE - Protegida) ---
-// Permite a administradores o miembros de campaña autorizados eliminar una asignación específica.
 export const deleteEscrutadorAssignment = functions.https.onRequest(
   { secrets: [JWT_SECRET_KEY_PARAM] },
   async (req, res) => {
@@ -1199,12 +1155,11 @@ export const deleteEscrutadorAssignment = functions.https.onRequest(
 
       try {
         const db = getFirestore(getApp())
-        const { assignmentId } = req.body // El ID de la asignación a eliminar
+        const { assignmentId } = req.body
         const callingUserRole = req.userRole
         const callingUserUid = req.userUid
         const callingUserCampaignMemberships = req.campaignMemberships
 
-        // Validaciones básicas
         if (!assignmentId) {
           return res
             .status(400)
@@ -1225,9 +1180,6 @@ export const deleteEscrutadorAssignment = functions.https.onRequest(
         const assignmentData = assignmentDoc.data()
         const assignedCampaignId = assignmentData.campaignId
 
-        // --- Autorización para eliminar: ---
-        // Admins pueden eliminar cualquier asignación.
-        // Candidatos, Gerentes, Anillos solo pueden eliminar asignaciones de SU campaña
         const isAuthorized =
           callingUserRole === 'admin' ||
           callingUserCampaignMemberships.some(
@@ -1246,7 +1198,6 @@ export const deleteEscrutadorAssignment = functions.https.onRequest(
           })
         }
 
-        // Eliminar la asignación
         await assignmentRef.delete()
 
         return res.status(200).json({
@@ -1254,10 +1205,10 @@ export const deleteEscrutadorAssignment = functions.https.onRequest(
           assignmentId: assignmentId,
         })
       } catch (error) {
-        console.error('Error en deleteEscrutadorAssignment:', error)
+        functions.logger.error('Error en getEscrutadorAssignments:', error) // CORREGIDO: Usar functions.logger.error
         return res.status(500).json({
           message:
-            'Error interno del servidor al eliminar la asignación de escrutador.',
+            'Error interno del servidor al obtener asignaciones de escrutadores.',
           error: error.message,
         })
       }
@@ -1266,11 +1217,11 @@ export const deleteEscrutadorAssignment = functions.https.onRequest(
 )
 
 // 7. --- FUNCIÓN PARA ACTUALIZAR UNA MEMBRESÍA DE CAMPAÑA (PATCH - Protegida) ---
-// Permite actualizar campos específicos de la membresía de un usuario en una campaña.
 export const updateCampaignMembership = functions.https.onRequest(
   { secrets: [JWT_SECRET_KEY_PARAM] },
   async (req, res) => {
-    authenticateUserAndAttachRole(req, res, async () => {
+    // Aplica el middleware de autenticación
+    await authenticateUserAndAttachRole(req, res, async () => {
       if (req.method !== 'PATCH') {
         return res.status(405).send('Método no permitido. Solo PATCH.')
       }
@@ -1282,7 +1233,6 @@ export const updateCampaignMembership = functions.https.onRequest(
         const callingUserRole = req.userRole
         const callingUserCampaignMemberships = req.campaignMemberships
 
-        // Validaciones básicas
         if (
           !userId ||
           !campaignId ||
@@ -1316,25 +1266,17 @@ export const updateCampaignMembership = functions.https.onRequest(
         const currentMembership = campaignMemberships[membershipIndex]
         let potentialVotesChange = 0
 
-        // --- Autorización para actualizar: ---
-        // 1. Un usuario puede actualizar su propio votoPromesa (si userId es él mismo).
-        // 2. Un superior (admin, candidato, manager, anillo) puede actualizar el votoEsperado de un subordinado directo.
-        // 3. Admins pueden actualizar cualquier campo.
-
         let isAuthorized = false
 
-        // Si es admin, está autorizado.
         if (callingUserRole === 'admin') {
+          // Un admin siempre puede actualizar
           isAuthorized = true
-        }
-        // Si el usuario está actualizando su propia membresía
-        else if (userId === callingUserUid) {
-          // Solo puede actualizar su votoPromesa
+        } else if (userId === callingUserUid) {
+          // El propio usuario solo puede actualizar su votoPromesa
           if (
             updates.votoPromesa !== undefined &&
             Object.keys(updates).length === 1
           ) {
-            // Solo si solo actualiza votoPromesa
             isAuthorized = true
           } else {
             return res.status(403).json({
@@ -1342,19 +1284,15 @@ export const updateCampaignMembership = functions.https.onRequest(
                 'Acceso denegado: Solo puedes actualizar tu propio "votoPromesa".',
             })
           }
-        }
-        // Si no es admin y no es el propio usuario, debe ser un superior actualizando un subordinado
-        else {
-          // Verificar si el callingUserUid es el parentId (ownerBy) de este userId en esta campaña
-          // Y si está intentando actualizar 'votoEsperado'
+        } else {
           const callingUserIsDirectSuperior =
             currentMembership.ownerBy === callingUserUid
 
+          // Un superior directo puede actualizar el votoEsperado de su subordinado
           if (
             callingUserIsDirectSuperior &&
             updates.votoEsperado !== undefined
           ) {
-            // Verificar que el callingUser sea un rol que pueda tener subordinados y que esté activo en la campaña
             const callingUserIsActiveCampaignMember =
               callingUserCampaignMemberships.some(
                 (m) =>
@@ -1362,25 +1300,52 @@ export const updateCampaignMembership = functions.https.onRequest(
                   (m.role === 'candidato' ||
                     m.role === 'manager' ||
                     m.role === 'anillo' ||
-                    m.role === 'votante') && // Votantes también pueden tener subordinados via QR
-                  m.status === 'activo' &&
-                  m.campaignId === campaignId, // Asegurar que el superior esté en la misma campaña
+                    m.role === 'votante') && // Votantes también pueden ser superiores si registran a otros
+                  m.status === 'activo',
               )
 
             if (callingUserIsActiveCampaignMember) {
               isAuthorized = true
             }
           }
+
+          // CORREGIDO: Lógica para permitir a superiores directos modificar canRegisterSubordinates
+          if (
+            Object.prototype.hasOwnProperty.call(
+              updates,
+              'canRegisterSubordinates',
+            ) &&
+            callingUserIsDirectSuperior
+          ) {
+            const callingUserCanManageSubordinates = [
+              'admin',
+              'candidato',
+              'manager',
+              'anillo',
+            ].includes(callingUserRole)
+            if (callingUserCanManageSubordinates) {
+              isAuthorized = true
+            } else {
+              functions.logger.warn(
+                // CORREGIDO: Usar functions.logger.warn
+                `Acceso denegado: Rol ${callingUserRole} no autorizado para modificar canRegisterSubordinates para ${userId}.`,
+              )
+              return res.status(403).json({
+                message:
+                  'Acceso denegado: Tu rol no te permite modificar la capacidad de registro de subordinados.',
+              })
+            }
+          }
+
           if (!isAuthorized) {
-            // Si ya no se autorizó por las condiciones anteriores
             return res.status(403).json({
               message:
-                'Acceso denegado: Solo el usuario o su superior directo pueden actualizar esta membresía.',
+                'Acceso denegado: Solo el usuario, su superior directo o un admin pueden actualizar esta membresía o campo específico.',
             })
           }
         }
 
-        // Aplicar actualizaciones permitidas y calcular cambio en votoEsperado
+        // Aplicar actualizaciones si están presentes
         if (updates.votoPromesa !== undefined) {
           currentMembership.votoPromesa = updates.votoPromesa
         }
@@ -1389,26 +1354,34 @@ export const updateCampaignMembership = functions.https.onRequest(
           const oldVotoEsperado = currentMembership.votoEsperado || 0
           const newVotoEsperado = updates.votoEsperado
 
-          // Calcular el cambio para la propagación
           potentialVotesChange = newVotoEsperado - oldVotoEsperado
           currentMembership.votoEsperado = newVotoEsperado
         }
 
-        // Puedes añadir otros campos que se puedan actualizar si es necesario,
-        // siempre con su lógica de autorización correspondiente.
-        // Ej: if (updates.status !== undefined) { currentMembership.status = updates.status; }
+        // CORREGIDO: Permitir la actualización de canRegisterSubordinates si la clave está en updates
+        if (
+          Object.prototype.hasOwnProperty.call(
+            updates,
+            'canRegisterSubordinates',
+          )
+        ) {
+          currentMembership.canRegisterSubordinates =
+            updates.canRegisterSubordinates
+        }
 
-        // Actualizar el array de membresías
+        // Actualizar la membresía en la base de datos
         campaignMemberships[membershipIndex] = currentMembership
         await userDocRef.update({
           campaignMemberships: campaignMemberships,
           updatedAt: new Date().toISOString(),
         })
 
-        // Si hubo un cambio en votoEsperado, iniciar la propagación
+        // Si hubo cambio en votos potenciales, propagar
         if (potentialVotesChange !== 0) {
+          const app = getApp() // Obtener app dentro de la función para el logger.
+          const dbForPropagate = getFirestore(app) // Pasar db instance to propagatePotentialVotes
           await propagatePotentialVotes(
-            db,
+            dbForPropagate, // Pasar la instancia de db
             campaignId,
             userId,
             potentialVotesChange,
@@ -1422,7 +1395,7 @@ export const updateCampaignMembership = functions.https.onRequest(
           campaignId: campaignId,
         })
       } catch (error) {
-        console.error('Error en updateCampaignMembership:', error)
+        functions.logger.error('Error en updateCampaignMembership:', error) // CORREGIDO: Usar functions.logger.error
         return res.status(500).json({
           message:
             'Error interno del servidor al actualizar la membresía de campaña.',
@@ -1434,7 +1407,6 @@ export const updateCampaignMembership = functions.https.onRequest(
 )
 
 // 8. --- FUNCIÓN PARA REGISTRAR VOTOS DIRECTOS POR UN MIEMBRO DE CAMPAÑA (POST - Protegida) ---
-// Permite a un votante (o miembro de pirámide) registrar votos confirmados personalmente.
 export const submitDirectVote = functions.https.onRequest(
   { secrets: [JWT_SECRET_KEY_PARAM] },
   async (req, res) => {
@@ -1449,7 +1421,6 @@ export const submitDirectVote = functions.https.onRequest(
         const reportingUserUid = req.userUid
         const reportingUserRole = req.userRole
 
-        // Validaciones
         if (
           !campaignId ||
           votesCount === undefined ||
@@ -1489,8 +1460,6 @@ export const submitDirectVote = functions.https.onRequest(
 
         const currentMembership = campaignMemberships[membershipIndex]
 
-        // Autorización: Solo Candidatos, Gerentes, Anillos y Votantes pueden registrar votos directos.
-        // Los administradores no registran votos directos de la pirámide, lo hacen vía escrutinio.
         if (
           !['candidato', 'manager', 'anillo', 'votante'].includes(
             reportingUserRole,
@@ -1501,7 +1470,6 @@ export const submitDirectVote = functions.https.onRequest(
             .json({ message: 'Tu rol no te permite registrar votos directos.' })
         }
 
-        // Actualizar directVotes en la membresía del usuario que reporta
         currentMembership.directVotes =
           (currentMembership.directVotes || 0) + votesCount
         campaignMemberships[membershipIndex] = currentMembership
@@ -1510,7 +1478,6 @@ export const submitDirectVote = functions.https.onRequest(
           updatedAt: new Date().toISOString(),
         })
 
-        // Propagar los votos reales hacia arriba en la pirámide
         await propagateRealVotes(db, campaignId, reportingUserUid, votesCount)
 
         return res.status(200).json({
@@ -1520,7 +1487,7 @@ export const submitDirectVote = functions.https.onRequest(
           newDirectVotes: currentMembership.directVotes,
         })
       } catch (error) {
-        console.error('Error en submitDirectVote:', error)
+        functions.logger.error('Error en submitDirectVote:', error) // CORREGIDO: Usar functions.logger.error
         return res.status(500).json({
           message: 'Error interno del servidor al registrar votos directos.',
           error: error.message,
