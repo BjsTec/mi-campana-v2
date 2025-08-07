@@ -725,7 +725,9 @@ export const createActiveUserAndMembership = functions.https.onRequest(
         const requiredFields = ['email', 'cedula', 'name', 'role', 'campaignId']
         for (const field of requiredFields) {
           if (!req.body[field]) {
-            return res.status(400).json({ message: `El campo '${field}' es requerido.` })
+            return res
+              .status(400)
+              .json({ message: `El campo '${field}' es requerido.` })
           }
         }
         if (!['votante', 'anillo', 'manager'].includes(role)) {
@@ -746,7 +748,9 @@ export const createActiveUserAndMembership = functions.https.onRequest(
         const parentUserRef = db.collection('users').doc(parentUid)
         const parentUserDoc = await parentUserRef.get()
         if (!parentUserDoc.exists) {
-          return res.status(404).json({ message: 'Usuario padre no encontrado.' })
+          return res
+            .status(404)
+            .json({ message: 'Usuario padre no encontrado.' })
         }
         const parentUserData = parentUserDoc.data()
         const parentMembership = parentUserData.campaignMemberships?.find(
@@ -761,7 +765,7 @@ export const createActiveUserAndMembership = functions.https.onRequest(
 
         const callingUserUid = req.userUid
         const callingUserRole = req.userRole
-        
+
         // --- INICIO DE LÓGICA DE AUTORIZACIÓN MODIFICADA ---
         let isAuthorized = false
         if (callingUserRole === 'admin') {
@@ -769,19 +773,20 @@ export const createActiveUserAndMembership = functions.https.onRequest(
         } else if (callingUserUid === parentUid) {
           // Un usuario puede crear un subordinado debajo de sí mismo
           const allowedSubordinateRoles = {
-            'candidato': ['manager', 'anillo', 'votante'],
-            'manager': ['anillo', 'votante'],
-            'anillo': ['votante'],
-            'votante': ['votante']
-          };
+            candidato: ['manager', 'anillo', 'votante'],
+            manager: ['anillo', 'votante'],
+            anillo: ['votante'],
+            votante: ['votante'],
+          }
           if (allowedSubordinateRoles[callingUserRole]?.includes(role)) {
-            isAuthorized = true;
+            isAuthorized = true
           }
         }
 
         if (!isAuthorized) {
           return res.status(403).json({
-            message: 'Acceso denegado: No tienes permiso para crear este rol de subordinado o no puedes crear un usuario bajo otro superior.',
+            message:
+              'Acceso denegado: No tienes permiso para crear este rol de subordinado o no puedes crear un usuario bajo otro superior.',
           })
         }
         // --- FIN DE LÓGICA DE AUTORIZACIÓN MODIFICADA ---
@@ -794,34 +799,49 @@ export const createActiveUserAndMembership = functions.https.onRequest(
             })
           }
 
-          const parentCurrentSubordinatesCount = parentMembership.subordinatesCount || 0
-          if (parentCurrentSubordinatesCount >= demoSettings.generalMaxDirectSubordinates) {
+          const parentCurrentSubordinatesCount =
+            parentMembership.subordinatesCount || 0
+          if (
+            parentCurrentSubordinatesCount >=
+            demoSettings.generalMaxDirectSubordinates
+          ) {
             return res.status(400).json({
               message: `El usuario padre ya tiene el número máximo de ${demoSettings.generalMaxDirectSubordinates} subordinados directos permitidos en esta campaña demo.`,
             })
           }
-          
-          const parentCurrentSubordinatesByRole = parentMembership.subordinatesByRole || {}
-          const allowedRolesForParent = demoSettings.rolesLimits?.[parentMembership.role]
+
+          const parentCurrentSubordinatesByRole =
+            parentMembership.subordinatesByRole || {}
+          const allowedRolesForParent =
+            demoSettings.rolesLimits?.[parentMembership.role]
 
           if (allowedRolesForParent) {
             switch (role) {
               case 'manager':
-                if ((parentCurrentSubordinatesByRole.managers || 0) >= (allowedRolesForParent.managers || 0)) {
+                if (
+                  (parentCurrentSubordinatesByRole.managers || 0) >=
+                  (allowedRolesForParent.managers || 0)
+                ) {
                   return res.status(400).json({
                     message: `El ${parentMembership.role} ya ha creado el número máximo de ${allowedRolesForParent.managers} Gerentes.`,
                   })
                 }
                 break
               case 'anillo':
-                if ((parentCurrentSubordinatesByRole.anillos || 0) >= (allowedRolesForParent.anillos || 0)) {
+                if (
+                  (parentCurrentSubordinatesByRole.anillos || 0) >=
+                  (allowedRolesForParent.anillos || 0)
+                ) {
                   return res.status(400).json({
                     message: `El ${parentMembership.role} ya ha creado el número máximo de ${allowedRolesForParent.anillos} Anillos.`,
                   })
                 }
                 break
               case 'votante':
-                if ((parentCurrentSubordinatesByRole.votantes || 0) >= (allowedRolesForParent.votantes || 0)) {
+                if (
+                  (parentCurrentSubordinatesByRole.votantes || 0) >=
+                  (allowedRolesForParent.votantes || 0)
+                ) {
                   return res.status(400).json({
                     message: `El ${parentMembership.role} ya ha creado el número máximo de ${allowedRolesForParent.votantes} Votantes.`,
                   })
@@ -829,7 +849,9 @@ export const createActiveUserAndMembership = functions.https.onRequest(
                 break
             }
           } else {
-            functions.logger.warn(`Rol de padre ${parentMembership.role} no tiene límites definidos en demoSettings.rolesLimits.`)
+            functions.logger.warn(
+              `Rol de padre ${parentMembership.role} no tiene límites definidos en demoSettings.rolesLimits.`,
+            )
             return res.status(400).json({
               message: `Configuración de límites incompleta para el rol ${parentMembership.role}. Contacte al administrador.`,
             })
@@ -839,16 +861,24 @@ export const createActiveUserAndMembership = functions.https.onRequest(
 
         if (parentMembership.votoPromesa && parentMembership.votoPromesa > 0) {
           return res.status(403).json({
-            message: 'Acceso denegado: No puedes registrar nuevos miembros si tienes una promesa de voto activa.',
+            message:
+              'Acceso denegado: No puedes registrar nuevos miembros si tienes una promesa de voto activa.',
           })
         }
 
-        if (Object.prototype.hasOwnProperty.call(parentMembership, 'canRegisterSubordinates') && parentMembership.canRegisterSubordinates === false) {
+        if (
+          Object.prototype.hasOwnProperty.call(
+            parentMembership,
+            'canRegisterSubordinates',
+          ) &&
+          parentMembership.canRegisterSubordinates === false
+        ) {
           functions.logger.warn(
             `Acceso denegado: Usuario ${parentMembership.id || 'N/A'} no tiene habilitada la capacidad para registrar subordinados en campaña ${parentMembership.campaignId || 'N/A'}.`,
           )
           return res.status(403).json({
-            message: 'Acceso denegado: No tienes habilitada la capacidad para registrar subordinados.',
+            message:
+              'Acceso denegado: No tienes habilitada la capacidad para registrar subordinados.',
           })
         }
 
@@ -865,12 +895,20 @@ export const createActiveUserAndMembership = functions.https.onRequest(
           existingUserDocRef = db.collection('users').doc(userUid)
           existingUserDataForNewMember = (await existingUserDocRef.get()).data()
 
-          if (existingUserDataForNewMember && existingUserDataForNewMember.role === 'admin') {
-            return res.status(409).json({ message: 'Este email ya pertenece a un administrador.' })
+          if (
+            existingUserDataForNewMember &&
+            existingUserDataForNewMember.role === 'admin'
+          ) {
+            return res
+              .status(409)
+              .json({ message: 'Este email ya pertenece a un administrador.' })
           }
 
-          const isAlreadyActiveInCampaign = existingUserDataForNewMember?.campaignMemberships?.some(
-              (membership) => membership.campaignId === campaignId && membership.status === 'activo',
+          const isAlreadyActiveInCampaign =
+            existingUserDataForNewMember?.campaignMemberships?.some(
+              (membership) =>
+                membership.campaignId === campaignId &&
+                membership.status === 'activo',
             )
           if (isAlreadyActiveInCampaign) {
             return res.status(409).json({
@@ -885,7 +923,8 @@ export const createActiveUserAndMembership = functions.https.onRequest(
           if (error.code === 'auth/user-not-found') {
             if (!password) {
               return res.status(400).json({
-                message: 'Se requiere contraseña para nuevos usuarios que no existen en Auth.',
+                message:
+                  'Se requiere contraseña para nuevos usuarios que no existen en Auth.',
               })
             }
             const newUserRecord = await auth.createUser({
@@ -897,17 +936,23 @@ export const createActiveUserAndMembership = functions.https.onRequest(
             existingUserDocRef = db.collection('users').doc(userUid)
           } else if (error.code === 'auth/email-already-in-use') {
             return res.status(409).json({
-              message: 'El correo electrónico ya está en uso por otra cuenta Auth.',
+              message:
+                'El correo electrónico ya está en uso por otra cuenta Auth.',
             })
           } else {
-            functions.logger.error('Error al manejar usuario en Firebase Auth:', error)
+            functions.logger.error(
+              'Error al manejar usuario en Firebase Auth:',
+              error,
+            )
             return res.status(500).json({
               message: `Error al procesar usuario en Auth: ${error.message}`,
             })
           }
         }
 
-        const hashedPassword = password ? await bcrypt.hash(password, saltRounds) : existingUserDataForNewMember?.hashedPassword || null
+        const hashedPassword = password
+          ? await bcrypt.hash(password, saltRounds)
+          : existingUserDataForNewMember?.hashedPassword || null
 
         if (!hashedPassword) {
           return res.status(500).json({
@@ -915,18 +960,24 @@ export const createActiveUserAndMembership = functions.https.onRequest(
           })
         }
 
-        await db.collection('user_credentials').doc(userUid).set(
-          {
-            firebaseAuthUid: userUid,
-            cedula: cedula,
-            hashedPassword: hashedPassword,
-            createdAt: existingUserDataForNewMember?.createdAt || new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          { merge: true },
-        )
+        await db
+          .collection('user_credentials')
+          .doc(userUid)
+          .set(
+            {
+              firebaseAuthUid: userUid,
+              cedula: cedula,
+              hashedPassword: hashedPassword,
+              createdAt:
+                existingUserDataForNewMember?.createdAt ||
+                new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            { merge: true },
+          )
 
-        let updatedCampaignMemberships = existingUserDataForNewMember?.campaignMemberships || []
+        let updatedCampaignMemberships =
+          existingUserDataForNewMember?.campaignMemberships || []
 
         const newMembership = {
           campaignId: campaignId,
@@ -944,15 +995,21 @@ export const createActiveUserAndMembership = functions.https.onRequest(
           pyramidVotes: 0,
           totalPotentialVotes: 0,
           level: newMemberLevel,
-          canRegister: ['candidato', 'manager', 'anillo', 'votante'].includes(role),
+          canRegister: ['candidato', 'manager', 'anillo', 'votante'].includes(
+            role,
+          ),
           canPromise: true,
-          maxSubordinates: isDemoCampaign ? demoSettings.generalMaxDirectSubordinates : null,
+          maxSubordinates: isDemoCampaign
+            ? demoSettings.generalMaxDirectSubordinates
+            : null,
           subordinatesCount: 0,
           subordinatesByRole: { managers: 0, anillos: 0, votantes: 0 },
           canRegisterSubordinates: true,
         }
 
-        const existingMembershipIndex = updatedCampaignMemberships.findIndex((m) => m.campaignId === campaignId && m.role === role)
+        const existingMembershipIndex = updatedCampaignMemberships.findIndex(
+          (m) => m.campaignId === campaignId && m.role === role,
+        )
 
         if (existingMembershipIndex !== -1) {
           updatedCampaignMemberships[existingMembershipIndex] = {
@@ -977,32 +1034,46 @@ export const createActiveUserAndMembership = functions.https.onRequest(
           role: role,
           level: newMemberLevel,
           status: 'activo',
-          createdAt: existingUserDataForNewMember?.createdAt || new Date().toISOString(),
+          createdAt:
+            existingUserDataForNewMember?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           registeredViaAuthUid: callingUserUid,
-          lastLogin: isExistingAuthUser ? existingUserDataForNewMember?.lastLogin || null : null,
+          lastLogin: isExistingAuthUser
+            ? existingUserDataForNewMember?.lastLogin || null
+            : null,
           campaignMemberships: updatedCampaignMemberships,
         }
 
-        await db.collection('users').doc(userUid).set(userProfileToSet, { merge: true })
+        await db
+          .collection('users')
+          .doc(userUid)
+          .set(userProfileToSet, { merge: true })
 
         await db.runTransaction(async (transaction) => {
           const parentDocSnapshot = await transaction.get(parentUserRef)
           if (!parentDocSnapshot.exists) {
-            throw new Error('Parent user disappeared during transaction for subordinate creation.')
+            throw new Error(
+              'Parent user disappeared during transaction for subordinate creation.',
+            )
           }
-          let parentMemberships = parentDocSnapshot.data()?.campaignMemberships || []
-          const parentIndex = parentMemberships.findIndex((m) => m.campaignId === campaignId)
+          let parentMemberships =
+            parentDocSnapshot.data()?.campaignMemberships || []
+          const parentIndex = parentMemberships.findIndex(
+            (m) => m.campaignId === campaignId,
+          )
 
           if (parentIndex !== -1) {
             let currentParentMembership = parentMemberships[parentIndex]
-            currentParentMembership.subordinatesCount = (currentParentMembership.subordinatesCount || 0) + 1
-            currentParentMembership.subordinatesByRole = currentParentMembership.subordinatesByRole || {
+            currentParentMembership.subordinatesCount =
+              (currentParentMembership.subordinatesCount || 0) + 1
+            currentParentMembership.subordinatesByRole =
+              currentParentMembership.subordinatesByRole || {
                 managers: 0,
                 anillos: 0,
                 votantes: 0,
               }
-            currentParentMembership.subordinatesByRole[role] = (currentParentMembership.subordinatesByRole[role] || 0) + 1
+            currentParentMembership.subordinatesByRole[role] =
+              (currentParentMembership.subordinatesByRole[role] || 0) + 1
             parentMemberships[parentIndex] = currentParentMembership
 
             transaction.update(parentUserRef, {
@@ -1010,7 +1081,9 @@ export const createActiveUserAndMembership = functions.https.onRequest(
               updatedAt: new Date().toISOString(),
             })
           } else {
-            functions.logger.warn(`Parent ${parentUid} membership for campaign ${campaignId} not found during transaction.`)
+            functions.logger.warn(
+              `Parent ${parentUid} membership for campaign ${campaignId} not found during transaction.`,
+            )
           }
         })
 
@@ -1023,22 +1096,31 @@ export const createActiveUserAndMembership = functions.https.onRequest(
           parentUid: parentUid,
         })
       } catch (error) {
-        functions.logger.error('Error en createActiveUserAndMembership Cloud Function:', error)
+        functions.logger.error(
+          'Error en createActiveUserAndMembership Cloud Function:',
+          error,
+        )
         if (error.code === 'auth/email-already-in-use') {
           return res.status(409).json({
-            message: 'El correo electrónico ya está en uso por otra cuenta Auth.',
+            message:
+              'El correo electrónico ya está en uso por otra cuenta Auth.',
           })
         }
-        if (error.message.includes('Acceso denegado') || error.message.includes('No autorizado') || error.message.includes('No tienes permiso')) {
+        if (
+          error.message.includes('Acceso denegado') ||
+          error.message.includes('No autorizado') ||
+          error.message.includes('No tienes permiso')
+        ) {
           return res.status(403).json({ message: error.message })
         }
         return res.status(500).json({
-          message: 'Error interno del servidor al crear/actualizar usuario y membresía.',
+          message:
+            'Error interno del servidor al crear/actualizar usuario y membresía.',
           error: error.message,
         })
       }
     })
-  }
+  },
 )
 
 // 8. --- FUNCIÓN PARA ACTUALIZAR EL PERFIL DE UN USUARIO (PROTEGIDA) ---
@@ -1588,94 +1670,109 @@ export const getCampaignMembers = functions.https.onRequest(
       const callingUserRole = req.userRole // El rol del usuario que hace la solicitud
 
       if (!campaignId) {
-        return res.status(400).json({ message: 'El campo "campaignId" es requerido.' })
+        return res
+          .status(400)
+          .json({ message: 'El campo "campaignId" es requerido.' })
       }
 
       // Asegurarse de que el usuario pertenezca a la campaña solicitada.
       const userCampaignMembership = req.campaignMemberships.find(
-        (m) => m.campaignId === campaignId && m.status === 'activo'
+        (m) => m.campaignId === campaignId && m.status === 'activo',
       )
-      
+
       // Lógica de autorización: el usuario debe ser un administrador o un miembro activo de la campaña
       if (!userCampaignMembership && callingUserRole !== 'admin') {
         return res.status(403).json({
-          message: 'Acceso denegado: No eres miembro activo de esta campaña.'
+          message: 'Acceso denegado: No eres miembro activo de esta campaña.',
         })
       }
 
       try {
-        let membersQuery = db.collection('users').where('campaignMemberships', 'array-contains', {
+        let membersQuery = db
+          .collection('users')
+          .where('campaignMemberships', 'array-contains', {
             campaignId: campaignId,
-            status: 'activo'
-        });
+            status: 'activo',
+          })
 
-        const membersSnapshot = await membersQuery.get();
-        const campaignMembers = [];
+        const membersSnapshot = await membersQuery.get()
+        const campaignMembers = []
 
         if (!membersSnapshot.empty) {
           membersSnapshot.forEach((doc) => {
-            const userData = doc.data();
+            const userData = doc.data()
             const membership = userData.campaignMemberships.find(
-              (m) => m.campaignId === campaignId
-            );
+              (m) => m.campaignId === campaignId,
+            )
 
             // Lógica de filtrado para asegurar que solo se muestren los subordinados directos
-            let shouldIncludeMember = false;
-            
+            let shouldIncludeMember = false
+
             // Un administrador puede ver a todos
             // Un candidato puede ver a todos sus subordinados directos
-            if (callingUserRole === 'admin' || membership.ownerBy === callingUserUid) {
-                shouldIncludeMember = true;
+            if (
+              callingUserRole === 'admin' ||
+              membership.ownerBy === callingUserUid
+            ) {
+              shouldIncludeMember = true
             }
 
             if (shouldIncludeMember) {
-                // Prepara un objeto simplificado para el frontend, excluyendo datos sensibles
-                campaignMembers.push({
-                    userId: doc.id,
-                    name: userData.name || userData.nombre,
-                    role: membership.role,
-                    level: membership.level,
-                    directVotes: membership.directVotes,
-                    pyramidVotes: membership.pyramidVotes,
-                    totalPotentialVotes: membership.totalPotentialVotes,
-                    ownerBy: membership.ownerBy // Incluye el ownerBy para construir la pirámide en el frontend
-                });
+              // Prepara un objeto simplificado para el frontend, excluyendo datos sensibles
+              campaignMembers.push({
+                userId: doc.id,
+                name: userData.name || userData.nombre,
+                role: membership.role,
+                level: membership.level,
+                directVotes: membership.directVotes,
+                pyramidVotes: membership.pyramidVotes,
+                totalPotentialVotes: membership.totalPotentialVotes,
+                ownerBy: membership.ownerBy, // Incluye el ownerBy para construir la pirámide en el frontend
+              })
             }
-          });
+          })
         }
-        
+
         // CORRECCIÓN: Para un candidato, la lógica es diferente.
         // Si el usuario es un candidato, su `ownerBy` en su propia membresía es su propio UID.
         // Para que se muestre a sí mismo, el filtro debe incluirlo.
         if (userCampaignMembership?.role === 'candidato') {
-            const candidatoSelf = membersSnapshot.docs.find(doc => doc.id === callingUserUid);
-            if (candidatoSelf) {
-                const userData = candidatoSelf.data();
-                const membership = userData.campaignMemberships.find(m => m.campaignId === campaignId);
-                 campaignMembers.push({
-                    userId: userData.id,
-                    name: userData.name || userData.nombre,
-                    role: membership.role,
-                    level: membership.level,
-                    directVotes: membership.directVotes,
-                    pyramidVotes: membership.pyramidVotes,
-                    totalPotentialVotes: membership.totalPotentialVotes,
-                    ownerBy: membership.ownerBy
-                });
-            }
+          const candidatoSelf = membersSnapshot.docs.find(
+            (doc) => doc.id === callingUserUid,
+          )
+          if (candidatoSelf) {
+            const userData = candidatoSelf.data()
+            const membership = userData.campaignMemberships.find(
+              (m) => m.campaignId === campaignId,
+            )
+            campaignMembers.push({
+              userId: userData.id,
+              name: userData.name || userData.nombre,
+              role: membership.role,
+              level: membership.level,
+              directVotes: membership.directVotes,
+              pyramidVotes: membership.pyramidVotes,
+              totalPotentialVotes: membership.totalPotentialVotes,
+              ownerBy: membership.ownerBy,
+            })
+          }
         }
-        
+
         return res.status(200).json({
           message: 'Miembros de la campaña recuperados exitosamente.',
           campaignMembers: campaignMembers,
-        });
+        })
       } catch (error) {
-        functions.logger.error('Error en getCampaignMembers Cloud Function:', error);
+        functions.logger.error(
+          'Error en getCampaignMembers Cloud Function:',
+          error,
+        )
         return res.status(500).json({
-          message: 'Error interno del servidor al recuperar miembros de la campaña.',
+          message:
+            'Error interno del servidor al recuperar miembros de la campaña.',
           error: error.message,
-        });
+        })
       }
-    });
-  }
-);
+    })
+  },
+)

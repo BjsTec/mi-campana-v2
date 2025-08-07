@@ -1,32 +1,39 @@
 // src/components/admin/campaigns/CampaignCard.js
-import React from 'react';
-import Link from 'next/link';
-import { CampaignIcon, EditIcon } from '@/components/ui/IconComponents';
+import React from 'react'
+import Link from 'next/link'
+import { CampaignIcon, EditIcon } from '@/components/ui/IconComponents'
 
 const StatusBadge = ({ status }) => {
   const statusColors = {
     activo: 'bg-green-100 text-green-800',
     inactivo: 'bg-red-100 text-red-800',
     archivado: 'bg-gray-100 text-gray-800',
-  };
+  }
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}
+    >
       {status}
     </span>
-  );
-};
+  )
+}
 
 const CampaignCard = ({ campaign, onToggleStatus, loading }) => {
   return (
     <div className="bg-white rounded-xl shadow-md p-6 transform hover:scale-105 transition duration-300 ease-in-out border border-gray-200">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center w-full min-w-0"> {/* Añado w-full y min-w-0 para que el flexbox maneje el espacio correctamente */}
+        <div className="flex items-center w-full min-w-0">
+          {' '}
+          {/* Añado w-full y min-w-0 para que el flexbox maneje el espacio correctamente */}
           {campaign.logoUrl ? (
             <img
               src={campaign.logoUrl}
               alt={`Logo de ${campaign.campaignName}`}
               className="h-12 w-12 object-contain rounded-full border border-gray-200 mr-4 flex-shrink-0"
-              onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/48x48/E5E7EB/4B5563?text=Logo`; }}
+              onError={(e) => {
+                e.target.onerror = null
+                e.target.src = `https://placehold.co/48x48/E5E7EB/4B5563?text=Logo`
+              }}
             />
           ) : (
             <div className="h-12 w-12 rounded-full border border-gray-200 bg-gray-100 flex items-center justify-center mr-4 flex-shrink-0">
@@ -42,9 +49,17 @@ const CampaignCard = ({ campaign, onToggleStatus, loading }) => {
 
       <div className="space-y-2 text-sm text-gray-600 mb-4">
         {/* Añado la clase 'truncate' a los párrafos para corregir el desbordamiento */}
-        <p className="truncate"><span className="font-medium">Candidato:</span> {campaign.candidateName}</p>
-        <p className="truncate"><span className="font-medium">Tipo:</span> {campaign.type}</p>
-        <p className="truncate"><span className="font-medium">Plan:</span> {campaign.planName || 'Básico'}</p>
+        <p className="truncate">
+          <span className="font-medium">Candidato:</span>{' '}
+          {campaign.candidateName}
+        </p>
+        <p className="truncate">
+          <span className="font-medium">Tipo:</span> {campaign.type}
+        </p>
+        <p className="truncate">
+          <span className="font-medium">Plan:</span>{' '}
+          {campaign.planName || 'Básico'}
+        </p>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mt-auto">
@@ -68,7 +83,7 @@ const CampaignCard = ({ campaign, onToggleStatus, loading }) => {
         </button>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default CampaignCard;
+export default CampaignCard

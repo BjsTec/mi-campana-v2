@@ -21,7 +21,7 @@ const UploadIcon = () => (
 
 const ImageUploader = ({ label, onFileChange, preview, setPreview }) => {
   const [isDragging, setIsDragging] = React.useState(false)
-  
+
   const handleDragEnter = (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -51,9 +51,9 @@ const ImageUploader = ({ label, onFileChange, preview, setPreview }) => {
       onFileChange(e.target.files[0])
     }
   }
-  
+
   const handleRemovePreview = () => {
-    setPreview(null);
+    setPreview(null)
   }
 
   return (
@@ -80,8 +80,18 @@ const ImageUploader = ({ label, onFileChange, preview, setPreview }) => {
               onClick={handleRemovePreview}
               className="absolute top-2 right-2 rounded-full bg-red-600 text-white p-1 hover:bg-red-700"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </>
@@ -132,20 +142,27 @@ const MediaMessagingStep = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <ImageUploader
           label="Logo de la Campaña"
-          onFileChange={(file) => handleFileChange(setLogoFile, setLogoPreview, file)}
+          onFileChange={(file) =>
+            handleFileChange(setLogoFile, setLogoPreview, file)
+          }
           preview={logoPreview}
           setPreview={setLogoPreview}
         />
         <ImageUploader
           label="Banner de la Campaña"
-          onFileChange={(file) => handleFileChange(setBannerFile, setBannerPreview, file)}
+          onFileChange={(file) =>
+            handleFileChange(setBannerFile, setBannerPreview, file)
+          }
           preview={bannerPreview}
           setPreview={setBannerPreview}
         />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label htmlFor="socialLinks.facebook" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.facebook"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL Facebook
           </label>
           <input
@@ -159,7 +176,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.instagram" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.instagram"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL Instagram
           </label>
           <input
@@ -173,7 +193,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.tiktok" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.tiktok"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL TikTok
           </label>
           <input
@@ -187,7 +210,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.threads" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.threads"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL Threads
           </label>
           <input
@@ -201,7 +227,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.youtube" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.youtube"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL YouTube
           </label>
           <input
@@ -215,7 +244,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.linkedin" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.linkedin"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL LinkedIn
           </label>
           <input
@@ -229,7 +261,10 @@ const MediaMessagingStep = ({
           />
         </div>
         <div>
-          <label htmlFor="socialLinks.twitter" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="socialLinks.twitter"
+            className="block text-sm font-medium text-gray-700"
+          >
             URL Twitter
           </label>
           <input
@@ -256,7 +291,10 @@ const MediaMessagingStep = ({
             onChange={handleInputChange}
             className="h-4 w-4 text-blue-600 border-gray-300 rounded"
           />
-          <label htmlFor="messagingOptions.email" className="ml-2 block text-sm text-gray-900">
+          <label
+            htmlFor="messagingOptions.email"
+            className="ml-2 block text-sm text-gray-900"
+          >
             Envío de Emails a Votantes
           </label>
         </div>
@@ -269,7 +307,10 @@ const MediaMessagingStep = ({
             onChange={handleInputChange}
             className="h-4 w-4 text-blue-600 border-gray-300 rounded"
           />
-          <label htmlFor="messagingOptions.alerts" className="ml-2 block text-sm text-gray-900">
+          <label
+            htmlFor="messagingOptions.alerts"
+            className="ml-2 block text-sm text-gray-900"
+          >
             Alertas Internas
           </label>
         </div>
@@ -282,7 +323,10 @@ const MediaMessagingStep = ({
             onChange={handleInputChange}
             className="h-4 w-4 text-blue-600 border-gray-300 rounded"
           />
-          <label htmlFor="messagingOptions.sms" className="ml-2 block text-sm text-gray-900">
+          <label
+            htmlFor="messagingOptions.sms"
+            className="ml-2 block text-sm text-gray-900"
+          >
             Envío de SMS
           </label>
         </div>
@@ -295,7 +339,10 @@ const MediaMessagingStep = ({
             onChange={handleInputChange}
             className="h-4 w-4 text-blue-600 border-gray-300 rounded"
           />
-          <label htmlFor="messagingOptions.whatsappBusiness" className="ml-2 block text-sm text-gray-900">
+          <label
+            htmlFor="messagingOptions.whatsappBusiness"
+            className="ml-2 block text-sm text-gray-900"
+          >
             Envío por WhatsApp Business
           </label>
         </div>

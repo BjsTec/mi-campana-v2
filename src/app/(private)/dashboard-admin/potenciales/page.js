@@ -14,7 +14,12 @@ import Tabs from '@/components/ui/Tabs.jsx'
 import LeadCard from '../../../../components/admin/LeadCard.jsx'
 
 // Importamos los íconos necesarios para las StatCards
-import { UsersIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
+import {
+  UsersIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon,
+} from '@heroicons/react/24/outline'
 
 const GET_LEADS_URL = process.env.NEXT_PUBLIC_GET_LEADS_URL
 
@@ -29,7 +34,9 @@ export default function LeadsListPage() {
   const fetchLeads = useCallback(async () => {
     if (authLoading || !idToken) {
       if (!authLoading && !idToken) {
-        setError('No autenticado. Por favor, inicia sesión para ver los clientes potenciales.')
+        setError(
+          'No autenticado. Por favor, inicia sesión para ver los clientes potenciales.',
+        )
         setLoading(false)
       }
       return
@@ -49,14 +56,16 @@ export default function LeadsListPage() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || 'Error al cargar clientes potenciales.')
+        throw new Error(
+          errorData.message || 'Error al cargar clientes potenciales.',
+        )
       }
 
       const data = await response.json()
       // CORRECCIÓN: Ajustar el manejo de la respuesta de la API. La documentación
       // muestra que el backend devuelve un array directamente.
-      const leadsArray = Array.isArray(data) ? data : (data.leads || []);
-      
+      const leadsArray = Array.isArray(data) ? data : data.leads || []
+
       const sortedData = leadsArray.sort((a, b) => {
         const timestampA = a.timestamp?._seconds || 0
         const timestampB = b.timestamp?._seconds || 0
@@ -81,20 +90,34 @@ export default function LeadsListPage() {
       (lead) =>
         lead.name?.toLowerCase().includes(lowerCaseSearchTerm) ||
         lead.email?.toLowerCase().includes(lowerCaseSearchTerm) ||
-        (lead.phone && lead.phone.toLowerCase().includes(lowerCaseSearchTerm)) ||
-        (lead.interestedIn && lead.interestedIn.toLowerCase().includes(lowerCaseSearchTerm)) ||
-        (lead.source && lead.source.toLowerCase().includes(lowerCaseSearchTerm)) ||
-        (lead.status && lead.status.toLowerCase().includes(lowerCaseSearchTerm)),
+        (lead.phone &&
+          lead.phone.toLowerCase().includes(lowerCaseSearchTerm)) ||
+        (lead.interestedIn &&
+          lead.interestedIn.toLowerCase().includes(lowerCaseSearchTerm)) ||
+        (lead.source &&
+          lead.source.toLowerCase().includes(lowerCaseSearchTerm)) ||
+        (lead.status &&
+          lead.status.toLowerCase().includes(lowerCaseSearchTerm)),
     )
   }, [allLeads, searchTerm])
 
-  const uncontactedLeads = useMemo(() => filteredLeads.filter((lead) => lead.status === 'nuevo'), [filteredLeads])
-  const contactedLeads = useMemo(() => filteredLeads.filter((lead) => lead.status !== 'nuevo'), [filteredLeads])
+  const uncontactedLeads = useMemo(
+    () => filteredLeads.filter((lead) => lead.status === 'nuevo'),
+    [filteredLeads],
+  )
+  const contactedLeads = useMemo(
+    () => filteredLeads.filter((lead) => lead.status !== 'nuevo'),
+    [filteredLeads],
+  )
 
-  const displayedLeads = activeTab === 'uncontacted' ? uncontactedLeads : contactedLeads
+  const displayedLeads =
+    activeTab === 'uncontacted' ? uncontactedLeads : contactedLeads
 
   const tabs = [
-    { label: `Sin Contactar (${uncontactedLeads.length})`, value: 'uncontacted' },
+    {
+      label: `Sin Contactar (${uncontactedLeads.length})`,
+      value: 'uncontacted',
+    },
     { label: `Contactados (${contactedLeads.length})`, value: 'contacted' },
   ]
 
@@ -122,15 +145,39 @@ export default function LeadsListPage() {
         </h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <StatCard title="Total Leads" value={allLeads.length} icon={UsersIcon} href="#" />
-          <StatCard title="Nuevos Leads" value={uncontactedLeads.length} icon={ClockIcon} href="#" />
-          <StatCard title="Contactados" value={contactedLeads.length} icon={CheckCircleIcon} href="#" />
-          <StatCard title="Descartados" value={allLeads.filter(l => l.status === 'descartado').length} icon={XCircleIcon} href="#" />
+          <StatCard
+            title="Total Leads"
+            value={allLeads.length}
+            icon={UsersIcon}
+            href="#"
+          />
+          <StatCard
+            title="Nuevos Leads"
+            value={uncontactedLeads.length}
+            icon={ClockIcon}
+            href="#"
+          />
+          <StatCard
+            title="Contactados"
+            value={contactedLeads.length}
+            icon={CheckCircleIcon}
+            href="#"
+          />
+          <StatCard
+            title="Descartados"
+            value={allLeads.filter((l) => l.status === 'descartado').length}
+            icon={XCircleIcon}
+            href="#"
+          />
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
           <div className="w-full md:w-1/2">
-            <SearchInput searchTerm={searchTerm} setSearchTerm={setSearchTerm} placeholder="Buscar por nombre, email, estado..." />
+            <SearchInput
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              placeholder="Buscar por nombre, email, estado..."
+            />
           </div>
           <Link
             href="/dashboard-admin/potenciales/new"
@@ -150,7 +197,9 @@ export default function LeadsListPage() {
           </div>
         )}
         {error && (
-          <p className="text-center text-error text-lg py-10 font-body">Error: {error}</p>
+          <p className="text-center text-error text-lg py-10 font-body">
+            Error: {error}
+          </p>
         )}
         {!loading && !error && displayedLeads.length === 0 && (
           <p className="text-center text-neutral-600 text-lg py-10 font-body">
@@ -159,9 +208,11 @@ export default function LeadsListPage() {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {!loading && !error && displayedLeads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} />
-          ))}
+          {!loading &&
+            !error &&
+            displayedLeads.map((lead) => (
+              <LeadCard key={lead.id} lead={lead} />
+            ))}
         </div>
       </div>
     </div>

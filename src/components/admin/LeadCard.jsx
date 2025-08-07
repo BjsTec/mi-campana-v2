@@ -13,7 +13,9 @@ export default function LeadCard({ lead }) {
 
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return 'N/A'
-    const date = timestamp._seconds ? new Date(timestamp._seconds * 1000) : new Date(timestamp)
+    const date = timestamp._seconds
+      ? new Date(timestamp._seconds * 1000)
+      : new Date(timestamp)
     return date.toLocaleDateString('es-CO', {
       year: 'numeric',
       month: 'short',
@@ -46,17 +48,27 @@ export default function LeadCard({ lead }) {
         <h3 className="text-lg font-semibold text-primary-dark mb-1 truncate">
           {lead.name}
         </h3>
-        <p className="text-neutral-800 text-xs mb-0.5 truncate">Email: {lead.email}</p>
-        <p className="text-neutral-800 text-xs mb-0.5">Teléfono: {lead.phone || 'N/A'}</p>
-        <p className="text-neutral-800 text-xs mb-0.5 truncate">Interesado en: {lead.interestedIn || 'N/A'}</p>
-        <p className="text-neutral-800 text-xs mb-0.5 truncate">Fuente: {lead.source || 'N/A'}</p>
+        <p className="text-neutral-800 text-xs mb-0.5 truncate">
+          Email: {lead.email}
+        </p>
+        <p className="text-neutral-800 text-xs mb-0.5">
+          Teléfono: {lead.phone || 'N/A'}
+        </p>
+        <p className="text-neutral-800 text-xs mb-0.5 truncate">
+          Interesado en: {lead.interestedIn || 'N/A'}
+        </p>
+        <p className="text-neutral-800 text-xs mb-0.5 truncate">
+          Fuente: {lead.source || 'N/A'}
+        </p>
         <p className="text-neutral-800 text-xs mb-1">
           Estado:
           <span className={`font-bold ml-1 ${statusColors}`}>
             {lead.status ? lead.status.replace(/_/g, ' ').toUpperCase() : 'N/A'}
           </span>
         </p>
-        <p className="text-neutral-600 text-xs mt-1">Recibido: {formatTimestamp(lead.timestamp)}</p>
+        <p className="text-neutral-600 text-xs mt-1">
+          Recibido: {formatTimestamp(lead.timestamp)}
+        </p>
       </div>
       <div className="mt-3">
         <button

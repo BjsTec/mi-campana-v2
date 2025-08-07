@@ -30,12 +30,19 @@ export default function Combobox({
         {/* CORRECCIÓN: El asterisco se añade solo si el campo es requerido */}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
-      <Listbox value={value} onChange={(val) => onChange(val)} disabled={disabled}>
+      <Listbox
+        value={value}
+        onChange={(val) => onChange(val)}
+        disabled={disabled}
+      >
         <div className="relative mt-1">
           <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 sm:text-sm text-gray-900 border border-gray-300">
             <span className="block truncate">{selectedOption}</span>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-              <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+              <ChevronUpDownIcon
+                className="h-5 w-5 text-gray-400"
+                aria-hidden="true"
+              />
             </span>
           </Listbox.Button>
           <Transition
@@ -57,11 +64,15 @@ export default function Combobox({
                 >
                   {({ selected, active }) => (
                     <>
-                      <span className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                      <span
+                        className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}
+                      >
                         {option.label}
                       </span>
                       {selected && (
-                        <span className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-blue-600'}`}>
+                        <span
+                          className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-blue-600'}`}
+                        >
                           <CheckIcon className="h-5 w-5" aria-hidden="true" />
                         </span>
                       )}

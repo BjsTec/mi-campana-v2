@@ -15,65 +15,79 @@ const ListaCampanasPage = () => {
   const { user, idToken } = useAuth()
   const [filters, setFilters] = useState({ type: '', status: '', search: '' })
 
-  const { campaigns, campaignTypes, loading, error, refreshData } = useCampaigns()
-  
+  const { campaigns, campaignTypes, loading, error, refreshData } =
+    useCampaigns()
+
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [campaignToToggle, setCampaignToToggle] = useState(null)
   const [alert, setAlert] = useState({ show: false, message: '', type: 'info' })
 
-  const UPDATE_CAMPAIGN_STATUS_URL = process.env.NEXT_PUBLIC_UPDATE_CAMPAIGN_STATUS_URL
-  const CAMPAIGN_TYPES_OPTIONS = useMemo(() => [
-    { value: '', label: 'Todos los Tipos' },
-    ...campaignTypes.map(type => ({ value: type.id, label: type.name }))
-  ], [campaignTypes]);
+  const UPDATE_CAMPAIGN_STATUS_URL =
+    process.env.NEXT_PUBLIC_UPDATE_CAMPAIGN_STATUS_URL
+  const CAMPAIGN_TYPES_OPTIONS = useMemo(
+    () => [
+      { value: '', label: 'Todos los Tipos' },
+      ...campaignTypes.map((type) => ({ value: type.id, label: type.name })),
+    ],
+    [campaignTypes],
+  )
 
   const STATUS_OPTIONS = [
     { value: '', label: 'Todos los Estados' },
     { value: 'activo', label: 'Activo' },
     { value: 'inactivo', label: 'Inactivo' },
-    { value: 'archivado', label: 'Archivado' }
-  ];
+    { value: 'archivado', label: 'Archivado' },
+  ]
 
   const filteredCampaigns = useMemo(() => {
-    return campaigns.filter(campaign => {
-      const matchesType = filters.type === '' || campaign.type === filters.type;
-      const matchesStatus = filters.status === '' || campaign.status === filters.status;
+    return campaigns.filter((campaign) => {
+      const matchesType = filters.type === '' || campaign.type === filters.type
+      const matchesStatus =
+        filters.status === '' || campaign.status === filters.status
       const matchesSearch =
         filters.search === '' ||
-        (campaign.campaignName && campaign.campaignName.toLowerCase().includes(filters.search.toLowerCase())) ||
-        (campaign.candidateName && campaign.candidateName.toLowerCase().includes(filters.search.toLowerCase()));
-      return matchesType && matchesStatus && matchesSearch;
-    });
-  }, [campaigns, filters]);
+        (campaign.campaignName &&
+          campaign.campaignName
+            .toLowerCase()
+            .includes(filters.search.toLowerCase())) ||
+        (campaign.candidateName &&
+          campaign.candidateName
+            .toLowerCase()
+            .includes(filters.search.toLowerCase()))
+      return matchesType && matchesStatus && matchesSearch
+    })
+  }, [campaigns, filters])
 
-  const totalCampaigns = campaigns.length;
-  const activeCampaigns = campaigns.filter(c => c.status === 'activo').length;
-  const inactiveCampaigns = campaigns.filter(c => c.status === 'inactivo').length;
+  const totalCampaigns = campaigns.length
+  const activeCampaigns = campaigns.filter((c) => c.status === 'activo').length
+  const inactiveCampaigns = campaigns.filter(
+    (c) => c.status === 'inactivo',
+  ).length
 
   const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilters(prevFilters => ({ ...prevFilters, [name]: value }));
-  };
+    const { name, value } = e.target
+    setFilters((prevFilters) => ({ ...prevFilters, [name]: value }))
+  }
 
   const handleOpenConfirmModal = useCallback((campaignId, currentStatus) => {
-    setCampaignToToggle({ id: campaignId, currentStatus });
-    setShowConfirmModal(true);
-  }, []);
+    setCampaignToToggle({ id: campaignId, currentStatus })
+    setShowConfirmModal(true)
+  }, [])
 
   const handleConfirmToggleStatus = useCallback(async () => {
-    if (!campaignToToggle) return;
-    const { id, currentStatus } = campaignToToggle;
-    setShowConfirmModal(false);
+    if (!campaignToToggle) return
+    const { id, currentStatus } = campaignToToggle
+    setShowConfirmModal(false)
 
     try {
       if (!UPDATE_CAMPAIGN_STATUS_URL) {
-        throw new Error('URL para actualizar estado de campaña no configurada.');
+        throw new Error('URL para actualizar estado de campaña no configurada.')
       }
       if (!idToken) {
-        throw new Error('No hay token de autenticación disponible.');
+        throw new Error('No hay token de autenticación disponible.')
       }
 
-      const newStatus = currentStatus === 'activo' ? 'inactivo' : 'activo';
+      const newStatus = currentStatus === 'activo' ? 'inactivo' : 'activo'
       const response = await fetch(UPDATE_CAMPAIGN_STATUS_URL, {
         method: 'POST',
         headers: {
@@ -81,39 +95,41 @@ const ListaCampanasPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ campaignId: id, status: newStatus }),
-      });
+      })
 
       if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.message || 'Error al actualizar el estado de la campaña.');
+        const errData = await response.json()
+        throw new Error(
+          errData.message || 'Error al actualizar el estado de la campaña.',
+        )
       }
 
-      await refreshData();
+      await refreshData()
       setAlert({
         show: true,
         message: `Estado de la campaña actualizado a '${newStatus}' exitosamente.`,
         type: 'success',
-      });
+      })
     } catch (err) {
-      console.error('Error al cambiar estado de campaña:', err);
+      console.error('Error al cambiar estado de campaña:', err)
       setAlert({
         show: true,
         message: `Error al cambiar estado de campaña: ${err.message}`,
         type: 'error',
-      });
+      })
     } finally {
-      setCampaignToToggle(null);
+      setCampaignToToggle(null)
     }
-  }, [UPDATE_CAMPAIGN_STATUS_URL, idToken, refreshData, campaignToToggle]);
+  }, [UPDATE_CAMPAIGN_STATUS_URL, idToken, refreshData, campaignToToggle])
 
   const handleCancelToggleStatus = useCallback(() => {
-    setShowConfirmModal(false);
-    setCampaignToToggle(null);
-  }, []);
+    setShowConfirmModal(false)
+    setCampaignToToggle(null)
+  }, [])
 
   const handleCloseAlert = useCallback(() => {
-    setAlert({ ...alert, show: false });
-  }, [alert]);
+    setAlert({ ...alert, show: false })
+  }, [alert])
 
   if (loading) {
     return (
@@ -121,22 +137,30 @@ const ListaCampanasPage = () => {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
         <p className="ml-4 text-primary-600">Cargando campañas...</p>
       </div>
-    );
+    )
   }
 
   if (error) {
     return (
       <div className="p-6 bg-neutral-100 min-h-screen flex items-center justify-center">
-        <Alert message={error} type="error" onClose={() => setAlert({ show: false, message: '', type: 'info' })} />
+        <Alert
+          message={error}
+          type="error"
+          onClose={() => setAlert({ show: false, message: '', type: 'info' })}
+        />
       </div>
-    );
+    )
   }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-neutral-100 min-h-screen">
       {alert.show && (
         <div className="fixed top-4 right-4 z-50">
-          <Alert message={alert.message} type={alert.type} onClose={handleCloseAlert} />
+          <Alert
+            message={alert.message}
+            type={alert.type}
+            onClose={handleCloseAlert}
+          />
         </div>
       )}
 
@@ -149,13 +173,26 @@ const ListaCampanasPage = () => {
         />
       )}
 
-      <h1 className="text-3xl font-bold text-neutral-800 mb-6">Gestión de Campañas</h1>
-      <p className="text-neutral-600 mb-6">Aquí puedes ver y gestionar todas las campañas registradas en el sistema.</p>
-      
+      <h1 className="text-3xl font-bold text-neutral-800 mb-6">
+        Gestión de Campañas
+      </h1>
+      <p className="text-neutral-600 mb-6">
+        Aquí puedes ver y gestionar todas las campañas registradas en el
+        sistema.
+      </p>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <StatCard title="Total de Campañas" value={totalCampaigns} />
-        <StatCard title="Campañas Activas" value={activeCampaigns} color="green" />
-        <StatCard title="Campañas Inactivas" value={inactiveCampaigns} color="red" />
+        <StatCard
+          title="Campañas Activas"
+          value={activeCampaigns}
+          color="green"
+        />
+        <StatCard
+          title="Campañas Inactivas"
+          value={inactiveCampaigns}
+          color="red"
+        />
       </div>
 
       <div className="bg-white p-4 rounded-xl shadow-md mb-8 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -175,8 +212,10 @@ const ListaCampanasPage = () => {
             onChange={handleFilterChange}
             className="block w-full pl-3 pr-10 py-2 text-base border-neutral-300 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md text-neutral-900"
           >
-            {CAMPAIGN_TYPES_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>{option.label}</option>
+            {CAMPAIGN_TYPES_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
           </select>
           <StatusSelector
@@ -187,7 +226,7 @@ const ListaCampanasPage = () => {
           />
         </div>
       </div>
-      
+
       {!loading && !error && filteredCampaigns.length === 0 && (
         <div className="text-center py-8 text-neutral-600">
           <p>No se encontraron campañas con los filtros aplicados.</p>
@@ -205,7 +244,7 @@ const ListaCampanasPage = () => {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ListaCampanasPage;
+export default ListaCampanasPage

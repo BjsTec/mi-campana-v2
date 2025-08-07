@@ -27,35 +27,99 @@ import {
 const navLinksByRole = {
   admin: [
     { href: '/dashboard-admin/home-wm', label: 'Inicio', icon: <Home /> },
-    { href: '/dashboard-admin/potenciales', label: 'Clientes', icon: <Users /> },
-    { href: '/dashboard-admin/nueva-campana', label: 'Nueva Campaña', icon: <Briefcase /> },
-    { href: '/dashboard-admin/lista-campanas', label: 'Lista de Campañas', icon: <Briefcase /> },
-    { href: '/dashboard-admin/users-list', label: 'Lista de usuarios', icon: <Users /> },
-    { href: '/dashboard-admin/variables', label: 'Variables del Sistema', icon: <Settings /> },
+    {
+      href: '/dashboard-admin/potenciales',
+      label: 'Clientes',
+      icon: <Users />,
+    },
+    {
+      href: '/dashboard-admin/nueva-campana',
+      label: 'Nueva Campaña',
+      icon: <Briefcase />,
+    },
+    {
+      href: '/dashboard-admin/lista-campanas',
+      label: 'Lista de Campañas',
+      icon: <Briefcase />,
+    },
+    {
+      href: '/dashboard-admin/users-list',
+      label: 'Lista de usuarios',
+      icon: <Users />,
+    },
+    {
+      href: '/dashboard-admin/variables',
+      label: 'Variables del Sistema',
+      icon: <Settings />,
+    },
   ],
   candidato: [
-    { href: '/dashboard-candidato/panel', label: 'Mi Panel', icon: <ChartBar /> },
-    { href: '/dashboard-candidato/equipo', label: 'Mi Equipo', icon: <Users /> },
-    { href: '/dashboard-candidato/escrutinio', label: 'Escrutinio', icon: <ClipboardList /> },
-    { href: '/dashboard-candidato/voto-opinion', label: 'Voto de Opinión', icon: <User /> },
-    { href: '/dashboard-candidato/editar-campana', label: 'Gestionar Campaña', icon: <Settings /> },
+    {
+      href: '/dashboard-candidato/panel',
+      label: 'Mi Panel',
+      icon: <ChartBar />,
+    },
+    {
+      href: '/dashboard-candidato/equipo',
+      label: 'Mi Equipo',
+      icon: <Users />,
+    },
+    {
+      href: '/dashboard-candidato/escrutinio',
+      label: 'Escrutinio',
+      icon: <ClipboardList />,
+    },
+    {
+      href: '/dashboard-candidato/voto-opinion',
+      label: 'Voto de Opinión',
+      icon: <User />,
+    },
+    {
+      href: '/dashboard-candidato/editar-campana',
+      label: 'Gestionar Campaña',
+      icon: <Settings />,
+    },
   ],
   manager: [
     { href: '/dashboard-manager/panel', label: 'Mi Panel', icon: <ChartBar /> },
     { href: '/dashboard-manager/equipo', label: 'Mi Equipo', icon: <Users /> },
-    { href: '/dashboard-manager/escrutinio', label: 'Escrutinio', icon: <ClipboardList /> },
-    { href: '/dashboard-manager/voto-opinion', label: 'Voto de Opinión', icon: <User /> },
-    { href: '/dashboard-manager/mis-votantes', label: 'Mis Votantes', icon: <User /> },
+    {
+      href: '/dashboard-manager/escrutinio',
+      label: 'Escrutinio',
+      icon: <ClipboardList />,
+    },
+    {
+      href: '/dashboard-manager/voto-opinion',
+      label: 'Voto de Opinión',
+      icon: <User />,
+    },
+    {
+      href: '/dashboard-manager/mis-votantes',
+      label: 'Mis Votantes',
+      icon: <User />,
+    },
   ],
   anillo: [
     { href: '/dashboard-anillo/panel', label: 'Mi Panel', icon: <ChartBar /> },
     { href: '/dashboard-anillo/equipo', label: 'Mi Equipo', icon: <Users /> },
-    { href: '/dashboard-anillo/escrutinio', label: 'Escrutinio', icon: <ClipboardList /> },
-    { href: '/dashboard-anillo/voto-opinion', label: 'Voto de Opinión', icon: <User /> },
+    {
+      href: '/dashboard-anillo/escrutinio',
+      label: 'Escrutinio',
+      icon: <ClipboardList />,
+    },
+    {
+      href: '/dashboard-anillo/voto-opinion',
+      label: 'Voto de Opinión',
+      icon: <User />,
+    },
   ],
   votante: [
     { href: '/dashboard-votante/panel', label: 'Mi Panel', icon: <ChartBar /> },
-    { href: '/dashboard-votante/escrutinio', label: 'Escrutinio', icon: <ClipboardList /> },
+    {
+      href: '/dashboard-votante/escrutinio',
+      label: 'Escrutinio',
+      icon: <ClipboardList />,
+    },
   ],
   public_lead: [],
 }
@@ -64,7 +128,14 @@ export default function DashboardLayout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
-  const { user, activeCampaign, logout, isLoading: authLoading, setActiveCampaignId, idToken } = useAuth()
+  const {
+    user,
+    activeCampaign,
+    logout,
+    isLoading: authLoading,
+    setActiveCampaignId,
+    idToken,
+  } = useAuth()
 
   const currentRole = user?.role || 'public_lead'
 
@@ -80,7 +151,10 @@ export default function DashboardLayout({ children }) {
     const electionDate = new Date(activeCampaign.electionDate)
     const today = new Date()
     const oneDayInMs = 24 * 60 * 60 * 1000
-    return today.getTime() >= electionDate.getTime() - oneDayInMs && today.getTime() <= electionDate.getTime() + oneDayInMs
+    return (
+      today.getTime() >= electionDate.getTime() - oneDayInMs &&
+      today.getTime() <= electionDate.getTime() + oneDayInMs
+    )
   }, [activeCampaign])
 
   useEffect(() => {
@@ -110,19 +184,27 @@ export default function DashboardLayout({ children }) {
 
   if (user && user.role === 'public_lead') {
     router.push('/registro-exitoso')
-    return null;
+    return null
   }
 
   if (user && !activeCampaign && currentRole !== 'admin') {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">¡Aún no estás en una campaña activa!</h2>
-            <p className="text-neutral-600 mb-6">Por favor, espera a que un administrador te asigne a una campaña o crea una campaña demo.</p>
-            <Link href="/registro-publico" className="text-blue-600 hover:underline">
-                Crear Campaña Demo
-            </Link>
-        </div>
-      )
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-8 text-center">
+        <h2 className="text-2xl font-bold mb-4">
+          ¡Aún no estás en una campaña activa!
+        </h2>
+        <p className="text-neutral-600 mb-6">
+          Por favor, espera a que un administrador te asigne a una campaña o
+          crea una campaña demo.
+        </p>
+        <Link
+          href="/registro-publico"
+          className="text-blue-600 hover:underline"
+        >
+          Crear Campaña Demo
+        </Link>
+      </div>
+    )
   }
 
   const primaryColor = activeCampaign?.colors?.primary || '#3084F2'
@@ -152,7 +234,12 @@ export default function DashboardLayout({ children }) {
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <div className="h-10 w-auto relative">
-              <Image src="/icon.png" alt="Icono" fill style={{ objectFit: "contain" }} />
+              <Image
+                src="/icon.png"
+                alt="Icono"
+                fill
+                style={{ objectFit: 'contain' }}
+              />
             </div>
             <h1
               className="hidden sm:block text-2xl font-bold ml-4"
@@ -183,7 +270,9 @@ export default function DashboardLayout({ children }) {
               )}
             <span className="hidden sm:inline text-lg text-neutral-600">
               Hola,{' '}
-              <span className="font-semibold">{user?.name || user?.email}!</span>
+              <span className="font-semibold">
+                {user?.name || user?.email}!
+              </span>
             </span>
             <button
               onClick={logout}
@@ -223,18 +312,22 @@ export default function DashboardLayout({ children }) {
               {navLinksByRole[currentRole]?.map((link) => {
                 const showLink =
                   (link.label !== 'Escrutinio' || isElectionDay) &&
-                  ((link.label !== 'Voto de Opinión' && link.label !== 'Mi Equipo') || canRegisterSubordinates);
+                  ((link.label !== 'Voto de Opinión' &&
+                    link.label !== 'Mi Equipo') ||
+                    canRegisterSubordinates)
 
-                return showLink && (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="flex items-center px-3 py-2 rounded-md hover:bg-white/20 font-medium transition-colors"
-                  >
-                    {link.icon && <span className="mr-3">{link.icon}</span>}
-                    {link.label}
-                  </Link>
-                );
+                return (
+                  showLink && (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="flex items-center px-3 py-2 rounded-md hover:bg-white/20 font-medium transition-colors"
+                    >
+                      {link.icon && <span className="mr-3">{link.icon}</span>}
+                      {link.label}
+                    </Link>
+                  )
+                )
               })}
             </nav>
             <button
@@ -246,7 +339,9 @@ export default function DashboardLayout({ children }) {
             </button>
           </aside>
 
-          <main className="flex-grow p-4 sm:p-6 md:p-8 overflow-auto">{children}</main>
+          <main className="flex-grow p-4 sm:p-6 md:p-8 overflow-auto">
+            {children}
+          </main>
         </div>
       </div>
     </>

@@ -150,11 +150,14 @@ export default function HomeWMPage() {
   // recomienda usar 'getSecureUsers' (solo admin) para este fin.
   const fetchTotalRegisteredUsers = useCallback(async (token) => {
     try {
-      const response = await fetch(process.env.NEXT_PUBLIC_GET_SECURE_USERS_URL, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        process.env.NEXT_PUBLIC_GET_SECURE_USERS_URL,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      })
+      )
       if (response.ok) {
         const data = await response.json()
         setTotalRegisteredUsers(data.data.length || 0)
@@ -413,7 +416,7 @@ export default function HomeWMPage() {
           />
         </div>
       </div>
-      
+
       {/* Listado de Clientes Interesados (Leads) */}
       <div className="bg-white p-3 sm:p-4 rounded-lg shadow-md border border-neutral-200">
         <h2 className="text-lg font-semibold text-neutral-800 mb-3">

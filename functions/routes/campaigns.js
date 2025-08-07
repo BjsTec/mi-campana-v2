@@ -86,23 +86,32 @@ export const createCampaign = functions.https.onRequest(
     // Aplica el middleware de autenticación
     authenticateUserAndAttachRole(req, res, async () => {
       if (req.method !== 'POST') {
-        return res.status(405).send('Método no permitido. Solo POST.');
+        return res.status(405).send('Método no permitido. Solo POST.')
       }
 
       try {
-        const db = getFirestore(getApp());
-        const auth = getAuth(getApp());
-        const data = req.body;
+        const db = getFirestore(getApp())
+        const auth = getAuth(getApp())
+        const data = req.body
 
         // Campos requeridos ajustados
         const requiredFields = [
-          'campaignName', 'type', 'candidateName', 'candidateCedula',
-          'candidateEmail', 'candidatePassword', 'sexo', 'dateBirth',
-          'planName', 'planPrice',
-        ];
+          'campaignName',
+          'type',
+          'candidateName',
+          'candidateCedula',
+          'candidateEmail',
+          'candidatePassword',
+          'sexo',
+          'dateBirth',
+          'planName',
+          'planPrice',
+        ]
         for (const field of requiredFields) {
           if (!data[field]) {
-            return res.status(400).json({ message: `El campo '${field}' es requerido.` });
+            return res
+              .status(400)
+              .json({ message: `El campo '${field}' es requerido.` })
           }
         }
 
@@ -114,32 +123,32 @@ export const createCampaign = functions.https.onRequest(
         ) {
           return res.status(400).json({
             message: 'El formato de electionDate debe ser YYYY-MM-DD.',
-          });
+          })
         }
 
-        let candidateUid;
-        let existingUserDocRef = null;
-        let existingUserData = null;
-        let authUserFound = false;
+        let candidateUid
+        let existingUserDocRef = null
+        let existingUserData = null
+        let authUserFound = false
 
         // PRIORIDAD 1: Intentar buscar por email en Firebase Auth
         try {
-          const userRecord = await auth.getUserByEmail(data.candidateEmail);
-          candidateUid = userRecord.uid;
-          authUserFound = true;
-          existingUserDocRef = db.collection('users').doc(candidateUid);
-          existingUserData = (await existingUserDocRef.get()).data();
+          const userRecord = await auth.getUserByEmail(data.candidateEmail)
+          candidateUid = userRecord.uid
+          authUserFound = true
+          existingUserDocRef = db.collection('users').doc(candidateUid)
+          existingUserData = (await existingUserDocRef.get()).data()
         } catch (error) {
           if (error.code === 'auth/user-not-found') {
-            authUserFound = false;
+            authUserFound = false
           } else if (error.code === 'auth/email-already-in-use') {
             return res.status(409).json({
               message:
                 'El correo electrónico ya está en uso por otra cuenta Auth.',
-            });
+            })
           } else {
-            console.error('Error al buscar usuario por email en Auth:', error);
-            throw error;
+            console.error('Error al buscar usuario por email en Auth:', error)
+            throw error
           }
         }
 
@@ -149,16 +158,16 @@ export const createCampaign = functions.https.onRequest(
             .collection('users')
             .where('cedula', '==', data.candidateCedula)
             .limit(1)
-            .get();
+            .get()
 
           if (!userByCedulaSnapshot.empty) {
-            existingUserDocRef = userByCedulaSnapshot.docs[0].ref;
-            existingUserData = (await existingUserDocRef.get()).data();
-            candidateUid = existingUserDocRef.id;
+            existingUserDocRef = userByCedulaSnapshot.docs[0].ref
+            existingUserData = (await existingUserDocRef.get()).data()
+            candidateUid = existingUserDocRef.id
 
             try {
-              await auth.getUser(candidateUid);
-              authUserFound = true;
+              await auth.getUser(candidateUid)
+              authUserFound = true
             } catch (error) {
               if (error.code === 'auth/user-not-found') {
                 const newAuthRecord = await auth.createUser({
@@ -166,12 +175,12 @@ export const createCampaign = functions.https.onRequest(
                   password: data.candidatePassword,
                   displayName: data.candidateName,
                   uid: candidateUid,
-                });
-                candidateUid = newAuthRecord.uid;
-                authUserFound = true;
+                })
+                candidateUid = newAuthRecord.uid
+                authUserFound = true
               } else {
-                console.error('Error al buscar usuario por UID en Auth:', error);
-                throw error;
+                console.error('Error al buscar usuario por UID en Auth:', error)
+                throw error
               }
             }
           }
@@ -183,13 +192,13 @@ export const createCampaign = functions.https.onRequest(
             email: data.candidateEmail,
             password: data.candidatePassword,
             displayName: data.candidateName,
-          });
-          candidateUid = newAuthRecord.uid;
+          })
+          candidateUid = newAuthRecord.uid
         }
 
         if (!existingUserDocRef || existingUserDocRef.id !== candidateUid) {
-          existingUserDocRef = db.collection('users').doc(candidateUid);
-          existingUserData = (await existingUserDocRef.get()).data();
+          existingUserDocRef = db.collection('users').doc(candidateUid)
+          existingUserData = (await existingUserDocRef.get()).data()
         }
 
         // --- Validación: ¿Ya es candidato activo para este tipo de campaña? ---
@@ -199,19 +208,19 @@ export const createCampaign = functions.https.onRequest(
               membership.type === data.type &&
               membership.role === 'candidato' &&
               membership.status === 'activo',
-          );
+          )
 
         if (isAlreadyActiveCandidateOfType) {
           return res.status(409).json({
             message: `El correo electrónico o cédula ya está asociado a un candidato ACTIVO para una campaña de tipo '${data.type}'.`,
-          });
+          })
         }
 
         // --- Guardar/Actualizar credenciales de usuario (contraseña hasheada) ---
         const hashedPassword = await bcrypt.hash(
           data.candidatePassword,
           saltRounds,
-        );
+        )
         await db
           .collection('user_credentials')
           .doc(candidateUid)
@@ -225,11 +234,11 @@ export const createCampaign = functions.https.onRequest(
                 existingUserData?.createdAt || new Date().toISOString(),
             },
             { merge: true },
-          );
+          )
 
         // --- Generar slug de registro para la campaña ---
-        const registrationSlug = `${data.type}-${data.campaignName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`;
-        const newCampaignRef = db.collection('campaigns').doc();
+        const registrationSlug = `${data.type}-${data.campaignName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`
+        const newCampaignRef = db.collection('campaigns').doc()
 
         // --- Construir el objeto campaignData ---
         const campaignData = {
@@ -263,40 +272,64 @@ export const createCampaign = functions.https.onRequest(
             supportEmail: data.contactInfo?.supportEmail || null,
             supportWhatsapp: data.contactInfo?.supportWhatsapp || null,
           },
-          media: data.media && Object.keys(data.media).length > 0 ?
-            { logoUrl: data.media.logoUrl || null, bannerUrl: data.media.bannerUrl || null } : {},
-          socialLinks: data.socialLinks && Object.keys(data.socialLinks).length > 0 ?
-            { facebook: data.socialLinks.facebook || null, instagram: data.socialLinks.instagram || null, tiktok: data.socialLinks.tiktok || null, threads: data.socialLinks.threads || null, youtube: data.socialLinks.youtube || null, linkedin: data.socialLinks.linkedin || null, twitter: data.socialLinks.twitter || null } : {},
+          media:
+            data.media && Object.keys(data.media).length > 0
+              ? {
+                  logoUrl: data.media.logoUrl || null,
+                  bannerUrl: data.media.bannerUrl || null,
+                }
+              : {},
+          socialLinks:
+            data.socialLinks && Object.keys(data.socialLinks).length > 0
+              ? {
+                  facebook: data.socialLinks.facebook || null,
+                  instagram: data.socialLinks.instagram || null,
+                  tiktok: data.socialLinks.tiktok || null,
+                  threads: data.socialLinks.threads || null,
+                  youtube: data.socialLinks.youtube || null,
+                  linkedin: data.socialLinks.linkedin || null,
+                  twitter: data.socialLinks.twitter || null,
+                }
+              : {},
           messagingOptions: {
             email: data.messagingOptions?.email ?? true,
             alerts: data.messagingOptions?.alerts ?? true,
             sms: data.messagingOptions?.sms ?? false,
             whatsappBusiness: data.messagingOptions?.whatsappBusiness ?? false,
           },
-        };
+        }
 
         if (data.type === 'equipo_de_trabajo') {
-          const systemVariablesRef = db.collection('system_variables').doc('campaign_types');
-          const systemVariablesDoc = await systemVariablesRef.get();
+          const systemVariablesRef = db
+            .collection('system_variables')
+            .doc('campaign_types')
+          const systemVariablesDoc = await systemVariablesRef.get()
           if (systemVariablesDoc.exists) {
-            const systemTypes = systemVariablesDoc.data()?.types;
-            const demoTypeConfig = systemTypes?.find((type) => type.id === 'equipo_de_trabajo');
+            const systemTypes = systemVariablesDoc.data()?.types
+            const demoTypeConfig = systemTypes?.find(
+              (type) => type.id === 'equipo_de_trabajo',
+            )
             if (demoTypeConfig) {
               campaignData.demoSettings = {
-                generalMaxDirectSubordinates: demoTypeConfig.generalMaxDirectSubordinates || 4,
+                generalMaxDirectSubordinates:
+                  demoTypeConfig.generalMaxDirectSubordinates || 4,
                 maxDepth: demoTypeConfig.maxDepth || 5,
-                rolesLimits: demoTypeConfig.rolesLimits || { candidato: { managers: 1, anillos: 1, votantes: 2 } },
-              };
+                rolesLimits: demoTypeConfig.rolesLimits || {
+                  candidato: { managers: 1, anillos: 1, votantes: 2 },
+                },
+              }
             }
           }
         }
 
         // Autorización: Solo un administrador global o el propio candidato puede crear una campaña
-        const isAuthorized = req.userRole === 'admin' || req.userUid === candidateUid;
+        const isAuthorized =
+          req.userRole === 'admin' || req.userUid === candidateUid
         if (!isAuthorized) {
           return res.status(403).json({
-            message: 'Acceso denegado: Solo administradores o el propio candidato pueden crear una campaña.',
-          });
+            message:
+              'Acceso denegado: Solo administradores o el propio candidato pueden crear una campaña.',
+          })
         }
 
         // Construir o actualizar el objeto userData para el candidato en Firestore
@@ -322,13 +355,14 @@ export const createCampaign = functions.https.onRequest(
           updatedAt: new Date().toISOString(),
           registeredViaAuthUid: req.userUid,
           lastLogin: null,
-        };
+        }
 
         // Gestionar campaignMemberships
-        let updatedCampaignMemberships = existingUserData?.campaignMemberships || [];
+        let updatedCampaignMemberships =
+          existingUserData?.campaignMemberships || []
         const existingMembershipIndex = updatedCampaignMemberships.findIndex(
           (m) => m.type === data.type && m.role === 'candidato',
-        );
+        )
         const newMembership = {
           campaignId: newCampaignRef.id,
           campaignName: data.campaignName,
@@ -343,48 +377,52 @@ export const createCampaign = functions.https.onRequest(
           votoEsperado: null,
           directVotes: 0,
           pyramidVotes: 0,
-        };
+        }
 
         if (existingMembershipIndex !== -1) {
           updatedCampaignMemberships[existingMembershipIndex] = {
             ...updatedCampaignMemberships[existingMembershipIndex],
             ...newMembership,
             status: 'activo',
-          };
+          }
         } else {
-          updatedCampaignMemberships.push(newMembership);
+          updatedCampaignMemberships.push(newMembership)
         }
-        userDataToSet.campaignMemberships = updatedCampaignMemberships;
+        userDataToSet.campaignMemberships = updatedCampaignMemberships
 
         // Guardar la nueva campaña y el perfil de usuario
-        await newCampaignRef.set(campaignData);
+        await newCampaignRef.set(campaignData)
         await db
           .collection('users')
           .doc(candidateUid)
-          .set(userDataToSet, { merge: true });
+          .set(userDataToSet, { merge: true })
 
         // ==========================================================
         // INICIO DE LA NUEVA LÓGICA: GENERACIÓN DE ENLACES DE WHATSAPP
         // ==========================================================
-        const candidatePhone = data.whatsapp || data.contactInfo?.whatsapp || null;
-        let candidateWhatsappLink = null;
+        const candidatePhone =
+          data.whatsapp || data.contactInfo?.whatsapp || null
+        let candidateWhatsappLink = null
         if (candidatePhone) {
-            const candidateMessage = `¡Hola ${data.candidateName}! Tu campaña "${data.campaignName}" ha sido creada exitosamente. Tu usuario es tu cédula: ${data.candidateCedula} y tu contraseña es: ${data.candidatePassword}. Por favor, cámbiala al iniciar sesión. ¡Bienvenido a Autoridad Política!`;
-            const encodedMessage = encodeURIComponent(candidateMessage);
-            const phoneNumber = candidatePhone.replace(/[^0-9]/g, '');
-            candidateWhatsappLink = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+          const candidateMessage = `¡Hola ${data.candidateName}! Tu campaña "${data.campaignName}" ha sido creada exitosamente. Tu usuario es tu cédula: ${data.candidateCedula} y tu contraseña es: ${data.candidatePassword}. Por favor, cámbiala al iniciar sesión. ¡Bienvenido a Autoridad Política!`
+          const encodedMessage = encodeURIComponent(candidateMessage)
+          const phoneNumber = candidatePhone.replace(/[^0-9]/g, '')
+          candidateWhatsappLink = `https://wa.me/${phoneNumber}?text=${encodedMessage}`
         }
 
-        let adminWhatsappLink = null;
+        let adminWhatsappLink = null
         if (req.userUid) {
-            const adminUserDoc = await db.collection('users').doc(req.userUid).get();
-            const adminData = adminUserDoc.data();
-            if (adminData && adminData.whatsapp) {
-                const adminMessage = `¡Hola ${adminData.name}! Se ha creado la campaña "${data.campaignName}" (ID: ${newCampaignRef.id}) para el candidato ${data.candidateName}. Su usuario es ${data.candidateCedula} y la contraseña es ${data.candidatePassword}. Por favor, notifícale sus credenciales.`;
-                const encodedAdminMessage = encodeURIComponent(adminMessage);
-                const adminPhoneNumber = adminData.whatsapp.replace(/[^0-9]/g, '');
-                adminWhatsappLink = `https://wa.me/${adminPhoneNumber}?text=${encodedAdminMessage}`;
-            }
+          const adminUserDoc = await db
+            .collection('users')
+            .doc(req.userUid)
+            .get()
+          const adminData = adminUserDoc.data()
+          if (adminData && adminData.whatsapp) {
+            const adminMessage = `¡Hola ${adminData.name}! Se ha creado la campaña "${data.campaignName}" (ID: ${newCampaignRef.id}) para el candidato ${data.candidateName}. Su usuario es ${data.candidateCedula} y la contraseña es ${data.candidatePassword}. Por favor, notifícale sus credenciales.`
+            const encodedAdminMessage = encodeURIComponent(adminMessage)
+            const adminPhoneNumber = adminData.whatsapp.replace(/[^0-9]/g, '')
+            adminWhatsappLink = `https://wa.me/${adminPhoneNumber}?text=${encodedAdminMessage}`
+          }
         }
         // ==========================================================
         // FIN DE LA NUEVA LÓGICA
@@ -397,28 +435,29 @@ export const createCampaign = functions.https.onRequest(
           electionDate: data.electionDate,
           candidateWhatsappLink, // Nuevo campo
           adminWhatsappLink, // Nuevo campo
-        });
+        })
       } catch (error) {
-        console.error('Error en createCampaign:', error);
+        console.error('Error en createCampaign:', error)
         if (error.code && error.message) {
           if (error.code === 'auth/email-already-in-use') {
             return res.status(409).json({
-              message: 'El correo electrónico ya está en uso por otra cuenta Auth.',
-            });
+              message:
+                'El correo electrónico ya está en uso por otra cuenta Auth.',
+            })
           }
           return res.status(500).json({
             message: `Error interno del servidor al crear la campaña: ${error.message}`,
             error: error.message,
-          });
+          })
         }
         return res.status(500).json({
           message: 'Error interno del servidor al crear la campaña.',
           error: error.message,
-        });
+        })
       }
-    });
+    })
   },
-);
+)
 
 // 2. --- FUNCIÓN PARA ACTUALIZAR UNA CAMPAÑA (PATCH - Protegida) ---
 export const updateCampaign = functions.https.onRequest(

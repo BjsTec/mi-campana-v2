@@ -67,7 +67,8 @@ export default function NewLeadPage() {
       } else {
         setAlert({
           visible: true,
-          message: result.message || 'Hubo un error al crear el cliente potencial.',
+          message:
+            result.message || 'Hubo un error al crear el cliente potencial.',
           type: 'error',
         })
         console.error('Error al añadir cliente potencial:', result)
@@ -84,26 +85,32 @@ export default function NewLeadPage() {
     }
   }
 
-  const interestedInOptions = useMemo(() => [
-    { value: '', label: 'Selecciona una opción' },
-    { value: 'presidencia', label: 'Campaña Presidencial' },
-    { value: 'senado', label: 'Campaña Senatorial' },
-    { value: 'gobernacion', label: 'Campaña Gubernamental' },
-    { value: 'alcaldia', label: 'Campaña de Alcaldía' },
-    { value: 'concejo', label: 'Campaña de Concejo' },
-    { value: 'edil', label: 'Campaña de Edil' },
-    { value: 'equipo_de_trabajo', label: 'Plan Equipo de Trabajo (Gratis)' },
-    { value: 'consulta_general', label: 'Consulta General' },
-  ], [])
+  const interestedInOptions = useMemo(
+    () => [
+      { value: '', label: 'Selecciona una opción' },
+      { value: 'presidencia', label: 'Campaña Presidencial' },
+      { value: 'senado', label: 'Campaña Senatorial' },
+      { value: 'gobernacion', label: 'Campaña Gubernamental' },
+      { value: 'alcaldia', label: 'Campaña de Alcaldía' },
+      { value: 'concejo', label: 'Campaña de Concejo' },
+      { value: 'edil', label: 'Campaña de Edil' },
+      { value: 'equipo_de_trabajo', label: 'Plan Equipo de Trabajo (Gratis)' },
+      { value: 'consulta_general', label: 'Consulta General' },
+    ],
+    [],
+  )
 
-  const sourceOptions = useMemo(() => [
-    { value: 'Manual (Admin)', label: 'Manual (Admin)' },
-    { value: 'referido', label: 'Referido' },
-    { value: 'evento_politico', label: 'Evento Político' },
-    { value: 'llamada_fria', label: 'Llamada en Frío' },
-    { value: 'base_de_datos_antigua', label: 'Base de Datos Antigua' },
-    { value: 'otro', label: 'Otro' },
-  ], [])
+  const sourceOptions = useMemo(
+    () => [
+      { value: 'Manual (Admin)', label: 'Manual (Admin)' },
+      { value: 'referido', label: 'Referido' },
+      { value: 'evento_politico', label: 'Evento Político' },
+      { value: 'llamada_fria', label: 'Llamada en Frío' },
+      { value: 'base_de_datos_antigua', label: 'Base de Datos Antigua' },
+      { value: 'otro', label: 'Otro' },
+    ],
+    [],
+  )
 
   return (
     <div className="min-h-screen bg-neutral-100 p-8">
@@ -121,7 +128,11 @@ export default function NewLeadPage() {
         </div>
 
         {alert.visible && (
-          <Alert message={alert.message} type={alert.type} onClose={() => setAlert({ ...alert, visible: false })} />
+          <Alert
+            message={alert.message}
+            type={alert.type}
+            onClose={() => setAlert({ ...alert, visible: false })}
+          />
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -285,20 +296,20 @@ export default function NewLeadPage() {
 
           <div className="mt-8 text-center">
             <div className="mt-8 text-center">
-        <button
-          type="submit"
-          disabled={loading}
-          className={`
+              <button
+                type="submit"
+                disabled={loading}
+                className={`
             inline-flex items-center justify-center px-8 py-3 rounded-full font-bold text-lg
             bg-primary-DEFAULT text-white hover:bg-primary-dark
             transition-all duration-300 shadow-xl transform hover:scale-105
             ${loading ? 'opacity-70 cursor-not-allowed' : ''}
           `}
-          style={{ backgroundColor: '#3084F2', color: '#FFFFFF' }}
-        >
-          {loading ? 'Creando Cliente...' : 'Crear Cliente Potencial'}
-        </button>
-      </div>
+                style={{ backgroundColor: '#3084F2', color: '#FFFFFF' }}
+              >
+                {loading ? 'Creando Cliente...' : 'Crear Cliente Potencial'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

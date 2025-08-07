@@ -111,7 +111,7 @@ export default function NuevaCampanaPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState({ text: '', type: '' })
   const [validationErrors, setValidationErrors] = useState({})
-  
+
   // Estados para previsualización de imágenes
   const [logoPreview, setLogoPreview] = useState('')
   const [bannerPreview, setBannerPreview] = useState('')
@@ -142,7 +142,7 @@ export default function NuevaCampanaPage() {
     process.env.NEXT_PUBLIC_GET_PUBLIC_CAMPAIGN_TYPES_URL
   const GET_PUBLIC_PRICING_PLANS_URL =
     process.env.NEXT_PUBLIC_GET_PUBLIC_PRICING_PLANS_URL
-  
+
   // Carga inicial de listas
   useEffect(() => {
     const fetchLists = async () => {
@@ -190,9 +190,9 @@ export default function NuevaCampanaPage() {
       type === 'checkbox'
         ? checked
         : type === 'number'
-        ? parseFloat(value)
-        : value
-    
+          ? parseFloat(value)
+          : value
+
     dispatch({ type: 'UPDATE_FIELD', field: name, value: fieldValue })
     setValidationErrors({ ...validationErrors, [name]: '' })
   }
@@ -213,68 +213,97 @@ export default function NuevaCampanaPage() {
   }
 
   const validateStep = () => {
-    let errors = {};
+    let errors = {}
     if (currentStep === 1) {
-      if (!formData.campaignName) errors.campaignName = 'El nombre de la campaña es obligatorio.';
-      if (!formData.type) errors.type = 'Debes seleccionar un tipo de campaña.';
-      if (!formData.planId) errors.planId = 'Debes seleccionar un plan de campaña.';
-      if (!formData.location.state) errors['location.state'] = 'El departamento es obligatorio.';
-      if (!formData.location.city) errors['location.city'] = 'La ciudad es obligatoria.';
-      if (!formData.contactInfo.email) errors['contactInfo.email'] = 'El email de contacto es obligatorio.';
-      if (!formData.contactInfo.phone) errors['contactInfo.phone'] = 'El teléfono de contacto es obligatorio.';
+      if (!formData.campaignName)
+        errors.campaignName = 'El nombre de la campaña es obligatorio.'
+      if (!formData.type) errors.type = 'Debes seleccionar un tipo de campaña.'
+      if (!formData.planId)
+        errors.planId = 'Debes seleccionar un plan de campaña.'
+      if (!formData.location.state)
+        errors['location.state'] = 'El departamento es obligatorio.'
+      if (!formData.location.city)
+        errors['location.city'] = 'La ciudad es obligatoria.'
+      if (!formData.contactInfo.email)
+        errors['contactInfo.email'] = 'El email de contacto es obligatorio.'
+      if (!formData.contactInfo.phone)
+        errors['contactInfo.phone'] = 'El teléfono de contacto es obligatorio.'
     } else if (currentStep === 2) {
-      if (!formData.candidateName) errors.candidateName = 'El nombre del candidato es obligatorio.';
-      if (!formData.candidateCedula) errors.candidateCedula = 'La cédula es obligatoria.';
-      if (!formData.candidateEmail) errors.candidateEmail = 'El email del candidato es obligatorio.';
-      if (!formData.candidatePassword) errors.candidatePassword = 'La contraseña es obligatoria.';
-      if (!formData.sexo) errors.sexo = 'El sexo es obligatorio.';
-      if (!formData.dateBirth) errors.dateBirth = 'La fecha de nacimiento es obligatoria.';
-      if (!formData.candidateLocation.state) errors['candidateLocation.state'] = 'El departamento es obligatorio.';
-      if (!formData.candidateLocation.city) errors['candidateLocation.city'] = 'La ciudad es obligatoria.';
+      if (!formData.candidateName)
+        errors.candidateName = 'El nombre del candidato es obligatorio.'
+      if (!formData.candidateCedula)
+        errors.candidateCedula = 'La cédula es obligatoria.'
+      if (!formData.candidateEmail)
+        errors.candidateEmail = 'El email del candidato es obligatorio.'
+      if (!formData.candidatePassword)
+        errors.candidatePassword = 'La contraseña es obligatoria.'
+      if (!formData.sexo) errors.sexo = 'El sexo es obligatorio.'
+      if (!formData.dateBirth)
+        errors.dateBirth = 'La fecha de nacimiento es obligatoria.'
+      if (!formData.candidateLocation.state)
+        errors['candidateLocation.state'] = 'El departamento es obligatorio.'
+      if (!formData.candidateLocation.city)
+        errors['candidateLocation.city'] = 'La ciudad es obligatoria.'
     }
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-  
-  const validateFinalSubmission = () => {
-    let errors = {};
-    // Validación del Paso 1
-    if (!formData.campaignName) errors.campaignName = 'El nombre de la campaña es obligatorio.';
-    if (!formData.type) errors.type = 'Debes seleccionar un tipo de campaña.';
-    if (!formData.planId) errors.planId = 'Debes seleccionar un plan de campaña.';
-    if (!formData.location.state) errors['location.state'] = 'El departamento es obligatorio.';
-    if (!formData.location.city) errors['location.city'] = 'La ciudad es obligatoria.';
-    if (!formData.contactInfo.email) errors['contactInfo.email'] = 'El email de contacto es obligatorio.';
-    if (!formData.contactInfo.phone) errors['contactInfo.phone'] = 'El teléfono de contacto es obligatorio.';
-    
-    // Validación del Paso 2
-    if (!formData.candidateName) errors.candidateName = 'El nombre del candidato es obligatorio.';
-    if (!formData.candidateCedula) errors.candidateCedula = 'La cédula es obligatoria.';
-    if (!formData.candidateEmail) errors.candidateEmail = 'El email del candidato es obligatorio.';
-    if (!formData.candidatePassword) errors.candidatePassword = 'La contraseña es obligatoria.';
-    if (!formData.sexo) errors.sexo = 'El sexo es obligatorio.';
-    if (!formData.dateBirth) errors.dateBirth = 'La fecha de nacimiento es obligatoria.';
-    if (!formData.candidateLocation.state) errors['candidateLocation.state'] = 'El departamento es obligatorio.';
-    if (!formData.candidateLocation.city) errors['candidateLocation.city'] = 'La ciudad es obligatoria.';
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+  const validateFinalSubmission = () => {
+    let errors = {}
+    // Validación del Paso 1
+    if (!formData.campaignName)
+      errors.campaignName = 'El nombre de la campaña es obligatorio.'
+    if (!formData.type) errors.type = 'Debes seleccionar un tipo de campaña.'
+    if (!formData.planId)
+      errors.planId = 'Debes seleccionar un plan de campaña.'
+    if (!formData.location.state)
+      errors['location.state'] = 'El departamento es obligatorio.'
+    if (!formData.location.city)
+      errors['location.city'] = 'La ciudad es obligatoria.'
+    if (!formData.contactInfo.email)
+      errors['contactInfo.email'] = 'El email de contacto es obligatorio.'
+    if (!formData.contactInfo.phone)
+      errors['contactInfo.phone'] = 'El teléfono de contacto es obligatorio.'
+
+    // Validación del Paso 2
+    if (!formData.candidateName)
+      errors.candidateName = 'El nombre del candidato es obligatorio.'
+    if (!formData.candidateCedula)
+      errors.candidateCedula = 'La cédula es obligatoria.'
+    if (!formData.candidateEmail)
+      errors.candidateEmail = 'El email del candidato es obligatorio.'
+    if (!formData.candidatePassword)
+      errors.candidatePassword = 'La contraseña es obligatoria.'
+    if (!formData.sexo) errors.sexo = 'El sexo es obligatorio.'
+    if (!formData.dateBirth)
+      errors.dateBirth = 'La fecha de nacimiento es obligatoria.'
+    if (!formData.candidateLocation.state)
+      errors['candidateLocation.state'] = 'El departamento es obligatorio.'
+    if (!formData.candidateLocation.city)
+      errors['candidateLocation.city'] = 'La ciudad es obligatoria.'
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
   }
 
   const handleNextStep = () => {
     if (validateStep()) {
-      setCurrentStep(currentStep + 1);
-      setMessage({ text: '', type: '' });
+      setCurrentStep(currentStep + 1)
+      setMessage({ text: '', type: '' })
     } else {
-      setMessage({ text: 'Por favor, completa los campos obligatorios.', type: 'error' });
+      setMessage({
+        text: 'Por favor, completa los campos obligatorios.',
+        type: 'error',
+      })
     }
-  };
+  }
 
   const handlePrevStep = () => {
-    setCurrentStep(currentStep - 1);
-    setMessage({ text: '', type: '' });
-    setValidationErrors({});
-  };
+    setCurrentStep(currentStep - 1)
+    setMessage({ text: '', type: '' })
+    setValidationErrors({})
+  }
 
   const uploadImageToStorage = async (file) => {
     console.log(`Simulando subida de ${file.name}...`)
@@ -283,27 +312,36 @@ export default function NuevaCampanaPage() {
   }
 
   const handleCreateAnotherCampaign = () => {
-    dispatch({ type: 'RESET_FORM' });
-    setLogoPreview('');
-    setBannerPreview('');
-    setLogoFile(null);
-    setBannerFile(null);
-    setCurrentStep(1);
-    setShowSuccessScreen(false);
-    setSuccessData({});
-    setMessage({ text: '', type: '' });
-  };
+    dispatch({ type: 'RESET_FORM' })
+    setLogoPreview('')
+    setBannerPreview('')
+    setLogoFile(null)
+    setBannerFile(null)
+    setCurrentStep(1)
+    setShowSuccessScreen(false)
+    setSuccessData({})
+    setMessage({ text: '', type: '' })
+  }
 
   const handleSubmit = async (e) => {
     if (e) {
-      e.preventDefault();
+      e.preventDefault()
     }
-    
+
     if (!validateFinalSubmission()) {
-      setMessage({ text: 'Por favor, completa todos los campos obligatorios en los pasos anteriores.', type: 'error' });
-      const firstErrorStep = Object.keys(validationErrors).some(k => k.startsWith('campaign')) ? 1 : Object.keys(validationErrors).some(k => k.startsWith('candidate')) ? 2 : 1;
-      setCurrentStep(firstErrorStep); 
-      return;
+      setMessage({
+        text: 'Por favor, completa todos los campos obligatorios en los pasos anteriores.',
+        type: 'error',
+      })
+      const firstErrorStep = Object.keys(validationErrors).some((k) =>
+        k.startsWith('campaign'),
+      )
+        ? 1
+        : Object.keys(validationErrors).some((k) => k.startsWith('candidate'))
+          ? 2
+          : 1
+      setCurrentStep(firstErrorStep)
+      return
     }
 
     setLoading(true)
@@ -323,8 +361,12 @@ export default function NuevaCampanaPage() {
 
       let logoUrl = ''
       let bannerUrl = ''
-      if (logoFile) { logoUrl = await uploadImageToStorage(logoFile) }
-      if (bannerFile) { bannerUrl = await uploadImageToStorage(bannerFile) }
+      if (logoFile) {
+        logoUrl = await uploadImageToStorage(logoFile)
+      }
+      if (bannerFile) {
+        bannerUrl = await uploadImageToStorage(bannerFile)
+      }
 
       const finalPayload = {
         ...formData,
@@ -340,7 +382,7 @@ export default function NuevaCampanaPage() {
 
       const response = await fetch(createCampaignUrl, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${idToken}`,
         },
@@ -350,7 +392,10 @@ export default function NuevaCampanaPage() {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.message || 'Ocurrió un error en el servidor al crear la campaña.')
+        throw new Error(
+          result.message ||
+            'Ocurrió un error en el servidor al crear la campaña.',
+        )
       }
 
       // NUEVO: Guardamos los datos de éxito en el estado
@@ -365,88 +410,100 @@ export default function NuevaCampanaPage() {
 
       // NUEVO: Mostramos la pantalla de éxito
       setShowSuccessScreen(true)
-
     } catch (error) {
       console.error('Error en handleSubmit:', error)
       setMessage({ text: error.message, type: 'error' })
     } finally {
       setLoading(false)
     }
-  };
+  }
 
   const renderStep = () => {
     // NUEVO: Si showSuccessScreen es true, renderizamos el componente de éxito
     if (showSuccessScreen) {
-      return <CampaignSuccessStep 
-        campaignName={successData.campaignName}
-        candidateName={successData.candidateName}
-        candidateCedula={successData.candidateCedula}
-        candidatePassword={successData.candidatePassword}
-        candidateWhatsappLink={successData.candidateWhatsappLink}
-        adminWhatsappLink={successData.adminWhatsappLink}
-        onReset={handleCreateAnotherCampaign}
-      />
+      return (
+        <CampaignSuccessStep
+          campaignName={successData.campaignName}
+          candidateName={successData.candidateName}
+          candidateCedula={successData.candidateCedula}
+          candidatePassword={successData.candidatePassword}
+          candidateWhatsappLink={successData.candidateWhatsappLink}
+          adminWhatsappLink={successData.adminWhatsappLink}
+          onReset={handleCreateAnotherCampaign}
+        />
+      )
     }
 
     switch (currentStep) {
       case 1:
-        return <CampaignInfoStep
-          formData={formData}
-          handleInputChange={handleInputChange}
-          departamentos={departamentos}
-          ciudades={ciudades}
-          setDepartamentos={setDepartamentos}
-          setCiudades={setCiudades}
-          setMessage={setMessage}
-          dispatch={dispatch}
-          GET_DEPARTMENTS_URL={GET_DEPARTMENTS_URL}
-          GET_CITIES_BY_DEPARTMENT_URL={GET_CITIES_BY_DEPARTMENT_URL}
-          campaignTypesList={campaignTypesList}
-          pricingPlansList={pricingPlansList}
-          validationErrors={validationErrors}
-        />
+        return (
+          <CampaignInfoStep
+            formData={formData}
+            handleInputChange={handleInputChange}
+            departamentos={departamentos}
+            ciudades={ciudades}
+            setDepartamentos={setDepartamentos}
+            setCiudades={setCiudades}
+            setMessage={setMessage}
+            dispatch={dispatch}
+            GET_DEPARTMENTS_URL={GET_DEPARTMENTS_URL}
+            GET_CITIES_BY_DEPARTMENT_URL={GET_CITIES_BY_DEPARTMENT_URL}
+            campaignTypesList={campaignTypesList}
+            pricingPlansList={pricingPlansList}
+            validationErrors={validationErrors}
+          />
+        )
       case 2:
-        return <CandidateInfoStep
-          formData={formData}
-          handleInputChange={handleInputChange}
-          departamentos={departamentos}
-          candidateCiudades={candidateCiudades}
-          setCandidateCiudades={setCandidateCiudades}
-          setMessage={setMessage}
-          dispatch={dispatch}
-          GET_CITIES_BY_DEPARTMENT_URL={GET_CITIES_BY_DEPARTMENT_URL}
-          GET_USER_BY_CEDULA_URL={GET_USER_BY_CEDULA_URL}
-          validationErrors={validationErrors}
-        />
+        return (
+          <CandidateInfoStep
+            formData={formData}
+            handleInputChange={handleInputChange}
+            departamentos={departamentos}
+            candidateCiudades={candidateCiudades}
+            setCandidateCiudades={setCandidateCiudades}
+            setMessage={setMessage}
+            dispatch={dispatch}
+            GET_CITIES_BY_DEPARTMENT_URL={GET_CITIES_BY_DEPARTMENT_URL}
+            GET_USER_BY_CEDULA_URL={GET_USER_BY_CEDULA_URL}
+            validationErrors={validationErrors}
+          />
+        )
       case 3:
-        return <MediaMessagingStep
-          formData={formData}
-          handleInputChange={handleInputChange}
-          setLogoFile={setLogoFile}
-          setBannerFile={setBannerFile}
-          logoPreview={logoPreview}
-          bannerPreview={bannerPreview}
-          handleFileChange={handleFileChange}
-          setLogoPreview={setLogoPreview}
-          setBannerPreview={setBannerPreview}
-        />
+        return (
+          <MediaMessagingStep
+            formData={formData}
+            handleInputChange={handleInputChange}
+            setLogoFile={setLogoFile}
+            setBannerFile={setBannerFile}
+            logoPreview={logoPreview}
+            bannerPreview={bannerPreview}
+            handleFileChange={handleFileChange}
+            setLogoPreview={setLogoPreview}
+            setBannerPreview={setBannerPreview}
+          />
+        )
       default:
         return null
     }
-  };
-  
+  }
+
   const steps = [
     { id: 1, name: 'Campaña', icon: BriefcaseIcon },
     { id: 2, name: 'Candidato', icon: UserIcon },
     { id: 3, name: 'Media', icon: PhotoIcon },
-  ];
+  ]
 
   if (!user || user.role !== 'admin') {
     return (
       <div className="p-6 bg-gray-50 min-h-screen flex items-center justify-center">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative max-w-lg text-center" role="alert">
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative max-w-lg text-center"
+          role="alert"
+        >
           <strong className="font-bold block">Acceso Denegado</strong>
-          <span className="block sm:inline">No tienes los permisos necesarios para acceder a esta sección.</span>
+          <span className="block sm:inline">
+            No tienes los permisos necesarios para acceder a esta sección.
+          </span>
         </div>
       </div>
     )
@@ -463,35 +520,67 @@ export default function NuevaCampanaPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Crear Nueva Campaña</h1>
-        <p className="text-gray-600 mb-8">Sigue los pasos para configurar todos los detalles de la campaña.</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Crear Nueva Campaña
+        </h1>
+        <p className="text-gray-600 mb-8">
+          Sigue los pasos para configurar todos los detalles de la campaña.
+        </p>
 
         {/* Ocultar la barra de progreso si la pantalla de éxito está activa */}
         {!showSuccessScreen && (
           <nav aria-label="Progress">
             <ol role="list" className="flex items-center mb-12">
               {steps.map((step, stepIdx) => (
-                <li key={step.name} className={`relative ${stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : ''}`}>
+                <li
+                  key={step.name}
+                  className={`relative ${stepIdx !== steps.length - 1 ? 'pr-8 sm:pr-20' : ''}`}
+                >
                   {currentStep > step.id ? (
                     <>
-                      <div className="absolute inset-0 flex items-center" aria-hidden="true"><div className="h-0.5 w-full bg-blue-600" /></div>
-                      <button onClick={() => setCurrentStep(step.id)} className="relative w-10 h-10 flex items-center justify-center bg-blue-600 rounded-full hover:bg-blue-700">
+                      <div
+                        className="absolute inset-0 flex items-center"
+                        aria-hidden="true"
+                      >
+                        <div className="h-0.5 w-full bg-blue-600" />
+                      </div>
+                      <button
+                        onClick={() => setCurrentStep(step.id)}
+                        className="relative w-10 h-10 flex items-center justify-center bg-blue-600 rounded-full hover:bg-blue-700"
+                      >
                         <CheckCircleIcon className="w-8 h-8 text-white" />
                         <span className="sr-only">{step.name}</span>
                       </button>
                     </>
                   ) : currentStep === step.id ? (
                     <>
-                      <div className="absolute inset-0 flex items-center" aria-hidden="true"><div className="h-0.5 w-full bg-gray-200" /></div>
-                      <div className="relative w-10 h-10 flex items-center justify-center bg-white border-2 border-blue-600 rounded-full" aria-current="step">
-                        <span className="text-blue-600"><step.icon className="w-6 h-6" /></span>
+                      <div
+                        className="absolute inset-0 flex items-center"
+                        aria-hidden="true"
+                      >
+                        <div className="h-0.5 w-full bg-gray-200" />
+                      </div>
+                      <div
+                        className="relative w-10 h-10 flex items-center justify-center bg-white border-2 border-blue-600 rounded-full"
+                        aria-current="step"
+                      >
+                        <span className="text-blue-600">
+                          <step.icon className="w-6 h-6" />
+                        </span>
                       </div>
                     </>
                   ) : (
                     <>
-                      <div className="absolute inset-0 flex items-center" aria-hidden="true"><div className="h-0.5 w-full bg-gray-200" /></div>
+                      <div
+                        className="absolute inset-0 flex items-center"
+                        aria-hidden="true"
+                      >
+                        <div className="h-0.5 w-full bg-gray-200" />
+                      </div>
                       <div className="group relative w-10 h-10 flex items-center justify-center bg-white border-2 border-gray-300 rounded-full hover:border-gray-400">
-                        <span className="text-gray-500 group-hover:text-gray-900"><step.icon className="w-6 h-6" /></span>
+                        <span className="text-gray-500 group-hover:text-gray-900">
+                          <step.icon className="w-6 h-6" />
+                        </span>
                       </div>
                     </>
                   )}
@@ -503,7 +592,7 @@ export default function NuevaCampanaPage() {
 
         <div className="bg-white p-8 rounded-xl shadow-lg">
           {showSuccessScreen ? (
-            <CampaignSuccessStep 
+            <CampaignSuccessStep
               campaignName={successData.campaignName}
               candidateName={successData.candidateName}
               candidateCedula={successData.candidateCedula}
@@ -515,7 +604,9 @@ export default function NuevaCampanaPage() {
             <form onSubmit={handleSubmit}>
               {renderStep()}
               {message.text && (
-                <div className={`mt-6 p-4 rounded-md text-sm font-medium ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}>
+                <div
+                  className={`mt-6 p-4 rounded-md text-sm font-medium ${message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-700'}`}
+                >
                   {message.text}
                 </div>
               )}

@@ -85,7 +85,9 @@ export default function LeadDetailPage() {
       })
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.message || 'Error al obtener el cliente potencial.')
+        throw new Error(
+          errorData.message || 'Error al obtener el cliente potencial.',
+        )
       }
       const data = await response.json()
       setLead(data)
@@ -291,7 +293,10 @@ export default function LeadDetailPage() {
 
           {isEditingStatus && (
             <div className="flex items-center gap-4 mt-4">
-              <StatusSelector selectedStatus={newStatus} onSelect={setNewStatus} />
+              <StatusSelector
+                selectedStatus={newStatus}
+                onSelect={setNewStatus}
+              />
               <button
                 onClick={handleUpdateStatus}
                 disabled={updateStatus === 'loading'}

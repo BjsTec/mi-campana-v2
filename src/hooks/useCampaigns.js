@@ -20,7 +20,9 @@ export const useCampaigns = () => {
     if (authLoading) return
     if (!user || user.role !== 'admin' || !idToken) {
       setLoading(false)
-      setError('Acceso denegado: No eres un administrador o no hay token de autenticación.')
+      setError(
+        'Acceso denegado: No eres un administrador o no hay token de autenticación.',
+      )
       return
     }
 
@@ -70,7 +72,13 @@ export const useCampaigns = () => {
     } finally {
       setLoading(false)
     }
-  }, [user, idToken, authLoading, GET_CAMPAIGNS_URL, GET_PUBLIC_CAMPAIGN_TYPES_URL])
+  }, [
+    user,
+    idToken,
+    authLoading,
+    GET_CAMPAIGNS_URL,
+    GET_PUBLIC_CAMPAIGN_TYPES_URL,
+  ])
 
   useEffect(() => {
     fetchData()
