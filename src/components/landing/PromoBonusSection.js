@@ -163,7 +163,7 @@ export default function PromoBonusSection() {
               href={promoBonus.ctaLink || '/login'}
               className={`bg-primary-dark text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-primary-DEFAULT transition-all duration-300 shadow-xl transform hover:scale-105 ${isSectionVisible ? 'animate-fade-in-up delay-600' : 'opacity-0 translate-y-8'}`}
             >
-              {promoBonus.ctaText || 'Canjear Bono Ahora'}
+              {promoBonus.ctaText || 'Canjear Bono Ahora que epsras'}
             </Link>
           </div>
         </div>
