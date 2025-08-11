@@ -93,10 +93,7 @@ const authorizeAdmin = async (req, res, next) => {
 // Middleware para configuración CORS de funciones públicas
 const setPublicCorsHeaders = (req, res, next) => {
   res.set('Access-Control-Allow-Origin', '*')
-  res.set(
-    'Access-Control-Allow-Methods',
-    'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  )
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
   if (req.method === 'OPTIONS') {
@@ -105,6 +102,123 @@ const setPublicCorsHeaders = (req, res, next) => {
   }
   next()
 }
+
+// login  temporal
+export const loginWithCedulaV2 = functions.https.onRequest(
+  { secrets: [JWT_SECRET_KEY_PARAM] },
+  async (req, res) => {
+    setPublicCorsHeaders(req, res, async () => {
+      if (req.method !== 'POST') {
+        return res
+          .status(405)
+          .send('Method Not Allowed. Only POST is accepted.')
+      }
+
+      try {
+        const app = getApp()
+        const db = getFirestore(app)
+        const jwtSecretValue = JWT_SECRET_KEY_PARAM.value()
+
+        if (!jwtSecretValue) {
+          functions.logger.error(
+            'JWT_SECRET not configured in Firebase Functions.',
+          )
+          return res.status(500).json({
+            message: 'Server configuration error.',
+          })
+        }
+        const cleanedJwtSecret = jwtSecretValue.trim()
+
+        const { cedula, clave } = req.body
+
+        const userCredentialSnapshot = await db
+          .collection('user_credentials')
+          .where('cedula', '==', cedula)
+          .limit(1)
+          .get()
+
+        if (userCredentialSnapshot.empty) {
+          return res.status(401).json({
+            message: 'Incorrect credentials.',
+          })
+        }
+
+        const userCredentialDoc = userCredentialSnapshot.docs[0].data()
+        const storedHashedPassword = userCredentialDoc.hashedPassword
+        const firebaseAuthUid = userCredentialDoc.firebaseAuthUid
+
+        const passwordMatch = await bcrypt.compare(clave, storedHashedPassword)
+
+        if (!passwordMatch) {
+          return res.status(401).json({
+            message: 'Incorrect credentials.',
+          })
+        }
+
+        const userDoc = await db.collection('users').doc(firebaseAuthUid).get()
+
+        if (!userDoc.exists) {
+          return res.status(404).json({
+            message: 'User profile not found.',
+          })
+        }
+
+        const userData = userDoc.data()
+
+        const allowedRolesForLogin = [
+          'admin',
+          'candidato',
+          'manager',
+          'ring',
+          'anillo',
+          'voter',
+          'votante',
+        ]
+        if (!allowedRolesForLogin.includes(userData.role)) {
+          return res.status(403).json({
+            message: 'User role does not allow direct login.',
+          })
+        }
+
+        await db.collection('users').doc(firebaseAuthUid).update({
+          lastLogin: new Date().toISOString(),
+        })
+
+        const tokenPayload = {
+          uid: firebaseAuthUid,
+          email: userData.email,
+          name: userData.name || userData.nombre,
+          role: userData.role,
+          campaignMemberships: userData.campaignMemberships || [],
+        }
+
+        const idToken = jwt.sign(tokenPayload, cleanedJwtSecret, {
+          algorithm: 'HS256',
+          expiresIn: '1h',
+        })
+
+        return res.status(200).json({
+          message: 'Credentials verified successfully.',
+          firebaseAuthUid: firebaseAuthUid,
+          email: userData.email,
+          name: userData.name || userData.nombre,
+          role: userData.role,
+          idToken: idToken,
+          campaignMemberships: userData.campaignMemberships || [],
+        })
+      } catch (error) {
+        functions.logger.error(
+          'Error in loginWithCedulaV2 Cloud Function:',
+          error,
+        )
+        return res.status(500).json({
+          message: 'Internal server error during login.',
+          error: error.message,
+        })
+      }
+    })
+  },
+)
 
 // Middleware de autenticación y adjuntar rol/UID a la solicitud (para funciones protegidas)
 // Este middleware verifica el token JWT y adjunta userUid, userRole y campaignMemberships
@@ -490,106 +604,128 @@ export const registerPublicUser = functions.https.onRequest(
 )
 
 // 4. --- FUNCIÓN PARA INICIAR SESIÓN CON EMAIL Y CLAVE (POST) ---
-export const loginWithEmail = functions.https.onRequest(async (req, res) => {
-  setPublicCorsHeaders(req, res, async () => {
-    if (req.method === 'GET') {
-      return res.status(200).send('Keep-alive ping. Instance is warm.')
-    }
-
-    if (req.method !== 'POST') {
-      return res.status(405).send('Method Not Allowed. Only POST is accepted.')
-    }
-
-    try {
-      const app = getApp()
-      const db = getFirestore(app)
-      const jwtSecretValue = JWT_SECRET_KEY_PARAM.value()
-
-      if (!jwtSecretValue) {
-        functions.logger.error(
-          'JWT_SECRET not configured in Firebase Functions.',
-        )
-        return res.status(500).json({ message: 'Server configuration error.' })
-      }
-      const cleanedJwtSecret = jwtSecretValue.trim()
-
-      const { email, clave } = req.body
-      const userCredentialSnapshot = await db
-        .collection('user_credentials')
-        .where('cedula', '==', email)
-        .limit(1)
-        .get()
-
-      if (userCredentialSnapshot.empty) {
-        return res.status(401).json({ message: 'Incorrect credentials.' })
-      }
-
-      const userCredentialDoc = userCredentialSnapshot.docs[0].data()
-      const storedHashedPassword = userCredentialDoc.hashedPassword
-      const firebaseAuthUid = userCredentialDoc.firebaseAuthUid
-      const passwordMatch = await bcrypt.compare(clave, storedHashedPassword)
-
-      if (!passwordMatch) {
-        return res.status(401).json({ message: 'Incorrect credentials.' })
-      }
-
-      const userDoc = await db.collection('users').doc(firebaseAuthUid).get()
-      if (!userDoc.exists) {
-        return res.status(404).json({ message: 'User profile not found.' })
-      }
-
-      const userData = userDoc.data()
-
-      const allowedRolesForLogin = [
-        'admin',
-        'candidato',
-        'manager',
-        'ring',
-        'anillo',
-        'voter',
-        'votante',
-      ]
-      if (!allowedRolesForLogin.includes(userData.role)) {
+export const loginWithEmail = functions.https.onRequest(
+  { secrets: [JWT_SECRET_KEY_PARAM] },
+  async (req, res) => {
+    // Aplicar middleware de CORS
+    setPublicCorsHeaders(req, res, async () => {
+      // Manejar método no permitido
+      if (req.method !== 'POST') {
         return res
-          .status(403)
-          .json({ message: 'User role does not allow direct login.' })
+          .status(405)
+          .send('Method Not Allowed. Only POST is accepted.')
       }
 
-      await db.collection('users').doc(firebaseAuthUid).update({
-        lastLogin: new Date().toISOString(),
-      })
+      try {
+        const app = getApp()
+        const db = getFirestore(app)
+        const jwtSecretValue = JWT_SECRET_KEY_PARAM.value()
 
-      const tokenPayload = {
-        uid: firebaseAuthUid,
-        email: userData.email,
-        name: userData.name || userData.nombre,
-        role: userData.role,
-        campaignMemberships: userData.campaignMemberships || [],
+        if (!jwtSecretValue) {
+          functions.logger.error(
+            'JWT_SECRET not configured in Firebase Functions.',
+          )
+          return res.status(500).json({
+            message: 'Server configuration error.',
+          })
+        }
+        const cleanedJwtSecret = jwtSecretValue.trim()
+
+        const { email, clave } = req.body
+
+        // Buscar credenciales por cédula (que se usa como 'email' en el login)
+        const userCredentialSnapshot = await db
+          .collection('user_credentials')
+          .where('cedula', '==', email)
+          .limit(1)
+          .get()
+
+        if (userCredentialSnapshot.empty) {
+          // Asegurar respuesta JSON consistente para errores de credenciales
+          return res.status(401).json({
+            message: 'Incorrect credentials.',
+          })
+        }
+
+        const userCredentialDoc = userCredentialSnapshot.docs[0].data()
+        const storedHashedPassword = userCredentialDoc.hashedPassword
+        const firebaseAuthUid = userCredentialDoc.firebaseAuthUid
+
+        // Comparar la clave del request con la clave hasheada almacenada
+        const passwordMatch = await bcrypt.compare(clave, storedHashedPassword)
+
+        if (!passwordMatch) {
+          // Asegurar respuesta JSON consistente para errores de credenciales
+          return res.status(401).json({
+            message: 'Incorrect credentials.',
+          })
+        }
+
+        // Obtener el perfil de usuario
+        const userDoc = await db.collection('users').doc(firebaseAuthUid).get()
+
+        if (!userDoc.exists) {
+          return res.status(404).json({
+            message: 'User profile not found.',
+          })
+        }
+
+        const userData = userDoc.data()
+
+        // Validar el rol del usuario para el login
+        const allowedRolesForLogin = [
+          'admin',
+          'candidato',
+          'manager',
+          'ring',
+          'anillo',
+          'voter',
+          'votante',
+        ]
+        if (!allowedRolesForLogin.includes(userData.role)) {
+          return res.status(403).json({
+            message: 'User role does not allow direct login.',
+          })
+        }
+
+        // Actualizar la fecha del último login
+        await db.collection('users').doc(firebaseAuthUid).update({
+          lastLogin: new Date().toISOString(),
+        })
+
+        // Crear el payload del token JWT
+        const tokenPayload = {
+          uid: firebaseAuthUid,
+          email: userData.email,
+          name: userData.name || userData.nombre,
+          role: userData.role,
+          campaignMemberships: userData.campaignMemberships || [],
+        }
+
+        const idToken = jwt.sign(tokenPayload, cleanedJwtSecret, {
+          algorithm: 'HS256',
+          expiresIn: '1h',
+        })
+
+        return res.status(200).json({
+          message: 'Credentials verified successfully.',
+          firebaseAuthUid: firebaseAuthUid,
+          email: userData.email,
+          name: userData.name || userData.nombre,
+          role: userData.role,
+          idToken: idToken,
+          campaignMemberships: userData.campaignMemberships || [],
+        })
+      } catch (error) {
+        functions.logger.error('Error in loginWithEmail Cloud Function:', error)
+        return res.status(500).json({
+          message: 'Internal server error during login.',
+          error: error.message,
+        })
       }
-
-      const idToken = jwt.sign(tokenPayload, cleanedJwtSecret, {
-        algorithm: 'HS256',
-        expiresIn: '1h',
-      })
-
-      return res.status(200).json({
-        message: 'Credentials verified successfully.',
-        firebaseAuthUid: firebaseAuthUid,
-        email: userData.email,
-        name: userData.name || userData.nombre,
-        role: userData.role,
-        idToken: idToken,
-        campaignMemberships: userData.campaignMemberships || [],
-      })
-    } catch (error) {
-      functions.logger.error('Error in loginWithEmail Cloud Function:', error)
-      return res.status(500).json({
-        message: 'Internal server error during login.',
-        error: error.message,
-      })
-    }
-  })
-})
+    })
+  },
+)
 
 // 5. --- FUNCIÓN PARA OBTENER USUARIOS DE FORMA SEGURA (GET) ---
 export const getSecureUsers = functions.https.onRequest(

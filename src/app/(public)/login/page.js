@@ -45,7 +45,7 @@ export default function LoginPage() {
     }
 
     try {
-      const loginFunctionUrl = process.env.NEXT_PUBLIC_LOGIN_WITH_EMAIL_URL
+      const loginFunctionUrl = `${process.env.NEXT_PUBLIC_FUNCTIONS_BASE_URL}/loginWithEmail`
       if (!loginFunctionUrl) {
         throw new Error(
           'La URL de la función de login no está configurada (NEXT_PUBLIC_LOGIN_WITH_EMAIL_URL).',
