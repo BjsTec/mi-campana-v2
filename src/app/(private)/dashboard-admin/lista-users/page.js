@@ -40,15 +40,13 @@ const UserCard = ({ userItem, onStatusChange }) => {
   }
 
   return (
-       <div className="bg-white rounded-xl shadow-md p-6 transform hover:scale-105 transition duration-300 ease-in-out border border-gray-200">
-
+    <div className="bg-white rounded-xl shadow-md p-6 transform hover:scale-105 transition duration-300 ease-in-out border border-gray-200">
       <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center w-full min-w-0">
-     <div className="bg-gray-100 rounded-full h-10 w-10 flex items-center justify-center mr-3">
+        <div className="flex items-center w-full min-w-0">
+          <div className="bg-gray-100 rounded-full h-10 w-10 flex items-center justify-center mr-3">
             <UserIcon className="h-6 w-6 text-gray-500" />
           </div>
-                <h2 className="text-xl font-semibold text-gray-900 leading-tight truncate">
-
+          <h2 className="text-xl font-semibold text-gray-900 leading-tight truncate">
             {userItem.name || 'Nombre no disponible'}
           </h2>
         </div>
@@ -57,7 +55,8 @@ const UserCard = ({ userItem, onStatusChange }) => {
       <div className="space-y-2 text-sm text-neutral-700">
         <p className="flex items-center">
           <IdentificationIcon className="h-4 w-4 text-neutral-500 mr-2" />
-          <span className="font-medium">Cédula:</span> {userItem.cedula || 'N/A'}
+          <span className="font-medium">Cédula:</span>{' '}
+          {userItem.cedula || 'N/A'}
         </p>
         <p className="flex items-center">
           <BuildingOfficeIcon className="h-4 w-4 text-neutral-500 mr-2" />
@@ -67,13 +66,13 @@ const UserCard = ({ userItem, onStatusChange }) => {
       <div className="mt-4 pt-4 border-t border-neutral-200 flex justify-between">
         <Link
           href={`/dashboard-admin/user/${userItem.cedula}`}
-            className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md text-blue-600 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+          className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md text-blue-600 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
         >
           Ver Perfil
         </Link>
         <button
           onClick={handleStatusChange}
-         className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md text-white whitespace-nowrap ${
+          className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md text-white whitespace-nowrap ${
             userStatus.status === 'activo'
               ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
               : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
@@ -111,7 +110,7 @@ export default function UserListPage() {
       if (!response.ok) {
         if (response.status === 403) {
           throw new Error(
-            'Acceso denegado. Solo administradores pueden ver esta página.'
+            'Acceso denegado. Solo administradores pueden ver esta página.',
           )
         }
         const errorData = await response.json()
@@ -141,7 +140,7 @@ export default function UserListPage() {
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(
-          errorData.message || 'Error al cambiar el estado del usuario.'
+          errorData.message || 'Error al cambiar el estado del usuario.',
         )
       }
 
@@ -201,7 +200,7 @@ export default function UserListPage() {
   // Nuevas métricas para el resumen
   const totalUsers = users.length
   const activeUsers = users.filter(
-    (u) => (u.campaignMemberships?.[0]?.status || 'inactivo') === 'activo'
+    (u) => (u.campaignMemberships?.[0]?.status || 'inactivo') === 'activo',
   ).length
   const inactiveUsers = totalUsers - activeUsers
 
@@ -234,18 +233,14 @@ export default function UserListPage() {
       {/* Sección de Métricas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <StatCard title="Total de Usuarios" value={totalUsers} />
-        <StatCard
-          title="Usiarios Activas"
-          value={activeUsers}
-          color="green"
-        />
+        <StatCard title="Usiarios Activas" value={activeUsers} color="green" />
         <StatCard
           title="Usuarios Inactivos"
           value={inactiveUsers}
           color="red"
         />
       </div>
- 
+
       <div className="bg-white p-4 rounded-xl shadow-md mb-8">
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           <div className="flex-1">

@@ -15,8 +15,10 @@ export default function ContactFormSection() {
   const [interestedInOptions, setInterestedInOptions] = useState([])
   const [loadingOptions, setLoadingOptions] = useState(true)
 
-  const SUBMIT_CONTACT_FORM_URL = process.env.NEXT_PUBLIC_SUBMIT_CONTACT_FORM_URL
-  const GET_PUBLIC_CAMPAIGN_TYPES_URL = process.env.NEXT_PUBLIC_GET_PUBLIC_CAMPAIGN_TYPES_URL
+  const SUBMIT_CONTACT_FORM_URL =
+    process.env.NEXT_PUBLIC_SUBMIT_CONTACT_FORM_URL
+  const GET_PUBLIC_CAMPAIGN_TYPES_URL =
+    process.env.NEXT_PUBLIC_GET_PUBLIC_CAMPAIGN_TYPES_URL
 
   const fetchCampaignTypes = useCallback(async () => {
     try {
@@ -24,7 +26,7 @@ export default function ContactFormSection() {
       const data = await response.json()
       if (response.ok) {
         // Mapea los datos del backend para usarlos en el select
-        const options = data.map(item => ({
+        const options = data.map((item) => ({
           value: item.id,
           label: item.name,
         }))

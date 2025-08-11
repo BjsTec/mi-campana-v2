@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 
 const StatusBadge = ({ status, role }) => {
   const statusColors = {
@@ -8,10 +8,11 @@ const StatusBadge = ({ status, role }) => {
     manager: 'bg-indigo-100 text-indigo-800',
     votante: 'bg-blue-100 text-blue-800',
     anillo: 'bg-purple-100 text-purple-800',
-    admin: 'bg-gray-100 text-gray-800'
-  };
-  const displayText = role || (status === 'public_lead' ? 'Lead' : status);
-  const finalStatus = statusColors[role] || statusColors[status] || 'bg-gray-100 text-gray-800';
+    admin: 'bg-gray-100 text-gray-800',
+  }
+  const displayText = role || (status === 'public_lead' ? 'Lead' : status)
+  const finalStatus =
+    statusColors[role] || statusColors[status] || 'bg-gray-100 text-gray-800'
 
   return (
     <span
@@ -19,7 +20,7 @@ const StatusBadge = ({ status, role }) => {
     >
       {displayText}
     </span>
-  );
-};
+  )
+}
 
-export default StatusBadge;
+export default StatusBadge

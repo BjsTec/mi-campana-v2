@@ -140,9 +140,14 @@ export default function VariablesPage() {
           try {
             errorData = JSON.parse(errorText)
           } catch (e) {
-            throw new Error(`Error ${response.status}: ${errorText || response.statusText}`)
+            throw new Error(
+              `Error ${response.status}: ${errorText || response.statusText}`,
+            )
           }
-          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+          throw new Error(
+            errorData.message ||
+              `Error ${response.status}: ${response.statusText}`,
+          )
         }
 
         return await response.json()
@@ -187,29 +192,36 @@ export default function VariablesPage() {
           try {
             errorData = JSON.parse(errorText)
           } catch (e) {
-            throw new Error(`Error ${response.status}: ${errorText || response.statusText}`)
+            throw new Error(
+              `Error ${response.status}: ${errorText || response.statusText}`,
+            )
           }
-          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
+          throw new Error(
+            errorData.message ||
+              `Error ${response.status}: ${response.statusText}`,
+          )
         }
 
         const data = await response.json()
         setCampaignTypes(data.campaign_types?.types || [])
         setPricingPlans(data.pricing_plans?.plans || [])
         setContactInfo(data.contact_info || {})
-        setPromoBonus(data.promo_bonus || {
-          title: '',
-          description: '',
-          discountPercentage: 0,
-          appliesTo: '',
-          startDate: '',
-          endDate: '',
-          isActive: false,
-          ctaText: '',
-          ctaLink: '',
-          imageUrl: '',
-          backgroundColor: '#FFFFFF',
-          textColor: '#000000',
-        })
+        setPromoBonus(
+          data.promo_bonus || {
+            title: '',
+            description: '',
+            discountPercentage: 0,
+            appliesTo: '',
+            startDate: '',
+            endDate: '',
+            isActive: false,
+            ctaText: '',
+            ctaLink: '',
+            imageUrl: '',
+            backgroundColor: '#FFFFFF',
+            textColor: '#000000',
+          },
+        )
       } catch (error) {
         triggerAlert(`Error al cargar datos: ${error.message}`, 'error')
         setCampaignTypes([])

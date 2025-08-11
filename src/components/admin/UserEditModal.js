@@ -1,11 +1,11 @@
 // components/admin/UserEditModal.js
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '@/context/AuthContext'
 
 const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
-  const [formData, setFormData] = useState({});
-  const { idToken } = useAuth();
-  
+  const [formData, setFormData] = useState({})
+  const { idToken } = useAuth()
+
   useEffect(() => {
     if (user) {
       setFormData({
@@ -15,48 +15,55 @@ const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
         // Agrega aquí los campos que el admin puede editar
         phone: user.phone || '',
         whatsapp: user.whatsapp || '',
-      });
+      })
     }
-  }, [user]);
+  }, [user])
 
   if (!isOpen || !user) {
-    return null;
+    return null
   }
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleSave = async () => {
     // Aquí iría la lógica para llamar al endpoint de actualización de perfil
     try {
       // Reemplaza con tu endpoint de actualización de perfil
-      const response = await fetch(`${process.env.NEXT_PUBLIC_UPDATE_USER_PROFILE_URL}/${user.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_UPDATE_USER_PROFILE_URL}/${user.id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ updates: formData }),
         },
-        body: JSON.stringify({ updates: formData }),
-      });
+      )
       if (!response.ok) {
-        throw new Error('Error al actualizar el usuario.');
+        throw new Error('Error al actualizar el usuario.')
       }
-      onSave(user.id, formData);
+      onSave(user.id, formData)
     } catch (error) {
-      console.error('Error al guardar cambios:', error);
-      alert('Hubo un error al guardar los cambios.');
+      console.error('Error al guardar cambios:', error)
+      alert('Hubo un error al guardar los cambios.')
     }
-  };
+  }
 
   return (
     <div className="fixed inset-0 bg-neutral-600 bg-opacity-75 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
-        <h3 className="text-xl font-bold text-neutral-800 mb-4">Editar Usuario: {user.name}</h3>
+        <h3 className="text-xl font-bold text-neutral-800 mb-4">
+          Editar Usuario: {user.name}
+        </h3>
         <div className="space-y-4">
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-neutral-600">Nombre</label>
+            <label className="text-sm font-medium text-neutral-600">
+              Nombre
+            </label>
             <input
               type="text"
               name="name"
@@ -66,7 +73,9 @@ const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-neutral-600">Cédula</label>
+            <label className="text-sm font-medium text-neutral-600">
+              Cédula
+            </label>
             <input
               type="text"
               name="cedula"
@@ -93,7 +102,7 @@ const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default UserEditModal;
+export default UserEditModal

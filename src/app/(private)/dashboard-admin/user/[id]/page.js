@@ -34,7 +34,8 @@ const StatusBadge = ({ status, role }) => {
     admin: 'bg-gray-100 text-gray-800',
   }
   const displayText = role || (status === 'public_lead' ? 'Lead' : status)
-  const finalStatus = statusColors[role] || statusColors[status] || 'bg-gray-100 text-gray-800'
+  const finalStatus =
+    statusColors[role] || statusColors[status] || 'bg-gray-100 text-gray-800'
 
   return (
     <span
@@ -54,7 +55,9 @@ const MetricCard = ({ title, value, icon, color }) => {
   }
   return (
     <div className="bg-white p-5 rounded-xl shadow-md border border-neutral-200 flex flex-col items-center text-center transition-all duration-300 hover:shadow-lg hover:scale-[1.02]">
-      <div className={`p-3 rounded-full ${iconBg[color] || 'bg-gray-100 text-gray-600'}`}>
+      <div
+        className={`p-3 rounded-full ${iconBg[color] || 'bg-gray-100 text-gray-600'}`}
+      >
         {icon}
       </div>
       <p className="text-xl font-extrabold text-neutral-900 mt-3">{value}</p>
@@ -91,14 +94,17 @@ const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
 
   const handleSave = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_UPDATE_USER_PROFILE_URL}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_UPDATE_USER_PROFILE_URL}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ userId: user.id, updates: formData }),
         },
-        body: JSON.stringify({ userId: user.id, updates: formData }),
-      })
+      )
       if (!response.ok) {
         throw new Error('Error al actualizar el usuario.')
       }
@@ -117,7 +123,9 @@ const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
         </h3>
         <div className="space-y-4">
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-neutral-600">Nombre</label>
+            <label className="text-sm font-medium text-neutral-600">
+              Nombre
+            </label>
             <input
               type="text"
               name="name"
@@ -127,7 +135,9 @@ const UserEditModal = ({ isOpen, onClose, user, onSave }) => {
             />
           </div>
           <div className="flex flex-col">
-            <label className="text-sm font-medium text-neutral-600">Cédula</label>
+            <label className="text-sm font-medium text-neutral-600">
+              Cédula
+            </label>
             <input
               type="text"
               name="cedula"
@@ -193,9 +203,11 @@ export default function UserDetailPage() {
       try {
         data = JSON.parse(text)
       } catch (e) {
-        throw new Error('Respuesta del servidor no válida. Por favor, revisa la URL del backend.')
+        throw new Error(
+          'Respuesta del servidor no válida. Por favor, revisa la URL del backend.',
+        )
       }
-      
+
       if (data.user) {
         setUserProfile(data.user)
         const registeredByUid = data.user.campaignMemberships?.[0]?.registeredBy
@@ -206,7 +218,9 @@ export default function UserDetailPage() {
           })
           if (allUsersResponse.ok) {
             const allUsersData = await allUsersResponse.json()
-            const creator = allUsersData.data.find(u => u.id === registeredByUid)
+            const creator = allUsersData.data.find(
+              (u) => u.id === registeredByUid,
+            )
             if (creator) {
               setCreatorProfile(creator)
             }
@@ -283,16 +297,26 @@ export default function UserDetailPage() {
     )
   }
 
-  const { name, email, cedula, role, location, campaignMemberships } = userProfile
+  const { name, email, cedula, role, location, campaignMemberships } =
+    userProfile
   const firstMembership = campaignMemberships?.[0] || {}
-  const { campaignName, status, directVotes = 0, pyramidVotes = 0, totalPotentialVotes = 0, registeredAt } = firstMembership
+  const {
+    campaignName,
+    status,
+    directVotes = 0,
+    pyramidVotes = 0,
+    totalPotentialVotes = 0,
+    registeredAt,
+  } = firstMembership
   const isUserActive = status === 'activo'
-  
-  const formattedRegisteredAt = registeredAt ? new Date(registeredAt).toLocaleDateString('es-CO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }) : 'N/A';
+
+  const formattedRegisteredAt = registeredAt
+    ? new Date(registeredAt).toLocaleDateString('es-CO', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : 'N/A'
 
   return (
     <>
@@ -325,28 +349,42 @@ export default function UserDetailPage() {
                 <div className="flex items-start">
                   <IdentificationIcon className="h-5 w-5 text-neutral-500 mr-3 mt-1" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-500">Cédula</p>
-                    <p className="text-base font-semibold text-neutral-800">{cedula || 'N/A'}</p>
+                    <p className="text-sm font-medium text-neutral-500">
+                      Cédula
+                    </p>
+                    <p className="text-base font-semibold text-neutral-800">
+                      {cedula || 'N/A'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start">
                   <EnvelopeIcon className="h-5 w-5 text-neutral-500 mr-3 mt-1" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-500">Email</p>
-                    <p className="text-base font-semibold text-neutral-800">{email || 'N/A'}</p>
+                    <p className="text-sm font-medium text-neutral-500">
+                      Email
+                    </p>
+                    <p className="text-base font-semibold text-neutral-800">
+                      {email || 'N/A'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start">
                   <BuildingOfficeIcon className="h-5 w-5 text-neutral-500 mr-3 mt-1" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-500">Campaña</p>
-                    <p className="text-base font-semibold text-neutral-800">{campaignName || 'N/A'}</p>
+                    <p className="text-sm font-medium text-neutral-500">
+                      Campaña
+                    </p>
+                    <p className="text-base font-semibold text-neutral-800">
+                      {campaignName || 'N/A'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start">
                   <MapPinIcon className="h-5 w-5 text-neutral-500 mr-3 mt-1" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-500">Ubicación</p>
+                    <p className="text-sm font-medium text-neutral-500">
+                      Ubicación
+                    </p>
                     <p className="text-base font-semibold text-neutral-800">
                       {location?.address || location?.city || 'N/A'}
                     </p>
@@ -355,8 +393,12 @@ export default function UserDetailPage() {
                 <div className="flex items-start">
                   <CalendarIcon className="h-5 w-5 text-neutral-500 mr-3 mt-1" />
                   <div>
-                    <p className="text-sm font-medium text-neutral-500">Fecha de Creación</p>
-                    <p className="text-base font-semibold text-neutral-800">{formattedRegisteredAt}</p>
+                    <p className="text-sm font-medium text-neutral-500">
+                      Fecha de Creación
+                    </p>
+                    <p className="text-base font-semibold text-neutral-800">
+                      {formattedRegisteredAt}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -369,7 +411,12 @@ export default function UserDetailPage() {
                   <PencilIcon className="h-4 w-4 mr-2" /> Editar
                 </button>
                 <button
-                  onClick={() => handleStatusChange(userProfile.id, isUserActive ? 'inactivo' : 'activo')}
+                  onClick={() =>
+                    handleStatusChange(
+                      userProfile.id,
+                      isUserActive ? 'inactivo' : 'activo',
+                    )
+                  }
                   className={`w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200
                     ${isUserActive ? 'text-red-600 bg-red-50 hover:bg-red-100' : 'text-green-600 bg-green-50 hover:bg-green-100'}`}
                 >
@@ -386,19 +433,25 @@ export default function UserDetailPage() {
 
           <div className="lg:col-span-2 space-y-8">
             <div className="bg-white rounded-xl shadow-md p-6 border border-neutral-200">
-                <h3 className="text-lg font-semibold text-neutral-800 mb-4">Creado por</h3>
-                {creatorProfile ? (
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <div className="flex items-center">
-                      <UserCircleIcon className="h-8 w-8 text-neutral-500 mr-2" />
-                      <p className="text-base font-semibold text-neutral-800">{creatorProfile.name}</p>
-                    </div>
-                    <StatusBadge role={creatorProfile.role} />
+              <h3 className="text-lg font-semibold text-neutral-800 mb-4">
+                Creado por
+              </h3>
+              {creatorProfile ? (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                  <div className="flex items-center">
+                    <UserCircleIcon className="h-8 w-8 text-neutral-500 mr-2" />
+                    <p className="text-base font-semibold text-neutral-800">
+                      {creatorProfile.name}
+                    </p>
                   </div>
-                ) : (
-                  <p className="text-neutral-500 text-sm">No se pudo cargar la información del creador.</p>
-                )}
-              </div>
+                  <StatusBadge role={creatorProfile.role} />
+                </div>
+              ) : (
+                <p className="text-neutral-500 text-sm">
+                  No se pudo cargar la información del creador.
+                </p>
+              )}
+            </div>
             <div>
               <h3 className="text-lg font-semibold text-neutral-800 mb-4">
                 Métricas de Campaña (Monitoreo)
