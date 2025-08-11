@@ -193,69 +193,69 @@ export const getActivePromoBonus = functions.https.onRequest(
   },
 )
 
-// 2. OBTENER TIPOS DE CAMPAÑA PÚBLICOS (GET - Pública para selectores y listados)
-export const getPublicCampaignTypes = functions.https.onRequest(
-  async (req, res) => {
-    publicCors(req, res, async () => {
-      // Usar publicCors aquí
-      if (req.method !== 'GET') {
-        return res.status(405).send('Método no permitido. Solo GET.')
-      }
-      try {
-        const db = getFirestore(getApp())
-        const docRef = db.collection('system_variables').doc('campaign_types')
-        const doc = await docRef.get()
+// // 2. OBTENER TIPOS DE CAMPAÑA PÚBLICOS (GET - Pública para selectores y listados)
+// export const getPublicCampaignTypes = functions.https.onRequest(
+//   async (req, res) => {
+//     publicCors(req, res, async () => {
+//       // Usar publicCors aquí
+//       if (req.method !== 'GET') {
+//         return res.status(405).send('Método no permitido. Solo GET.')
+//       }
+//       try {
+//         const db = getFirestore(getApp())
+//         const docRef = db.collection('system_variables').doc('campaign_types')
+//         const doc = await docRef.get()
 
-        if (!doc.exists || !doc.data().types) {
-          return res.status(200).json([]) // Devolver un array vacío si no hay tipos
-        }
+//         if (!doc.exists || !doc.data().types) {
+//           return res.status(200).json([]) // Devolver un array vacío si no hay tipos
+//         }
 
-        // Devolver solo los tipos activos
-        const publicTypes = doc.data().types.filter((type) => type.active)
+//         // Devolver solo los tipos activos
+//         const publicTypes = doc.data().types.filter((type) => type.active)
 
-        return res.status(200).json(publicTypes)
-      } catch (error) {
-        functions.logger.error('Error en getPublicCampaignTypes:', error) // CORREGIDO
-        return res.status(500).json({
-          message: 'Error interno del servidor al obtener tipos de campaña.',
-          error: error.message,
-        })
-      }
-    })
-  },
-)
+//         return res.status(200).json(publicTypes)
+//       } catch (error) {
+//         functions.logger.error('Error en getPublicCampaignTypes:', error) // CORREGIDO
+//         return res.status(500).json({
+//           message: 'Error interno del servidor al obtener tipos de campaña.',
+//           error: error.message,
+//         })
+//       }
+//     })
+//   },
+// )
 
-// 3. OBTENER PLANES DE PRECIOS PÚBLICOS (GET - Pública para la tabla de precios)
-export const getPublicPricingPlans = functions.https.onRequest(
-  async (req, res) => {
-    publicCors(req, res, async () => {
-      // Usar publicCors aquí
-      if (req.method !== 'GET') {
-        return res.status(405).send('Método no permitido. Solo GET.')
-      }
-      try {
-        const db = getFirestore(getApp())
-        const docRef = db.collection('system_variables').doc('pricing_plans')
-        const doc = await docRef.get()
+// // 3. OBTENER PLANES DE PRECIOS PÚBLICOS (GET - Pública para la tabla de precios)
+// export const getPublicPricingPlans = functions.https.onRequest(
+//   async (req, res) => {
+//     publicCors(req, res, async () => {
+//       // Usar publicCors aquí
+//       if (req.method !== 'GET') {
+//         return res.status(405).send('Método no permitido. Solo GET.')
+//       }
+//       try {
+//         const db = getFirestore(getApp())
+//         const docRef = db.collection('system_variables').doc('pricing_plans')
+//         const doc = await docRef.get()
 
-        if (!doc.exists || !doc.data().plans) {
-          return res.status(200).json([]) // Devolver un array vacío si no hay planes
-        }
+//         if (!doc.exists || !doc.data().plans) {
+//           return res.status(200).json([]) // Devolver un array vacío si no hay planes
+//         }
 
-        // Devolver todos los planes configurados (puedes añadir filtro 'active' si es necesario en el futuro)
-        const publicPlans = doc.data().plans
+//         // Devolver todos los planes configurados (puedes añadir filtro 'active' si es necesario en el futuro)
+//         const publicPlans = doc.data().plans
 
-        return res.status(200).json(publicPlans)
-      } catch (error) {
-        functions.logger.error('Error en getPublicPricingPlans:', error) // CORREGIDO
-        return res.status(500).json({
-          message: 'Error interno del servidor al obtener planes de precios.',
-          error: error.message,
-        })
-      }
-    })
-  },
-)
+//         return res.status(200).json(publicPlans)
+//       } catch (error) {
+//         functions.logger.error('Error en getPublicPricingPlans:', error) // CORREGIDO
+//         return res.status(500).json({
+//           message: 'Error interno del servidor al obtener planes de precios.',
+//           error: error.message,
+//         })
+//       }
+//     })
+//   },
+// )
 
 // --- FUNCIONES PROTEGIDAS (Solo accesibles por administradores) ---
 
@@ -336,371 +336,262 @@ export const updateSystemVariable = functions.https.onRequest(
   },
 )
 
-// 6. AÑADIR TIPO DE CAMPAÑA (POST - Para el panel de administración)
-export const addCampaignType = functions.https.onRequest(
-  { secrets: [JWT_SECRET_KEY_PARAM] }, // Declara el secreto aquí
-  async (req, res) => {
-    authorizeAdmin(req, res, async () => {
-      if (req.method !== 'POST') {
-        return res.status(405).send('Método no permitido. Solo POST.')
-      }
+// // 6. AÑADIR TIPO DE CAMPAÑA (POST - Para el panel de administración)
+// export const addCampaignType = functions.https.onRequest(
+//   { secrets: [JWT_SECRET_KEY_PARAM] }, // Declara el secreto aquí
+//   async (req, res) => {
+//     authorizeAdmin(req, res, async () => {
+//       if (req.method !== 'POST') {
+//         return res.status(405).send('Método no permitido. Solo POST.')
+//       }
 
-      let newType
-      try {
-        // Asegurar que req.body sea parseado como JSON.
-        // req.body podría ser un Buffer o una cadena si Content-Type no es application/json
-        // o si el middleware body-parser no lo está manejando implícitamente por alguna razón.
-        if (
-          req.body &&
-          typeof req.body === 'object' &&
-          !Array.isArray(req.body) &&
-          Object.keys(req.body).length > 0
-        ) {
-          newType = req.body // Ya parseado por el runtime de Firebase Functions
-        } else if (typeof req.body === 'string' && req.body.length > 0) {
-          newType = JSON.parse(req.body) // Parsear si es una cadena cruda
-        } else {
-          // Si req.body es undefined, null, un array vacío o un objeto vacío, asumimos un objeto vacío
-          newType = {}
-        }
-      } catch (parseError) {
-        console.error(
-          'Error al parsear el cuerpo de la solicitud en addCampaignType:',
-          parseError,
-        )
-        return res
-          .status(400)
-          .json({ message: 'Cuerpo de la solicitud inválido o no JSON.' })
-      }
+//       let newType
+//       try {
+//         // Asegurar que req.body sea parseado como JSON.
+//         // req.body podría ser un Buffer o una cadena si Content-Type no es application/json
+//         // o si el middleware body-parser no lo está manejando implícitamente por alguna razón.
+//         if (
+//           req.body &&
+//           typeof req.body === 'object' &&
+//           !Array.isArray(req.body) &&
+//           Object.keys(req.body).length > 0
+//         ) {
+//           newType = req.body // Ya parseado por el runtime de Firebase Functions
+//         } else if (typeof req.body === 'string' && req.body.length > 0) {
+//           newType = JSON.parse(req.body) // Parsear si es una cadena cruda
+//         } else {
+//           // Si req.body es undefined, null, un array vacío o un objeto vacío, asumimos un objeto vacío
+//           newType = {}
+//         }
+//       } catch (parseError) {
+//         console.error(
+//           'Error al parsear el cuerpo de la solicitud en addCampaignType:',
+//           parseError,
+//         )
+//         return res
+//           .status(400)
+//           .json({ message: 'Cuerpo de la solicitud inválido o no JSON.' })
+//       }
 
-      console.log(
-        'Cuerpo recibido para addCampaignType (después del intento de parsing):',
-        newType,
-      )
+//       console.log(
+//         'Cuerpo recibido para addCampaignType (después del intento de parsing):',
+//         newType,
+//       )
 
-      try {
-        const db = getFirestore(getApp())
-        // La validación ahora se basa en el 'newType' parseado
-        if (!newType || !newType.id || !newType.name) {
-          console.log(
-            'Fallo de validación: newType:',
-            newType,
-            'newType.id:',
-            newType.id,
-            'newType.name:',
-            newType.name,
-          )
-          return res.status(400).json({
-            message: 'Se requiere ID y nombre para el nuevo tipo de campaña.',
-          })
-        }
+//       try {
+//         const db = getFirestore(getApp())
+//         // La validación ahora se basa en el 'newType' parseado
+//         if (!newType || !newType.id || !newType.name) {
+//           console.log(
+//             'Fallo de validación: newType:',
+//             newType,
+//             'newType.id:',
+//             newType.id,
+//             'newType.name:',
+//             newType.name,
+//           )
+//           return res.status(400).json({
+//             message: 'Se requiere ID y nombre para el nuevo tipo de campaña.',
+//           })
+//         }
 
-        const campaignTypesRef = db
-          .collection('system_variables')
-          .doc('campaign_types')
-        const doc = await campaignTypesRef.get()
-        let types = []
-        if (doc.exists && doc.data().types) {
-          types = doc.data().types
-        }
+//         const campaignTypesRef = db
+//           .collection('system_variables')
+//           .doc('campaign_types')
+//         const doc = await campaignTypesRef.get()
+//         let types = []
+//         if (doc.exists && doc.data().types) {
+//           types = doc.data().types
+//         }
 
-        if (types.some((t) => t.id === newType.id)) {
-          return res.status(409).json({
-            message: `El tipo de campaña con ID '${newType.id}' ya existe.`,
-          })
-        }
+//         if (types.some((t) => t.id === newType.id)) {
+//           return res.status(409).json({
+//             message: `El tipo de campaña con ID '${newType.id}' ya existe.`,
+//           })
+//         }
 
-        types.push(newType)
-        await campaignTypesRef.set({ types }, { merge: true })
+//         types.push(newType)
+//         await campaignTypesRef.set({ types }, { merge: true })
 
-        return res
-          .status(201)
-          .json({ message: 'Tipo de campaña añadido exitosamente.', newType })
-      } catch (error) {
-        functions.logger.error('Error en addCampaignType:', error) // CORREGIDO
-        return res.status(500).json({
-          message: 'Error interno del servidor al añadir tipo de campaña.',
-        })
-      }
-    })
-  },
-)
+//         return res
+//           .status(201)
+//           .json({ message: 'Tipo de campaña añadido exitosamente.', newType })
+//       } catch (error) {
+//         functions.logger.error('Error en addCampaignType:', error) // CORREGIDO
+//         return res.status(500).json({
+//           message: 'Error interno del servidor al añadir tipo de campaña.',
+//         })
+//       }
+//     })
+//   },
+// )
 
-// 7. ACTUALIZAR TIPO DE CAMPAÑA (POST - Para el panel de administración)
-export const updateCampaignType = functions.https.onRequest(
-  { secrets: [JWT_SECRET_KEY_PARAM] }, // Declara el secreto aquí
-  async (req, res) => {
-    authorizeAdmin(req, res, async () => {
-      if (req.method !== 'POST') {
-        return res.status(405).send('Método no permitido. Solo POST.')
-      }
-      try {
-        const db = getFirestore(getApp())
-        const { id, updates } = req.body // id del tipo de campaña, y el objeto con actualizaciones
+// // 7. ACTUALIZAR TIPO DE CAMPAÑA (POST - Para el panel de administración)
+// export const updateCampaignType = functions.https.onRequest(
+//   { secrets: [JWT_SECRET_KEY_PARAM] }, // Declara el secreto aquí
+//   async (req, res) => {
+//     authorizeAdmin(req, res, async () => {
+//       if (req.method !== 'POST') {
+//         return res.status(405).send('Método no permitido. Solo POST.')
+//       }
+//       try {
+//         const db = getFirestore(getApp())
+//         const { id, updates } = req.body // id del tipo de campaña, y el objeto con actualizaciones
 
-        if (!id || !updates || typeof updates !== 'object') {
-          return res.status(400).json({
-            message:
-              'Se requiere ID y actualizaciones para el tipo de campaña.',
-          })
-        }
+//         if (!id || !updates || typeof updates !== 'object') {
+//           return res.status(400).json({
+//             message:
+//               'Se requiere ID y actualizaciones para el tipo de campaña.',
+//           })
+//         }
 
-        const campaignTypesRef = db
-          .collection('system_variables')
-          .doc('campaign_types')
-        const doc = await campaignTypesRef.get()
-        if (!doc.exists || !doc.data().types) {
-          return res.status(404).json({
-            message: 'No se encontraron tipos de campaña para actualizar.',
-          })
-        }
+//         const campaignTypesRef = db
+//           .collection('system_variables')
+//           .doc('campaign_types')
+//         const doc = await campaignTypesRef.get()
+//         if (!doc.exists || !doc.data().types) {
+//           return res.status(404).json({
+//             message: 'No se encontraron tipos de campaña para actualizar.',
+//           })
+//         }
 
-        let types = doc.data().types
-        const index = types.findIndex((t) => t.id === id)
+//         let types = doc.data().types
+//         const index = types.findIndex((t) => t.id === id)
 
-        if (index === -1) {
-          return res
-            .status(404)
-            .json({ message: `Tipo de campaña con ID '${id}' no encontrado.` })
-        }
+//         if (index === -1) {
+//           return res
+//             .status(404)
+//             .json({ message: `Tipo de campaña con ID '${id}' no encontrado.` })
+//         }
 
-        types[index] = { ...types[index], ...updates }
-        await campaignTypesRef.set({ types }, { merge: true })
+//         types[index] = { ...types[index], ...updates }
+//         await campaignTypesRef.set({ types }, { merge: true })
 
-        return res.status(200).json({
-          message: 'Tipo de campaña actualizado exitosamente.',
-          updatedType: types[index],
-        })
-      } catch (error) {
-        functions.logger.error('Error en updateCampaignType:', error) // CORREGIDO
-        return res.status(500).json({
-          message: 'Error interno del servidor al actualizar tipo de campaña.',
-        })
-      }
-    })
-  },
-)
+//         return res.status(200).json({
+//           message: 'Tipo de campaña actualizado exitosamente.',
+//           updatedType: types[index],
+//         })
+//       } catch (error) {
+//         functions.logger.error('Error en updateCampaignType:', error) // CORREGIDO
+//         return res.status(500).json({
+//           message: 'Error interno del servidor al actualizar tipo de campaña.',
+//         })
+//       }
+//     })
+//   },
+// )
 
-// 8. ELIMINAR TIPO DE CAMPAÑA (POST - Para el panel de administración)
-export const deleteCampaignType = functions.https.onRequest(
-  { secrets: [JWT_SECRET_KEY_PARAM] }, // Declara el secreto aquí
-  async (req, res) => {
-    authorizeAdmin(req, res, async () => {
-      if (req.method !== 'POST') {
-        return res.status(405).send('Método no permitido. Solo POST.')
-      }
-      try {
-        const db = getFirestore(getApp())
-        const { id } = req.body
+// // 8. ELIMINAR TIPO DE CAMPAÑA (POST - Para el panel de administración)
+// export const deleteCampaignType = functions.https.onRequest(
+//   { secrets: [JWT_SECRET_KEY_PARAM] }, // Declara el secreto aquí
+//   async (req, res) => {
+//     authorizeAdmin(req, res, async () => {
+//       if (req.method !== 'POST') {
+//         return res.status(405).send('Método no permitido. Solo POST.')
+//       }
+//       try {
+//         const db = getFirestore(getApp())
+//         const { id } = req.body
 
-        if (!id) {
-          return res.status(400).json({
-            message: 'Se requiere ID para eliminar el tipo de campaña.',
-          })
-        }
+//         if (!id) {
+//           return res.status(400).json({
+//             message: 'Se requiere ID para eliminar el tipo de campaña.',
+//           })
+//         }
 
-        // CORRECCIÓN: Usar campaignTypesRef y 'campaign_types'
-        const campaignTypesRef = db
-          .collection('system_variables')
-          .doc('campaign_types')
-        const doc = await campaignTypesRef.get()
-        if (!doc.exists || !doc.data().types) {
-          return res.status(404).json({
-            message: 'No se encontraron tipos de campaña para eliminar.',
-          })
-        }
+//         // CORRECCIÓN: Usar campaignTypesRef y 'campaign_types'
+//         const campaignTypesRef = db
+//           .collection('system_variables')
+//           .doc('campaign_types')
+//         const doc = await campaignTypesRef.get()
+//         if (!doc.exists || !doc.data().types) {
+//           return res.status(404).json({
+//             message: 'No se encontraron tipos de campaña para eliminar.',
+//           })
+//         }
 
-        let types = doc.data().types
-        const initialLength = types.length
-        types = types.filter((t) => t.id !== id)
+//         let types = doc.data().types
+//         const initialLength = types.length
+//         types = types.filter((t) => t.id !== id)
 
-        if (types.length === initialLength) {
-          return res
-            .status(404)
-            .json({ message: `Tipo de campaña con ID '${id}' no encontrado.` })
-        }
+//         if (types.length === initialLength) {
+//           return res
+//             .status(404)
+//             .json({ message: `Tipo de campaña con ID '${id}' no encontrado.` })
+//         }
 
-        // CORRECCIÓN: Usar campaignTypesRef.set
-        await campaignTypesRef.set({ types }, { merge: true })
+//         // CORRECCIÓN: Usar campaignTypesRef.set
+//         await campaignTypesRef.set({ types }, { merge: true })
 
-        return res.status(200).json({
-          message: 'Tipo de campaña eliminado exitosamente.',
-          deletedId: id,
-        })
-      } catch (error) {
-        functions.logger.error('Error en deleteCampaignType:', error) // CORREGIDO
-        return res.status(500).json({
-          message: 'Error interno del servidor al eliminar tipo de campaña.',
-        })
-      }
-    })
-  },
-)
+//         return res.status(200).json({
+//           message: 'Tipo de campaña eliminado exitosamente.',
+//           deletedId: id,
+//         })
+//       } catch (error) {
+//         functions.logger.error('Error en deleteCampaignType:', error) // CORREGIDO
+//         return res.status(500).json({
+//           message: 'Error interno del servidor al eliminar tipo de campaña.',
+//         })
+//       }
+//     })
+//   },
+// )
 
-// 9. AÑADIR PLAN DE PRECIOS (POST - Para el panel de administración)
-export const addPricingPlan = functions.https.onRequest(
-  { secrets: [JWT_SECRET_KEY_PARAM] }, // Declara el secreto aquí
-  async (req, res) => {
-    authorizeAdmin(req, res, async () => {
-      if (req.method !== 'POST') {
-        return res.status(405).send('Método no permitido. Solo POST.')
-      }
-      try {
-        const db = getFirestore(getApp())
-        const newPlan = req.body // { id, typeId, name, price, description }
+// // 9. AÑADIR PLAN DE PRECIOS (POST - Para el panel de administración)
+// export const addPricingPlan = functions.https.onRequest(
+//   { secrets: [JWT_SECRET_KEY_PARAM] }, // Declara el secreto aquí
+//   async (req, res) => {
+//     authorizeAdmin(req, res, async () => {
+//       if (req.method !== 'POST') {
+//         return res.status(405).send('Método no permitido. Solo POST.')
+//       }
+//       try {
+//         const db = getFirestore(getApp())
+//         const newPlan = req.body // { id, typeId, name, price, description }
 
-        if (
-          !newPlan ||
-          !newPlan.id ||
-          !newPlan.name ||
-          newPlan.price === undefined ||
-          !newPlan.typeId
-        ) {
-          return res.status(400).json({
-            message:
-              'Se requieren ID, tipo de campaña, nombre y precio para el nuevo plan.',
-          })
-        }
+//         if (
+//           !newPlan ||
+//           !newPlan.id ||
+//           !newPlan.name ||
+//           newPlan.price === undefined ||
+//           !newPlan.typeId
+//         ) {
+//           return res.status(400).json({
+//             message:
+//               'Se requieren ID, tipo de campaña, nombre y precio para el nuevo plan.',
+//           })
+//         }
 
-        const pricingPlansRef = db
-          .collection('system_variables')
-          .doc('pricing_plans')
-        const doc = await pricingPlansRef.get()
-        let plans = []
-        if (doc.exists && doc.data().plans) {
-          plans = doc.data().plans
-        }
+//         const pricingPlansRef = db
+//           .collection('system_variables')
+//           .doc('pricing_plans')
+//         const doc = await pricingPlansRef.get()
+//         let plans = []
+//         if (doc.exists && doc.data().plans) {
+//           plans = doc.data().plans
+//         }
 
-        if (plans.some((p) => p.id === newPlan.id)) {
-          return res.status(409).json({
-            message: `El plan de precios con ID '${newPlan.id}' ya existe.`,
-          })
-        }
+//         if (plans.some((p) => p.id === newPlan.id)) {
+//           return res.status(409).json({
+//             message: `El plan de precios con ID '${newPlan.id}' ya existe.`,
+//           })
+//         }
 
-        plans.push(newPlan)
-        await pricingPlansRef.set({ plans }, { merge: true })
+//         plans.push(newPlan)
+//         await pricingPlansRef.set({ plans }, { merge: true })
 
-        return res
-          .status(201)
-          .json({ message: 'Plan de precios añadido exitosamente.', newPlan })
-      } catch (error) {
-        functions.logger.error('Error en addPricingPlan:', error) // CORREGIDO
-        return res.status(500).json({
-          message: 'Error interno del servidor al añadir plan de precios.',
-        })
-      }
-    })
-  },
-)
-
-// 10. ACTUALIZAR PLAN DE PRECIOS (POST - Para el panel de administración)
-export const updatePricingPlan = functions.https.onRequest(
-  { secrets: [JWT_SECRET_KEY_PARAM] }, // Declara el secreto aquí
-  async (req, res) => {
-    authorizeAdmin(req, res, async () => {
-      if (req.method !== 'POST') {
-        return res.status(405).send('Método no permitido. Solo POST.')
-      }
-      try {
-        const db = getFirestore(getApp())
-        const { id, updates } = req.body
-
-        if (!id || !updates || typeof updates !== 'object') {
-          return res.status(400).json({
-            message:
-              'Se requiere ID y actualizaciones para el plan de precios.',
-          })
-        }
-
-        const pricingPlansRef = db
-          .collection('system_variables')
-          .doc('pricing_plans')
-        const doc = await pricingPlansRef.get()
-        if (!doc.exists || !doc.data().plans) {
-          return res.status(404).json({
-            message: 'No se encontraron planes de precios para actualizar.',
-          })
-        }
-
-        let plans = doc.data().plans
-        const index = plans.findIndex((p) => p.id === id)
-
-        if (index === -1) {
-          return res
-            .status(404)
-            .json({ message: `Plan de precios con ID '${id}' no encontrado.` })
-        }
-
-        plans[index] = { ...plans[index], ...updates }
-        await pricingPlansRef.set({ plans }, { merge: true })
-
-        return res.status(200).json({
-          message: 'Plan de precios actualizado exitosamente.',
-          updatedPlan: plans[index],
-        })
-      } catch (error) {
-        functions.logger.error('Error en updatePricingPlan:', error) // CORREGIDO
-        return res.status(500).json({
-          message: 'Error interno del servidor al actualizar plan de precios.',
-        })
-      }
-    })
-  },
-)
-
-// 11. ELIMINAR PLAN DE PRECIOS (POST - Para el panel de administración)
-export const deletePricingPlan = functions.https.onRequest(
-  { secrets: [JWT_SECRET_KEY_PARAM] }, // Declara el secreto aquí
-  async (req, res) => {
-    authorizeAdmin(req, res, async () => {
-      if (req.method !== 'POST') {
-        return res.status(405).send('Método no permitido. Solo POST.')
-      }
-      try {
-        const db = getFirestore(getApp())
-        const { id } = req.body
-
-        if (!id) {
-          return res.status(400).json({
-            message: 'Se requiere ID para eliminar el plan de precios.',
-          })
-        }
-
-        const pricingPlansRef = db
-          .collection('system_variables')
-          .doc('pricing_plans')
-        const doc = await pricingPlansRef.get()
-        if (!doc.exists || !doc.data().plans) {
-          return res.status(404).json({
-            message: 'No se encontraron planes de precios para eliminar.',
-          })
-        }
-
-        let plans = doc.data().plans
-        const initialLength = plans.length
-        plans = plans.filter((t) => t.id !== id)
-
-        if (plans.length === initialLength) {
-          return res
-            .status(404)
-            .json({ message: `Plan de precios con ID '${id}' no encontrado.` })
-        }
-
-        await pricingPlansRef.set({ plans }, { merge: true })
-
-        return res.status(200).json({
-          message: 'Plan de precios eliminado exitosamente.',
-          deletedId: id,
-        })
-      } catch (error) {
-        functions.logger.error('Error en deletePricingPlan:', error) // CORREGIDO
-        return res.status(500).json({
-          message: 'Error interno del servidor al eliminar plan de precios.',
-        })
-      }
-    })
-  },
-)
+//         return res
+//           .status(201)
+//           .json({ message: 'Plan de precios añadido exitosamente.', newPlan })
+//       } catch (error) {
+//         functions.logger.error('Error en addPricingPlan:', error) // CORREGIDO
+//         return res.status(500).json({
+//           message: 'Error interno del servidor al añadir plan de precios.',
+//         })
+//       }
+//     })
+//   },
+// )
 
 // --- NUEVAS FUNCIONES PARA UBICACIONES (Departamentos y Ciudades) ---
 
@@ -777,231 +668,231 @@ export const getCitiesByDepartment = functions.https.onRequest((req, res) => {
   })
 })
 
-// 14. registro formulario de contacto (POST - Pública para la Home)
-export const submitContactForm = functions.https.onRequest(async (req, res) => {
-  // Aplicar el middleware CORS para permitir solicitudes desde el frontend
-  publicCors(req, res, async () => {
-    // Solo permitir solicitudes POST
-    if (req.method !== 'POST') {
-      return res.status(405).send('Método no permitido. Solo POST.')
-    }
+// // 14. registro formulario de contacto (POST - Pública para la Home)
+// export const submitContactForm = functions.https.onRequest(async (req, res) => {
+//   // Aplicar el middleware CORS para permitir solicitudes desde el frontend
+//   publicCors(req, res, async () => {
+//     // Solo permitir solicitudes POST
+//     if (req.method !== 'POST') {
+//       return res.status(405).send('Método no permitido. Solo POST.')
+//     }
 
-    // Extraer datos del cuerpo de la solicitud
-    // Añadido 'source' para saber cómo nos conoció el cliente
-    const { name, email, phone, interestedIn, message, source } = req.body
+//     // Extraer datos del cuerpo de la solicitud
+//     // Añadido 'source' para saber cómo nos conoció el cliente
+//     const { name, email, phone, interestedIn, message, source } = req.body
 
-    // 1. Validación básica de los campos recibidos
-    if (!name || !email || !interestedIn || !message) {
-      return res.status(400).json({
-        message:
-          'Faltan campos obligatorios (nombre, email, interés, mensaje).',
-      })
-    }
+//     // 1. Validación básica de los campos recibidos
+//     if (!name || !email || !interestedIn || !message) {
+//       return res.status(400).json({
+//         message:
+//           'Faltan campos obligatorios (nombre, email, interés, mensaje).',
+//       })
+//     }
 
-    try {
-      const db = getFirestore(getApp()) // Obtener la instancia de Firestore de Firebase Admin
+//     try {
+//       const db = getFirestore(getApp()) // Obtener la instancia de Firestore de Firebase Admin
 
-      // 2. Crear un nuevo documento en la colección 'leads' de Firestore
-      const newLead = {
-        name: name,
-        email: email,
-        phone: phone || null, // El teléfono es opcional
-        interestedIn: interestedIn,
-        message: message,
-        source: source || null, // Nuevo campo: cómo nos conoció (opcional por ahora)
-        timestamp: new Date(), // Registrar la fecha y hora de la solicitud
-        status: 'nuevo', // Estado inicial del lead para tu seguimiento
-      }
+//       // 2. Crear un nuevo documento en la colección 'leads' de Firestore
+//       const newLead = {
+//         name: name,
+//         email: email,
+//         phone: phone || null, // El teléfono es opcional
+//         interestedIn: interestedIn,
+//         message: message,
+//         source: source || null, // Nuevo campo: cómo nos conoció (opcional por ahora)
+//         timestamp: new Date(), // Registrar la fecha y hora de la solicitud
+//         status: 'nuevo', // Estado inicial del lead para tu seguimiento
+//       }
 
-      await db.collection('leads').add(newLead) // Usar .add() para que Firestore genere un ID automático
+//       await db.collection('leads').add(newLead) // Usar .add() para que Firestore genere un ID automático
 
-      // 3. Enviar una respuesta de éxito al frontend
-      return res.status(200).json({
-        message:
-          'Tu mensaje ha sido enviado con éxito. Nos pondremos en contacto contigo pronto.',
-        leadId: newLead.id, // Firestore genera el ID después de .add()
-      })
-    } catch (error) {
-      functions.logger.error(
-        'Error al procesar el formulario de contacto:',
-        error,
-      ) // CORREGIDO
-      return res.status(500).json({
-        message:
-          'Hubo un error al enviar tu mensaje. Por favor, inténtalo de nuevo más tarde.',
-        error: error.message,
-      })
-    }
-  })
-})
+//       // 3. Enviar una respuesta de éxito al frontend
+//       return res.status(200).json({
+//         message:
+//           'Tu mensaje ha sido enviado con éxito. Nos pondremos en contacto contigo pronto.',
+//         leadId: newLead.id, // Firestore genera el ID después de .add()
+//       })
+//     } catch (error) {
+//       functions.logger.error(
+//         'Error al procesar el formulario de contacto:',
+//         error,
+//       ) // CORREGIDO
+//       return res.status(500).json({
+//         message:
+//           'Hubo un error al enviar tu mensaje. Por favor, inténtalo de nuevo más tarde.',
+//         error: error.message,
+//       })
+//     }
+//   })
+// })
 
-// 15. OBTENER CLIENTES POTENCIALES LIST (GET - Protegida para el panel de administración)
-export const getLeads = functions.https.onRequest(
-  { secrets: ['BJS_JWT_SECRET_KEY'] }, // Declara el secreto aquí si authorizeAdmin lo usa
-  async (req, res) => {
-    // authorizeAdmin ya maneja CORS para funciones protegidas
-    authorizeAdmin(req, res, async () => {
-      if (req.method !== 'GET') {
-        return res.status(405).send('Método no permitido. Solo GET.')
-      }
+// // 15. OBTENER CLIENTES POTENCIALES LIST (GET - Protegida para el panel de administración)
+// export const getLeads = functions.https.onRequest(
+//   { secrets: ['BJS_JWT_SECRET_KEY'] }, // Declara el secreto aquí si authorizeAdmin lo usa
+//   async (req, res) => {
+//     // authorizeAdmin ya maneja CORS para funciones protegidas
+//     authorizeAdmin(req, res, async () => {
+//       if (req.method !== 'GET') {
+//         return res.status(405).send('Método no permitido. Solo GET.')
+//       }
 
-      try {
-        const db = getFirestore(getApp())
-        let leadsRef = db.collection('leads')
+//       try {
+//         const db = getFirestore(getApp())
+//         let leadsRef = db.collection('leads')
 
-        // Filtrar por estado si se proporciona el parámetro 'status'
-        const statusFilter = req.query.status
-        if (statusFilter) {
-          leadsRef = leadsRef.where('status', '==', statusFilter)
-        }
+//         // Filtrar por estado si se proporciona el parámetro 'status'
+//         const statusFilter = req.query.status
+//         if (statusFilter) {
+//           leadsRef = leadsRef.where('status', '==', statusFilter)
+//         }
 
-        // Puedes añadir ordenación por timestamp o nombre si lo deseas
-        leadsRef = leadsRef.orderBy('timestamp', 'desc')
+//         // Puedes añadir ordenación por timestamp o nombre si lo deseas
+//         leadsRef = leadsRef.orderBy('timestamp', 'desc')
 
-        const snapshot = await leadsRef.get()
-        const leads = []
-        snapshot.forEach((doc) => {
-          leads.push({ id: doc.id, ...doc.data() })
-        })
+//         const snapshot = await leadsRef.get()
+//         const leads = []
+//         snapshot.forEach((doc) => {
+//           leads.push({ id: doc.id, ...doc.data() })
+//         })
 
-        return res.status(200).json(leads)
-      } catch (error) {
-        functions.logger.error('Error en getLeads:', error) // CORREGIDO
-        return res.status(500).json({
-          message:
-            'Error interno del servidor al obtener clientes potenciales.',
-          error: error.message,
-        })
-      }
-    })
-  },
-)
+//         return res.status(200).json(leads)
+//       } catch (error) {
+//         functions.logger.error('Error en getLeads:', error) // CORREGIDO
+//         return res.status(500).json({
+//           message:
+//             'Error interno del servidor al obtener clientes potenciales.',
+//           error: error.message,
+//         })
+//       }
+//     })
+//   },
+// )
 
-// 16. OBTENER CLIENTE POTENCIAL POR ID (GET - Protegida para el panel de administración)
-export const getLeadById = functions.https.onRequest(
-  { secrets: ['BJS_JWT_SECRET_KEY'] },
-  async (req, res) => {
-    authorizeAdmin(req, res, async () => {
-      if (req.method !== 'GET') {
-        return res.status(405).send('Método no permitido. Solo GET.')
-      }
+// // 16. OBTENER CLIENTE POTENCIAL POR ID (GET - Protegida para el panel de administración)
+// export const getLeadById = functions.https.onRequest(
+//   { secrets: ['BJS_JWT_SECRET_KEY'] },
+//   async (req, res) => {
+//     authorizeAdmin(req, res, async () => {
+//       if (req.method !== 'GET') {
+//         return res.status(405).send('Método no permitido. Solo GET.')
+//       }
 
-      const leadId = req.query.id // Esperamos el ID como parámetro de consulta
+//       const leadId = req.query.id // Esperamos el ID como parámetro de consulta
 
-      if (!leadId) {
-        return res
-          .status(400)
-          .json({ message: 'Se requiere el ID del cliente potencial.' })
-      }
+//       if (!leadId) {
+//         return res
+//           .status(400)
+//           .json({ message: 'Se requiere el ID del cliente potencial.' })
+//       }
 
-      try {
-        const db = getFirestore(getApp())
-        const leadDocRef = db.collection('leads').doc(leadId)
-        const leadDoc = await leadDocRef.get()
+//       try {
+//         const db = getFirestore(getApp())
+//         const leadDocRef = db.collection('leads').doc(leadId)
+//         const leadDoc = await leadDocRef.get()
 
-        if (!leadDoc.exists) {
-          return res
-            .status(404)
-            .json({ message: 'Cliente potencial no encontrado.' })
-        }
+//         if (!leadDoc.exists) {
+//           return res
+//             .status(404)
+//             .json({ message: 'Cliente potencial no encontrado.' })
+//         }
 
-        return res.status(200).json({ id: leadDoc.id, ...leadDoc.data() })
-      } catch (error) {
-        functions.logger.error('Error en getLeadById:', error) // CORREGIDO
-        return res.status(500).json({
-          message:
-            'Error interno del servidor al obtener el cliente potencial.',
-          error: error.message,
-        })
-      }
-    })
-  },
-)
+//         return res.status(200).json({ id: leadDoc.id, ...leadDoc.data() })
+//       } catch (error) {
+//         functions.logger.error('Error en getLeadById:', error) // CORREGIDO
+//         return res.status(500).json({
+//           message:
+//             'Error interno del servidor al obtener el cliente potencial.',
+//           error: error.message,
+//         })
+//       }
+//     })
+//   },
+// )
 
-// 17. ACTUALIZAR CLIENTE POTENCIAL (POST o PATCH - Protegida para el panel de administración)
-export const updateLead = functions.https.onRequest(
-  { secrets: ['BJS_JWT_SECRET_KEY'] },
-  async (req, res) => {
-    authorizeAdmin(req, res, async () => {
-      if (req.method !== 'POST' && req.method !== 'PATCH') {
-        // Permitir POST o PATCH
-        return res.status(405).send('Método no permitido. Solo POST o PATCH.')
-      }
+// // 17. ACTUALIZAR CLIENTE POTENCIAL (POST o PATCH - Protegida para el panel de administración)
+// export const updateLead = functions.https.onRequest(
+//   { secrets: ['BJS_JWT_SECRET_KEY'] },
+//   async (req, res) => {
+//     authorizeAdmin(req, res, async () => {
+//       if (req.method !== 'POST' && req.method !== 'PATCH') {
+//         // Permitir POST o PATCH
+//         return res.status(405).send('Método no permitido. Solo POST o PATCH.')
+//       }
 
-      const { id, updates, newNote } = req.body // 'updates' para campos generales, 'newNote' para añadir al historial
-      const adminUid = req.userUid // UID del administrador que realiza la acción (viene de authorizeAdmin)
+//       const { id, updates, newNote } = req.body // 'updates' para campos generales, 'newNote' para añadir al historial
+//       const adminUid = req.userUid // UID del administrador que realiza la acción (viene de authorizeAdmin)
 
-      if (!id || (!updates && !newNote)) {
-        return res.status(400).json({
-          message: 'Se requiere ID y datos para actualizar o una nueva nota.',
-        })
-      }
+//       if (!id || (!updates && !newNote)) {
+//         return res.status(400).json({
+//           message: 'Se requiere ID y datos para actualizar o una nueva nota.',
+//         })
+//       }
 
-      if (!adminUid) {
-        // Esto no debería pasar si authorizeAdmin funciona correctamente, pero es una buena salvaguarda
-        return res.status(401).json({
-          message: 'No autorizado: UID del administrador no disponible.',
-        })
-      }
+//       if (!adminUid) {
+//         // Esto no debería pasar si authorizeAdmin funciona correctamente, pero es una buena salvaguarda
+//         return res.status(401).json({
+//           message: 'No autorizado: UID del administrador no disponible.',
+//         })
+//       }
 
-      try {
-        const db = getFirestore(getApp())
-        const leadDocRef = db.collection('leads').doc(id)
-        const leadDoc = await leadDocRef.get()
+//       try {
+//         const db = getFirestore(getApp())
+//         const leadDocRef = db.collection('leads').doc(id)
+//         const leadDoc = await leadDocRef.get()
 
-        if (!leadDoc.exists) {
-          return res
-            .status(404)
-            .json({ message: 'Cliente potencial no encontrado.' })
-        }
+//         if (!leadDoc.exists) {
+//           return res
+//             .status(404)
+//             .json({ message: 'Cliente potencial no encontrado.' })
+//         }
 
-        let currentData = leadDoc.data()
-        let updatedData = { ...currentData, ...updates } // Aplicar actualizaciones generales
+//         let currentData = leadDoc.data()
+//         let updatedData = { ...currentData, ...updates } // Aplicar actualizaciones generales
 
-        // Si hay una nueva nota, añadirla al array 'notes'
-        if (newNote && typeof newNote === 'string' && newNote.trim() !== '') {
-          const noteEntry = {
-            text: newNote.trim(),
-            timestamp: new Date(),
-            adminId: adminUid,
-          }
-          // Asegurarse de que 'notes' sea un array
-          updatedData.notes = Array.isArray(currentData.notes)
-            ? [...currentData.notes, noteEntry]
-            : [noteEntry]
-        }
+//         // Si hay una nueva nota, añadirla al array 'notes'
+//         if (newNote && typeof newNote === 'string' && newNote.trim() !== '') {
+//           const noteEntry = {
+//             text: newNote.trim(),
+//             timestamp: new Date(),
+//             adminId: adminUid,
+//           }
+//           // Asegurarse de que 'notes' sea un array
+//           updatedData.notes = Array.isArray(currentData.notes)
+//             ? [...currentData.notes, noteEntry]
+//             : [noteEntry]
+//         }
 
-        // Si se actualiza el status, también podrías registrarlo en las notas automáticamente
-        if (
-          updates &&
-          updates.status &&
-          updates.status !== currentData.status
-        ) {
-          const statusChangeNote = {
-            text: `Estado cambiado de '${currentData.status || 'N/A'}' a '${updates.status}'`,
-            timestamp: new Date(),
-            adminId: adminUid,
-            type: 'status_change', // Tipo de nota especial
-          }
-          updatedData.notes = Array.isArray(updatedData.notes)
-            ? [...updatedData.notes, statusChangeNote]
-            : [statusChangeNote]
-        }
+//         // Si se actualiza el status, también podrías registrarlo en las notas automáticamente
+//         if (
+//           updates &&
+//           updates.status &&
+//           updates.status !== currentData.status
+//         ) {
+//           const statusChangeNote = {
+//             text: `Estado cambiado de '${currentData.status || 'N/A'}' a '${updates.status}'`,
+//             timestamp: new Date(),
+//             adminId: adminUid,
+//             type: 'status_change', // Tipo de nota especial
+//           }
+//           updatedData.notes = Array.isArray(updatedData.notes)
+//             ? [...updatedData.notes, statusChangeNote]
+//             : [statusChangeNote]
+//         }
 
-        await leadDocRef.set(updatedData, { merge: true }) // Usar set con merge para actualizar
+//         await leadDocRef.set(updatedData, { merge: true }) // Usar set con merge para actualizar
 
-        return res.status(200).json({
-          message: 'Cliente potencial actualizado exitosamente.',
-          updatedLeadId: id,
-        })
-      } catch (error) {
-        functions.logger.error('Error en updateLead:', error) // CORREGIDO
-        return res.status(500).json({
-          message:
-            'Error interno del servidor al actualizar el cliente potencial.',
-          error: error.message,
-        })
-      }
-    })
-  },
-)
+//         return res.status(200).json({
+//           message: 'Cliente potencial actualizado exitosamente.',
+//           updatedLeadId: id,
+//         })
+//       } catch (error) {
+//         functions.logger.error('Error en updateLead:', error) // CORREGIDO
+//         return res.status(500).json({
+//           message:
+//             'Error interno del servidor al actualizar el cliente potencial.',
+//           error: error.message,
+//         })
+//       }
+//     })
+//   },
+// )

@@ -490,113 +490,103 @@ export const registerPublicUser = functions.https.onRequest(
 )
 
 // 4. --- FUNCIÓN PARA INICIAR SESIÓN CON EMAIL Y CLAVE (POST) ---
-export const loginWithEmail = functions.https.onRequest(
-  { secrets: [JWT_SECRET_KEY_PARAM] },
-  async (req, res) => {
-    setPublicCorsHeaders(req, res, async () => {
-      if (req.method === 'OPTIONS') {
-        res.status(204).send('')
-        return
-      }
-      if (req.method !== 'POST') {
-        return res
-          .status(405)
-          .send('Method Not Allowed. Only POST is accepted.')
-      }
-
-      try {
-        const app = getApp()
-        const db = getFirestore(app)
-        const jwtSecretValue = JWT_SECRET_KEY_PARAM.value()
-
-        if (!jwtSecretValue) {
-          functions.logger.error(
-            'JWT_SECRET not configured in Firebase Functions.',
-          ) // Usar functions.logger.error
-          return res
-            .status(500)
-            .json({ message: 'Server configuration error.' })
-        }
-        const cleanedJwtSecret = jwtSecretValue.trim()
-
-        const { email, clave } = req.body
-        const userCredentialSnapshot = await db
-          .collection('user_credentials')
-          .where('cedula', '==', email)
-          .limit(1)
-          .get()
-
-        if (userCredentialSnapshot.empty) {
-          return res.status(401).json({ message: 'Incorrect credentials.' })
+export const loginWithEmail = functions.https.onRequest(async (req, res) => {
+      setPublicCorsHeaders(req, res, async () => {
+        if (req.method === 'GET') {
+          return res.status(200).send('Keep-alive ping. Instance is warm.');
         }
 
-        const userCredentialDoc = userCredentialSnapshot.docs[0].data()
-        const storedHashedPassword = userCredentialDoc.hashedPassword
-        const firebaseAuthUid = userCredentialDoc.firebaseAuthUid
-        const passwordMatch = await bcrypt.compare(clave, storedHashedPassword)
-
-        if (!passwordMatch) {
-          return res.status(401).json({ message: 'Incorrect credentials.' })
+        if (req.method !== 'POST') {
+          return res.status(405).send('Method Not Allowed. Only POST is accepted.');
         }
 
-        const userDoc = await db.collection('users').doc(firebaseAuthUid).get()
-        if (!userDoc.exists) {
-          return res.status(404).json({ message: 'User profile not found.' })
+        try {
+          const app = getApp();
+          const db = getFirestore(app);
+          const jwtSecretValue = JWT_SECRET_KEY_PARAM.value();
+
+          if (!jwtSecretValue) {
+            functions.logger.error('JWT_SECRET not configured in Firebase Functions.');
+            return res.status(500).json({ message: 'Server configuration error.' });
+          }
+          const cleanedJwtSecret = jwtSecretValue.trim();
+
+          const { email, clave } = req.body;
+          const userCredentialSnapshot = await db
+            .collection('user_credentials')
+            .where('cedula', '==', email)
+            .limit(1)
+            .get();
+
+          if (userCredentialSnapshot.empty) {
+            return res.status(401).json({ message: 'Incorrect credentials.' });
+          }
+
+          const userCredentialDoc = userCredentialSnapshot.docs[0].data();
+          const storedHashedPassword = userCredentialDoc.hashedPassword;
+          const firebaseAuthUid = userCredentialDoc.firebaseAuthUid;
+          const passwordMatch = await bcrypt.compare(clave, storedHashedPassword);
+
+          if (!passwordMatch) {
+            return res.status(401).json({ message: 'Incorrect credentials.' });
+          }
+
+          const userDoc = await db.collection('users').doc(firebaseAuthUid).get();
+          if (!userDoc.exists) {
+            return res.status(404).json({ message: 'User profile not found.' });
+          }
+
+          const userData = userDoc.data();
+
+          const allowedRolesForLogin = [
+            'admin',
+            'candidato',
+            'manager',
+            'ring',
+            'anillo',
+            'voter',
+            'votante',
+          ];
+          if (!allowedRolesForLogin.includes(userData.role)) {
+            return res.status(403).json({ message: 'User role does not allow direct login.' });
+          }
+
+          await db.collection('users').doc(firebaseAuthUid).update({
+            lastLogin: new Date().toISOString(),
+          });
+
+          const tokenPayload = {
+            uid: firebaseAuthUid,
+            email: userData.email,
+            name: userData.name || userData.nombre,
+            role: userData.role,
+            campaignMemberships: userData.campaignMemberships || [],
+          };
+
+          const idToken = jwt.sign(tokenPayload, cleanedJwtSecret, {
+            algorithm: 'HS256',
+            expiresIn: '1h',
+          });
+
+          return res.status(200).json({
+            message: 'Credentials verified successfully.',
+            firebaseAuthUid: firebaseAuthUid,
+            email: userData.email,
+            name: userData.name || userData.nombre,
+            role: userData.role,
+            idToken: idToken,
+            campaignMemberships: userData.campaignMemberships || [],
+          });
+        } catch (error) {
+          functions.logger.error('Error in loginWithEmail Cloud Function:', error);
+          return res.status(500).json({
+            message: 'Internal server error during login.',
+            error: error.message,
+          });
         }
-
-        const userData = userDoc.data()
-
-        const allowedRolesForLogin = [
-          'admin',
-          'candidato',
-          'manager',
-          'ring', // Mantener 'ring' por compatibilidad si existe
-          'anillo',
-          'voter', // Mantener 'voter' por compatibilidad si existe
-          'votante',
-        ]
-        if (!allowedRolesForLogin.includes(userData.role)) {
-          return res
-            .status(403)
-            .json({ message: 'User role does not allow direct login.' })
-        }
-
-        await db.collection('users').doc(firebaseAuthUid).update({
-          lastLogin: new Date().toISOString(),
-        })
-
-        const tokenPayload = {
-          uid: firebaseAuthUid,
-          email: userData.email,
-          name: userData.name || userData.nombre,
-          role: userData.role,
-          campaignMemberships: userData.campaignMemberships || [],
-        }
-
-        const idToken = jwt.sign(tokenPayload, cleanedJwtSecret, {
-          algorithm: 'HS256',
-          expiresIn: '1h',
-        })
-
-        return res.status(200).json({
-          message: 'Credentials verified successfully.',
-          firebaseAuthUid: firebaseAuthUid,
-          email: userData.email,
-          name: userData.name || userData.nombre,
-          role: userData.role,
-          idToken: idToken,
-          campaignMemberships: userData.campaignMemberships || [],
-        })
-      } catch (error) {
-        functions.logger.error('Error in loginWithEmail Cloud Function:', error) // Usar functions.logger.error
-        return res.status(500).json({
-          message: 'Internal server error during login.',
-          error: error.message,
-        })
-      }
-    })
-  },
-)
+      });
+    }
+  );
 
 // 5. --- FUNCIÓN PARA OBTENER USUARIOS DE FORMA SEGURA (GET) ---
 export const getSecureUsers = functions.https.onRequest(
@@ -1656,18 +1646,17 @@ export const registerUserViaQr = functions.https.onRequest(async (req, res) => {
 
 // 11. --- FUNCIÓN PARA OBTENER MIEMBROS DE UNA CAMPAÑA (PROTEGIDA) ---
 export const getCampaignMembers = functions.https.onRequest(
-  { secrets: [JWT_SECRET_KEY_PARAM] },
+  { secrets: ['BJS_JWT_SECRET_KEY'] },
   async (req, res) => {
-    // Se usa el middleware estándar de autorización para cualquier miembro.
-    authenticateUserAndAttachRole(req, res, async () => {
+    await authenticateUserAndAttachRole(req, res, async () => {
       if (req.method !== 'GET') {
         return res.status(405).send('Método no permitido. Solo GET.')
       }
 
       const db = getFirestore(getApp())
-      const { campaignId } = req.query
-      const callingUserUid = req.userUid // El UID del usuario que hace la solicitud
-      const callingUserRole = req.userRole // El rol del usuario que hace la solicitud
+      const { campaignId, parentUid } = req.query
+      const callingUserUid = req.userUid
+      const callingUserRole = req.userRole
 
       if (!campaignId) {
         return res
@@ -1675,12 +1664,10 @@ export const getCampaignMembers = functions.https.onRequest(
           .json({ message: 'El campo "campaignId" es requerido.' })
       }
 
-      // Asegurarse de que el usuario pertenezca a la campaña solicitada.
       const userCampaignMembership = req.campaignMemberships.find(
         (m) => m.campaignId === campaignId && m.status === 'activo',
       )
 
-      // Lógica de autorización: el usuario debe ser un administrador o un miembro activo de la campaña
       if (!userCampaignMembership && callingUserRole !== 'admin') {
         return res.status(403).json({
           message: 'Acceso denegado: No eres miembro activo de esta campaña.',
@@ -1688,12 +1675,31 @@ export const getCampaignMembers = functions.https.onRequest(
       }
 
       try {
-        let membersQuery = db
-          .collection('users')
-          .where('campaignMemberships', 'array-contains', {
-            campaignId: campaignId,
-            status: 'activo',
-          })
+        let membersQuery = db.collection('users')
+
+        // CORRECCIÓN CLAVE: La consulta ahora se construye dinámicamente.
+        // Si hay un parentUid, busca los subordinados directos.
+        // Si no hay, busca todos los miembros de la campaña.
+        if (parentUid) {
+          membersQuery = membersQuery.where(
+            'campaignMemberships',
+            'array-contains',
+            {
+              campaignId: campaignId,
+              ownerBy: parentUid,
+              status: 'activo',
+            },
+          )
+        } else {
+          membersQuery = membersQuery.where(
+            'campaignMemberships',
+            'array-contains',
+            {
+              campaignId: campaignId,
+              status: 'activo',
+            },
+          )
+        }
 
         const membersSnapshot = await membersQuery.get()
         const campaignMembers = []
@@ -1705,20 +1711,7 @@ export const getCampaignMembers = functions.https.onRequest(
               (m) => m.campaignId === campaignId,
             )
 
-            // Lógica de filtrado para asegurar que solo se muestren los subordinados directos
-            let shouldIncludeMember = false
-
-            // Un administrador puede ver a todos
-            // Un candidato puede ver a todos sus subordinados directos
-            if (
-              callingUserRole === 'admin' ||
-              membership.ownerBy === callingUserUid
-            ) {
-              shouldIncludeMember = true
-            }
-
-            if (shouldIncludeMember) {
-              // Prepara un objeto simplificado para el frontend, excluyendo datos sensibles
+            if (membership) {
               campaignMembers.push({
                 userId: doc.id,
                 name: userData.name || userData.nombre,
@@ -1727,33 +1720,33 @@ export const getCampaignMembers = functions.https.onRequest(
                 directVotes: membership.directVotes,
                 pyramidVotes: membership.pyramidVotes,
                 totalPotentialVotes: membership.totalPotentialVotes,
-                ownerBy: membership.ownerBy, // Incluye el ownerBy para construir la pirámide en el frontend
+                ownerBy: membership.ownerBy,
+                subordinatesCount: membership.subordinatesCount,
               })
             }
           })
         }
 
-        // CORRECCIÓN: Para un candidato, la lógica es diferente.
-        // Si el usuario es un candidato, su `ownerBy` en su propia membresía es su propio UID.
-        // Para que se muestre a sí mismo, el filtro debe incluirlo.
-        if (userCampaignMembership?.role === 'candidato') {
-          const candidatoSelf = membersSnapshot.docs.find(
-            (doc) => doc.id === callingUserUid,
+        // Agregamos el usuario de la solicitud si no está en la lista para que el frontend lo pueda mostrar
+        if (!parentUid) {
+          // Solo si estamos en la vista de campaña general
+          const isSelfIncluded = campaignMembers.some(
+            (member) => member.userId === callingUserUid,
           )
-          if (candidatoSelf) {
-            const userData = candidatoSelf.data()
-            const membership = userData.campaignMemberships.find(
-              (m) => m.campaignId === campaignId,
-            )
+          if (userCampaignMembership && !isSelfIncluded) {
             campaignMembers.push({
-              userId: userData.id,
-              name: userData.name || userData.nombre,
-              role: membership.role,
-              level: membership.level,
-              directVotes: membership.directVotes,
-              pyramidVotes: membership.pyramidVotes,
-              totalPotentialVotes: membership.totalPotentialVotes,
-              ownerBy: membership.ownerBy,
+              userId: callingUserUid,
+              name:
+                req.userRole === 'admin'
+                  ? 'Admin'
+                  : userCampaignMembership.name || 'N/A',
+              role: userCampaignMembership.role,
+              level: userCampaignMembership.level,
+              directVotes: userCampaignMembership.directVotes,
+              pyramidVotes: userCampaignMembership.pyramidVotes,
+              totalPotentialVotes: userCampaignMembership.totalPotentialVotes,
+              ownerBy: userCampaignMembership.ownerBy,
+              subordinatesCount: userCampaignMembership.subordinatesCount,
             })
           }
         }
