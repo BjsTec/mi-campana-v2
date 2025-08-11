@@ -48,7 +48,7 @@ export default function HeroSection() {
         {/* Contenido de Texto */}
         <div className="md:w-1/2 text-center md:text-left mb-10 md:mb-0">
           <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight mb-6 text-neutral-50">
-            Gestión Política Estratégica al Alcance de tu Mano
+            Autoridad Política Estratégica al Alcance de tu Mano
           </h1>
           <p className="text-xl lg:text-2xl opacity-90 mb-8 text-neutral-100">
             Optimiza tu alcance, organiza tu equipo y maximiza tu impacto con
