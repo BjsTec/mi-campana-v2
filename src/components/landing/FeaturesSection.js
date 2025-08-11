@@ -1,19 +1,26 @@
-import React from 'react';
-import { UsersIcon, ChartBarIcon, ShieldCheckIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
-import Image from 'next/image';
+import React from 'react'
+import {
+  UsersIcon,
+  ChartBarIcon,
+  ShieldCheckIcon,
+  ChatBubbleLeftRightIcon,
+} from '@heroicons/react/24/outline'
+import Image from 'next/image'
 
 // Componente para una característica individual
 const FeatureCard = ({ icon: Icon, title, description }) => {
   return (
-<div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-neutral-200">
-  <div className="bg-primary-dark text-white mb-6 mx-auto flex justify-center items-center h-16 w-16 rounded-full">
-    {Icon && <Icon className="w-10 h-10" />}
-  </div>
-  <h3 className="text-2xl font-bold text-neutral-800 mb-3 text-center">{title}</h3>
-  <p className="text-neutral-600 text-center">{description}</p>
-</div>
-  );
-};
+    <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-neutral-200">
+      <div className="bg-primary-dark text-white mb-6 mx-auto flex justify-center items-center h-16 w-16 rounded-full">
+        {Icon && <Icon className="w-10 h-10" />}
+      </div>
+      <h3 className="text-2xl font-bold text-neutral-800 mb-3 text-center">
+        {title}
+      </h3>
+      <p className="text-neutral-600 text-center">{description}</p>
+    </div>
+  )
+}
 
 export default function FeaturesSection() {
   return (
@@ -23,7 +30,8 @@ export default function FeaturesSection() {
           Potencia tu Campaña con Nuestras Soluciones
         </h2>
         <p className="text-xl text-center text-neutral-600 mb-12 max-w-4xl mx-auto">
-          Descubre cómo Autoridad Política te brinda las herramientas necesarias para una gestión electoral eficiente y exitosa.
+          Descubre cómo Autoridad Política te brinda las herramientas necesarias
+          para una gestión electoral eficiente y exitosa.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -50,5 +58,5 @@ export default function FeaturesSection() {
         </div>
       </div>
     </section>
-  );
+  )
 }
