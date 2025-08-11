@@ -1,7 +1,7 @@
 // src/components/landing/ContactFormSection.js
-'use client' // Este componente usará useState para manejar el formulario
+'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 
 export default function ContactFormSection() {
   const [formData, setFormData] = useState({
@@ -10,9 +10,50 @@ export default function ContactFormSection() {
     phone: '',
     interestedIn: '',
     message: '',
-    // 'source' se elimina de aquí ya que se asume que es 'web'
   })
   const [status, setStatus] = useState('') // 'success', 'error', 'loading', ''
+  const [interestedInOptions, setInterestedInOptions] = useState([])
+  const [loadingOptions, setLoadingOptions] = useState(true)
+
+  const SUBMIT_CONTACT_FORM_URL = process.env.NEXT_PUBLIC_SUBMIT_CONTACT_FORM_URL
+  const GET_PUBLIC_CAMPAIGN_TYPES_URL = process.env.NEXT_PUBLIC_GET_PUBLIC_CAMPAIGN_TYPES_URL
+
+  const fetchCampaignTypes = useCallback(async () => {
+    try {
+      const response = await fetch(GET_PUBLIC_CAMPAIGN_TYPES_URL)
+      const data = await response.json()
+      if (response.ok) {
+        // Mapea los datos del backend para usarlos en el select
+        const options = data.map(item => ({
+          value: item.id,
+          label: item.name,
+        }))
+        setInterestedInOptions([
+          { value: '', label: 'Selecciona una opción' },
+          ...options,
+        ])
+      } else {
+        console.error('Error al cargar los tipos de campaña:', data.message)
+        // Usar opciones estáticas en caso de fallo
+        setInterestedInOptions([
+          { value: '', label: 'Selecciona una opción' },
+          { value: 'consulta_general', label: 'Consulta General' },
+        ])
+      }
+    } catch (error) {
+      console.error('Error de red al cargar opciones:', error)
+      setInterestedInOptions([
+        { value: '', label: 'Selecciona una opción' },
+        { value: 'consulta_general', label: 'Consulta General' },
+      ])
+    } finally {
+      setLoadingOptions(false)
+    }
+  }, [GET_PUBLIC_CAMPAIGN_TYPES_URL])
+
+  useEffect(() => {
+    fetchCampaignTypes()
+  }, [fetchCampaignTypes])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -27,18 +68,13 @@ export default function ContactFormSection() {
     setStatus('loading')
 
     try {
-      // URL de tu Firebase Function submitContactForm
-      const response = await fetch(
-        'https://us-central1-micampanav2.cloudfunctions.net/submitContactForm',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          // Enviamos los datos del formulario, añadiendo 'source: "Web"' implícitamente
-          body: JSON.stringify({ ...formData, source: 'Web' }),
+      const response = await fetch(SUBMIT_CONTACT_FORM_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
+        body: JSON.stringify({ ...formData, source: 'Web' }),
+      })
 
       const result = await response.json()
 
@@ -50,7 +86,7 @@ export default function ContactFormSection() {
           phone: '',
           interestedIn: '',
           message: '',
-        }) // Limpiar formulario
+        })
       } else {
         setStatus('error')
         console.error(
@@ -63,19 +99,6 @@ export default function ContactFormSection() {
       setStatus('error')
     }
   }
-
-  // Opciones para el campo "Interesado en" (puedes cargar esto dinámicamente si lo necesitas)
-  const interestedInOptions = [
-    { value: '', label: 'Selecciona una opción' },
-    { value: 'presidencia', label: 'Campaña Presidencial' },
-    { value: 'senado', label: 'Campaña Senatorial' },
-    { value: 'gobernacion', label: 'Campaña Gubernamental' },
-    { value: 'alcaldia', label: 'Campaña de Alcaldía' },
-    { value: 'concejo', label: 'Campaña de Concejo' },
-    { value: 'edil', label: 'Campaña de Edil' },
-    { value: 'equipo_de_trabajo', label: 'Plan Equipo de Trabajo (Gratis)' },
-    { value: 'consulta_general', label: 'Consulta General' },
-  ]
 
   return (
     <section id="contacto" className="py-20 bg-neutral-100">
@@ -159,18 +182,21 @@ export default function ContactFormSection() {
                 value={formData.interestedIn}
                 onChange={handleChange}
                 required
+                disabled={loadingOptions}
                 className="shadow border rounded w-full py-3 px-4 text-neutral-800 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent bg-white appearance-none transition-all duration-200"
               >
-                {interestedInOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
+                {loadingOptions ? (
+                  <option>Cargando opciones...</option>
+                ) : (
+                  interestedInOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
           </div>
-
-          {/* Campo 'source' eliminado del JSX */}
 
           <div className="mb-6">
             <label

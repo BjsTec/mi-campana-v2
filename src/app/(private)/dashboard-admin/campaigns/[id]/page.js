@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import CampaignDetailHeader from '@/components/admin/campaigns/CampaignDetailHeader'
 import CampaignMembersList from '@/components/admin/campaigns/CampaignMembersList'
@@ -10,8 +10,8 @@ import ConfirmModal from '@/components/ui/ConfirmModal'
 import Alert from '@/components/ui/Alert'
 
 const CampaignDetailsPage = ({ params }) => {
-  const { id } = params
   const router = useRouter()
+  const { id } = useParams()
   const { idToken } = useAuth()
   const [campaign, setCampaign] = useState(null)
   const [members, setMembers] = useState([])
@@ -25,9 +25,7 @@ const CampaignDetailsPage = ({ params }) => {
   const UPDATE_CAMPAIGN_URL = process.env.NEXT_PUBLIC_UPDATE_CAMPAIGN_URL
   const UPDATE_CAMPAIGN_STATUS_URL =
     process.env.NEXT_PUBLIC_UPDATE_CAMPAIGN_STATUS_URL
-  // NUEVA URL del backend para obtener los miembros
-  const GET_CAMPAIGN_MEMBERS_URL =
-    process.env.NEXT_PUBLIC_GET_CAMPAIGN_MEMBERS_URL
+  const GET_SECURE_USERS_URL = process.env.NEXT_PUBLIC_GET_SECURE_USERS_URL
 
   const fetchCampaignData = useCallback(async () => {
     if (!idToken || !id) {
@@ -57,12 +55,10 @@ const CampaignDetailsPage = ({ params }) => {
       setCampaign(campaignData)
 
       // Petición 2: Obtener los miembros de la campaña usando la nueva API
-      const membersResponse = await fetch(
-        `${GET_CAMPAIGN_MEMBERS_URL}?campaignId=${id}`,
-        {
-          headers: { Authorization: `Bearer ${idToken}` },
-        },
-      )
+      // Nota: getSecureUsers trae todos los usuarios; se filtran en el frontend.
+      const membersResponse = await fetch(`${GET_SECURE_USERS_URL}`, {
+        headers: { Authorization: `Bearer ${idToken}` },
+      })
       if (!membersResponse.ok) {
         const errData = await membersResponse.json()
         const errorMessage =
@@ -71,15 +67,24 @@ const CampaignDetailsPage = ({ params }) => {
         console.error('Error en fetchCampaignData - Miembros:', errorMessage)
         throw new Error(errorMessage)
       }
-      const membersData = await membersResponse.json()
-      setMembers(membersData.campaignMembers)
+
+      // CORRECCIÓN: Usar 'membersResponse' en lugar de 'usersResponse'
+      const usersData = await membersResponse.json()
+      const allUsers = usersData.data || []
+      const filteredMembers = allUsers.filter((user) =>
+        user.campaignMemberships?.some(
+          (m) => m.campaignId === id && m.status === 'activo',
+        ),
+      )
+
+      setMembers(filteredMembers)
     } catch (err) {
       console.error('Error general en fetchCampaignData:', err)
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [id, idToken, GET_CAMPAIGN_BY_ID_URL, GET_CAMPAIGN_MEMBERS_URL])
+  }, [id, idToken, GET_CAMPAIGN_BY_ID_URL, GET_SECURE_USERS_URL])
 
   useEffect(() => {
     if (idToken && id) {

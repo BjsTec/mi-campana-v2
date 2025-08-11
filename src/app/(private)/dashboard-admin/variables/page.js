@@ -91,36 +91,32 @@ export default function VariablesPage() {
       let functionUrl
       switch (functionName) {
         case 'updateSystemVariable':
-          functionUrl = process.env.NEXT_PUBLIC_FN_UPDATE_SYSTEM_VARIABLE_URL
+          functionUrl = process.env.NEXT_PUBLIC_UPDATE_SYSTEM_VARIABLE_URL
           break
         case 'addCampaignType':
-          functionUrl = process.env.NEXT_PUBLIC_FN_ADD_CAMPAIGN_TYPE_URL
+          functionUrl = process.env.NEXT_PUBLIC_ADD_CAMPAIGN_TYPE_URL
           break
         case 'updateCampaignType':
-          functionUrl = process.env.NEXT_PUBLIC_FN_UPDATE_CAMPAIGN_TYPE_URL
+          functionUrl = process.env.NEXT_PUBLIC_UPDATE_CAMPAIGN_TYPE_URL
           break
         case 'deleteCampaignType':
-          functionUrl = process.env.NEXT_PUBLIC_FN_DELETE_CAMPAIGN_TYPE_URL
+          functionUrl = process.env.NEXT_PUBLIC_DELETE_CAMPAIGN_TYPE_URL
           break
         case 'addPricingPlan':
-          functionUrl = process.env.NEXT_PUBLIC_FN_ADD_PRICING_PLAN_URL
+          functionUrl = process.env.NEXT_PUBLIC_ADD_PRICING_PLAN_URL
           break
         case 'updatePricingPlan':
-          functionUrl = process.env.NEXT_PUBLIC_FN_UPDATE_PRICING_PLAN_URL
+          functionUrl = process.env.NEXT_PUBLIC_UPDATE_PRICING_PLAN_URL
           break
         case 'deletePricingPlan':
-          functionUrl = process.env.NEXT_PUBLIC_FN_DELETE_PRICING_PLAN_URL
+          functionUrl = process.env.NEXT_PUBLIC_DELETE_PRICING_PLAN_URL
           break
         default:
-          console.error(
-            `Error: Nombre de función desconocido para callProtectedFunction: ${functionName}`,
-          )
           triggerAlert('Error: Función no configurada en el frontend.', 'error')
           return { error: 'Función no configurada en el frontend.' }
       }
 
       if (!functionUrl) {
-        console.error(`URL para ${functionName} no definida en .env.local.`)
         triggerAlert(
           `Error de configuración: URL para ${functionName} no encontrada.`,
           'error',
@@ -139,16 +135,18 @@ export default function VariablesPage() {
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(
-            errorData.message ||
-              `Error ${response.status}: ${response.statusText}`,
-          )
+          const errorText = await response.text()
+          let errorData
+          try {
+            errorData = JSON.parse(errorText)
+          } catch (e) {
+            throw new Error(`Error ${response.status}: ${errorText || response.statusText}`)
+          }
+          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
         }
 
         return await response.json()
       } catch (error) {
-        console.error(`Error al llamar a ${functionName}:`, error)
         triggerAlert(`Error al guardar: ${error.message}`, 'error')
         return { error: error.message }
       }
@@ -161,15 +159,7 @@ export default function VariablesPage() {
     const fetchAllVariables = async () => {
       if (!user || authLoading || !idToken) {
         if (!user && !authLoading) {
-          console.log('No user, not loading auth, redirecting...')
-        }
-        if (authLoading) {
-          console.log('Auth still loading...')
-        }
-        if (user && !idToken) {
-          console.log(
-            'User exists, but ID Token is not yet available in context.',
-          )
+          setLoadingData(false)
         }
         return
       }
@@ -182,7 +172,7 @@ export default function VariablesPage() {
         }
 
         const response = await fetch(
-          process.env.NEXT_PUBLIC_FN_GET_SYSTEM_VARIABLES_URL,
+          process.env.NEXT_PUBLIC_GET_SYSTEM_VARIABLES_URL,
           {
             method: 'GET',
             headers: {
@@ -192,35 +182,35 @@ export default function VariablesPage() {
         )
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(
-            errorData.message ||
-              `Error ${response.status}: ${response.statusText}`,
-          )
+          const errorText = await response.text()
+          let errorData
+          try {
+            errorData = JSON.parse(errorText)
+          } catch (e) {
+            throw new Error(`Error ${response.status}: ${errorText || response.statusText}`)
+          }
+          throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`)
         }
 
         const data = await response.json()
         setCampaignTypes(data.campaign_types?.types || [])
         setPricingPlans(data.pricing_plans?.plans || [])
         setContactInfo(data.contact_info || {})
-        setPromoBonus(
-          data.promo_bonus || {
-            title: '',
-            description: '',
-            discountPercentage: 0,
-            appliesTo: '',
-            startDate: '',
-            endDate: '',
-            isActive: false,
-            ctaText: '',
-            ctaLink: '',
-            imageUrl: '',
-            backgroundColor: '#FFFFFF',
-            textColor: '#000000',
-          },
-        )
+        setPromoBonus(data.promo_bonus || {
+          title: '',
+          description: '',
+          discountPercentage: 0,
+          appliesTo: '',
+          startDate: '',
+          endDate: '',
+          isActive: false,
+          ctaText: '',
+          ctaLink: '',
+          imageUrl: '',
+          backgroundColor: '#FFFFFF',
+          textColor: '#000000',
+        })
       } catch (error) {
-        console.error('Error al cargar todas las variables:', error)
         triggerAlert(`Error al cargar datos: ${error.message}`, 'error')
         setCampaignTypes([])
         setPricingPlans([])

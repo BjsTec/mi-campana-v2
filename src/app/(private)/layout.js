@@ -43,7 +43,7 @@ const navLinksByRole = {
       icon: <Briefcase />,
     },
     {
-      href: '/dashboard-admin/users-list',
+      href: '/dashboard-admin/lista-users',
       label: 'Lista de usuarios',
       icon: <Users />,
     },
