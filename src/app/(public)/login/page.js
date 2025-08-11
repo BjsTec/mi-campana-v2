@@ -33,95 +33,96 @@ export default function LoginPage() {
     router.push('/')
   }
 
-// En tu componente de login
+  // En tu componente de login
 
-const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
     if (!cedula || !password) {
-        setError('Por favor, ingresa tu cédula y contraseña.');
-        setLoading(false);
-        return;
+      setError('Por favor, ingresa tu cédula y contraseña.')
+      setLoading(false)
+      return
     }
 
     try {
-        // ✅ Tomar la URL desde variables de entorno
-        const loginFunctionUrl = process.env.NEXT_PUBLIC_LOGIN_WITH_EMAIL_URL?.trim();
+      // ✅ Tomar la URL desde variables de entorno
+      const loginFunctionUrl =
+        process.env.NEXT_PUBLIC_LOGIN_WITH_EMAIL_URL?.trim()
 
-        if (!loginFunctionUrl || !/^https?:\/\//.test(loginFunctionUrl)) {
-            throw new Error(
-                `La URL de login no está configurada correctamente: "${loginFunctionUrl}". Verifica NEXT_PUBLIC_LOGIN_WITH_EMAIL_URL en Vercel.`
-            );
+      if (!loginFunctionUrl || !/^https?:\/\//.test(loginFunctionUrl)) {
+        throw new Error(
+          `La URL de login no está configurada correctamente: "${loginFunctionUrl}". Verifica NEXT_PUBLIC_LOGIN_WITH_EMAIL_URL en Vercel.`,
+        )
+      }
+
+      const response = await fetch(loginFunctionUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cedula, clave: password }),
+      })
+
+      let data = null
+
+      try {
+        // ✅ Intentar parsear JSON solo si hay contenido
+        const text = await response.text()
+        data = text ? JSON.parse(text) : null
+      } catch {
+        if (!response.ok) {
+          throw new Error(
+            `Error ${response.status}: El servidor devolvió una respuesta no válida.`,
+          )
+        }
+        throw new Error('Respuesta del servidor inválida. No es JSON.')
+      }
+
+      if (response.ok) {
+        const { idToken } = data || {}
+        if (!idToken) {
+          throw new Error('El servidor no proporcionó un token de sesión.')
         }
 
-        const response = await fetch(loginFunctionUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: cedula, clave: password }),
-        });
+        // ✅ Establecer cookie en backend Next.js
+        const cookieResponse = await fetch('/api/set-session-cookie', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        })
 
-        let data = null;
-
-        try {
-            // ✅ Intentar parsear JSON solo si hay contenido
-            const text = await response.text();
-            data = text ? JSON.parse(text) : null;
-        } catch {
-            if (!response.ok) {
-                throw new Error(
-                    `Error ${response.status}: El servidor devolvió una respuesta no válida.`
-                );
-            }
-            throw new Error('Respuesta del servidor inválida. No es JSON.');
+        if (!cookieResponse.ok) {
+          const errorData = await cookieResponse.json().catch(() => ({}))
+          throw new Error(
+            errorData.message ||
+              'Error al establecer la sesión en el servidor.',
+          )
         }
 
-        if (response.ok) {
-            const { idToken } = data || {};
-            if (!idToken) {
-                throw new Error('El servidor no proporcionó un token de sesión.');
-            }
+        // Decodificar token y manejar redirección
+        const decodedUserData = jwtDecode(idToken)
+        login(decodedUserData, idToken)
 
-            // ✅ Establecer cookie en backend Next.js
-            const cookieResponse = await fetch('/api/set-session-cookie', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken }),
-            });
-
-            if (!cookieResponse.ok) {
-                const errorData = await cookieResponse.json().catch(() => ({}));
-                throw new Error(
-                    errorData.message || 'Error al establecer la sesión en el servidor.'
-                );
-            }
-
-            // Decodificar token y manejar redirección
-            const decodedUserData = jwtDecode(idToken);
-            login(decodedUserData, idToken);
-
-            const redirects = {
-                admin: '/dashboard-admin/home-wm',
-                candidato: '/dashboard-candidato',
-                manager: '/dashboard-manager/panel',
-                anillo: '/dashboard-anillo/panel',
-                votante: '/dashboard-votante/panel',
-            };
-
-            window.location.href =
-                redirects[decodedUserData?.role] || '/registro-exitoso';
-        } else {
-            throw new Error(data?.message || 'Error desconocido al iniciar sesión.');
+        const redirects = {
+          admin: '/dashboard-admin/home-wm',
+          candidato: '/dashboard-candidato',
+          manager: '/dashboard-manager/panel',
+          anillo: '/dashboard-anillo/panel',
+          votante: '/dashboard-votante/panel',
         }
+
+        window.location.href =
+          redirects[decodedUserData?.role] || '/registro-exitoso'
+      } else {
+        throw new Error(data?.message || 'Error desconocido al iniciar sesión.')
+      }
     } catch (err) {
-        console.error('Error durante el proceso de login:', err);
-        setError(err.message || 'Ocurrió un error inesperado.');
+      console.error('Error durante el proceso de login:', err)
+      setError(err.message || 'Ocurrió un error inesperado.')
     } finally {
-        setLoading(false);
+      setLoading(false)
     }
-};
-
+  }
 
   return (
     <div className="flex min-h-screen bg-neutral-900 font-body">
