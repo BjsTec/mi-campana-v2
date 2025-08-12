@@ -55,7 +55,7 @@ export default function HeroSection() {
             Autoridad Política.
           </p>
           <Link
-            href="/login"
+            href="/registro-publico"
             className="bg-neutral-50 text-primary-dark px-8 py-4 rounded-full font-bold text-lg hover:bg-secondary-dark hover:text-neutral-50 transition-colors duration-300 shadow-xl visible"
           >
             Prueba Nuestro Demo

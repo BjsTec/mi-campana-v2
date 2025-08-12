@@ -1,19 +1,26 @@
-// src/components/ui/StatCard.js
+// src/components/ui/StatCard.jsx
 import React from 'react'
+import { UsersIcon } from '@heroicons/react/24/outline' // Importa los iconos que necesites
 
-const StatCard = ({ title, value, color = 'blue' }) => {
-  const colorClasses = {
-    blue: 'bg-blue-50 text-blue-800',
-    green: 'bg-green-50 text-green-800',
-    red: 'bg-red-50 text-red-800',
-  }
-
-  return (
-    <div className={`p-4 rounded-xl shadow-md ${colorClasses[color]}`}>
-      <p className="text-sm font-medium">{title}</p>
-      <p className="text-3xl font-bold mt-1">{value}</p>
-    </div>
-  )
-}
+const StatCard = ({
+  title,
+  value,
+  description,
+  icon: IconComponent,
+  color = 'text-primary-default',
+}) => (
+  <div className="bg-white p-4 sm:p-5 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 flex-1 flex flex-col items-start border border-neutral-200">
+    {IconComponent && (
+      <IconComponent className={`h-6 w-6 sm:h-7 sm:w-7 ${color} mb-2`} />
+    )}
+    <h3 className="text-md sm:text-lg font-semibold text-neutral-800 mb-1">
+      {title}
+    </h3>
+    <p className={`text-2xl sm:text-3xl font-bold ${color} mb-1`}>
+      {value.toLocaleString()}
+    </p>
+    <p className="text-xs sm:text-sm text-neutral-600">{description}</p>
+  </div>
+)
 
 export default StatCard
