@@ -75,8 +75,8 @@ const navLinksByRole = {
       icon: <User />,
     },
     {
-      href: '/dashboard-candidato/editar-campana',
-      label: 'Gestionar Campaña',
+      href: '/dashboard-candidato/mi-campana',
+      label: 'Configuraciones',
       icon: <Settings />,
     },
   ],
@@ -136,6 +136,7 @@ export default function DashboardLayout({ children }) {
     setActiveCampaignId,
     idToken,
   } = useAuth()
+  console.log(user)
 
   const currentRole = user?.role || 'public_lead'
 
@@ -271,7 +272,7 @@ export default function DashboardLayout({ children }) {
             <span className="hidden sm:inline text-lg text-neutral-600">
               Hola,{' '}
               <span className="font-semibold">
-                {user?.name || user?.email}!
+                {user?.name || user?.nombre || user?.email}!
               </span>
             </span>
             <button

@@ -869,7 +869,7 @@ export const createDemoCampaignAndCandidato = functions.https.onRequest(
   async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*')
     res.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    res.set('Access-Control-Allow-Headers', 'Content-Type')
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
     if (req.method === 'OPTIONS') {
       res.status(204).send('')
@@ -922,104 +922,83 @@ export const createDemoCampaignAndCandidato = functions.https.onRequest(
           .json({ message: 'El formato del correo electrónico es inválido.' })
       }
 
+      let userRecord
+      let userCreated = false
       try {
-        let userRecord
-        let userCreated = false
-        try {
-          userRecord = await auth.getUserByEmail(candidateEmail)
-          const userDoc = await db.collection('users').doc(userRecord.uid).get()
-          if (userDoc.exists) {
-            const userData = userDoc.data()
-            const existingCandidatoMembership =
-              userData.campaignMemberships?.find(
-                (m) =>
-                  m.role === 'candidato' &&
-                  m.status === 'activo' &&
-                  m.type === 'equipo_de_trabajo',
-              )
-            if (existingCandidatoMembership) {
-              return res.status(409).json({
-                message:
-                  'Este correo electrónico ya está asociado a un Candidato activo en una campaña de equipo de trabajo.',
-              })
-            }
-            await auth.updateUser(userRecord.uid, {
-              password: candidatePassword,
-            })
-          }
-        } catch (error) {
-          if (
-            error.code === 'auth/user-not-found' ||
-            error.code === 'auth/email-not-found'
-          ) {
-            userRecord = await auth.createUser({
-              email: candidateEmail,
-              password: candidatePassword,
-              displayName: candidateName,
-            })
-            userCreated = true
-          } else if (error.code === 'auth/email-already-in-use') {
-            return res.status(409).json({
-              message: 'El correo electrónico ya está en uso por otra cuenta.',
-            })
-          } else {
-            console.error('Error en createDemoCampaignAndCandidato:', error) // Manteniendo console.error
-            return res.status(500).json({
-              message: 'Error interno del servidor al gestionar el usuario.',
-              error: error.message,
-            })
-          }
+        userRecord = await auth.getUserByEmail(candidateEmail)
+        await auth.updateUser(userRecord.uid, { password: candidatePassword })
+      } catch (error) {
+        if (error.code === 'auth/user-not-found') {
+          userRecord = await auth.createUser({
+            email: candidateEmail,
+            password: candidatePassword,
+            displayName: candidateName,
+          })
+          userCreated = true
+        } else if (error.code === 'auth/email-already-in-use') {
+          return res.status(409).json({
+            message: 'El correo electrónico ya está en uso por otra cuenta.',
+          })
+        } else {
+          functions.logger.error(
+            'Error al gestionar el usuario de Auth:',
+            error,
+          )
+          return res.status(500).json({
+            message: 'Error interno del servidor al gestionar el usuario.',
+            error: error.message,
+          })
+        }
+      }
+
+      const userUid = userRecord.uid
+      const hashedPassword = await bcrypt.hash(candidatePassword, saltRounds)
+
+      // Mover la declaración del campaignId aquí para que sea accesible
+      const newCampaignRef = db.collection('campaigns').doc()
+      const campaignId = newCampaignRef.id
+
+      await db.runTransaction(async (transaction) => {
+        const userRef = db.collection('users').doc(userUid)
+        const userDoc = await transaction.get(userRef)
+        const userProfileData = userDoc.data() || {}
+
+        const userCredentialRef = db.collection('user_credentials').doc(userUid)
+        const userCredentialDoc = await transaction.get(userCredentialRef)
+        const userCredentialData = userCredentialDoc.data() || {}
+
+        const userDataToSet = {
+          id: userUid,
+          name: candidateName,
+          email: candidateEmail,
+          cedula: candidateCedula,
+          whatsapp: whatsapp || null,
+          phone: phone || null,
+          location: location || {},
+          dateBirth: dateBirth || null,
+          sexo: sexo || null,
+          role: 'candidato',
+          level: 0,
+          status: 'activo',
+          createdAt: userCreated
+            ? new Date().toISOString()
+            : userProfileData.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          registeredViaAuthUid: 'system_auto_register',
+          lastLogin: null,
         }
 
-        const userUid = userRecord.uid
+        const userCredentialToSet = {
+          hashedPassword: hashedPassword,
+          email: candidateEmail,
+          createdAt: userCreated
+            ? new Date().toISOString()
+            : userCredentialData.createdAt || new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
 
-        const hashedPassword = await bcrypt.hash(candidatePassword, saltRounds)
-
-        const userRef = db.collection('users').doc(userUid)
-        await userRef.set(
-          {
-            id: userUid,
-            name: candidateName,
-            email: data.candidateEmail || candidateEmail,
-            cedula: candidateCedula,
-            whatsapp: whatsapp || null,
-            phone: phone || null,
-            location: location || {},
-            dateBirth: dateBirth || null,
-            sexo: sexo || null,
-            role: 'candidato',
-            level: 0,
-            status: 'activo',
-            createdAt: userCreated
-              ? new Date().toISOString()
-              : (await userRef.get()).data()?.createdAt ||
-                new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            registeredViaAuthUid: 'system_auto_register',
-            lastLogin: null,
-          },
-          { merge: true },
-        )
-
-        await db
-          .collection('user_credentials')
-          .doc(userUid)
-          .set(
-            {
-              hashedPassword: hashedPassword,
-              email: candidateEmail,
-              createdAt: userCreated
-                ? new Date().toISOString()
-                : (
-                    await db.collection('user_credentials').doc(userUid).get()
-                  ).data()?.createdAt || new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-            },
-            { merge: true },
-          )
-
-        const newCampaignRef = db.collection('campaigns').doc()
-        const campaignId = newCampaignRef.id
+        transaction.set(userRef, userDataToSet, { merge: true })
+        transaction.set(userCredentialRef, userCredentialToSet, { merge: true })
 
         const demoLimits = {
           maxDepth: 5,
@@ -1032,7 +1011,7 @@ export const createDemoCampaignAndCandidato = functions.https.onRequest(
           },
         }
 
-        await newCampaignRef.set({
+        const campaignData = {
           id: campaignId,
           campaignName: campaignName,
           description: `Campaña demo para ${candidateName}`,
@@ -1053,19 +1032,12 @@ export const createDemoCampaignAndCandidato = functions.https.onRequest(
           totalPotentialVotes: 0,
           electionDate: null,
           location: location || {},
-          contactInfo: {
-            email: data.contactInfo?.email || candidateEmail,
-            phone: data.contactInfo?.phone || phone || null,
-            whatsapp: data.contactInfo?.whatsapp || whatsapp || null,
-            web: data.contactInfo?.web || null,
-            supportWhatsapp: data.contactInfo?.supportWhatsapp || null,
-            supportEmail: data.contactInfo?.supportEmail || null,
-          },
-          media: data.media || {},
-          socialLinks: data.socialLinks || {},
-          messagingOptions: data.messagingOptions || {},
+          contactInfo: { email: candidateEmail, phone, whatsapp },
+          media: {},
+          socialLinks: {},
+          messagingOptions: {},
           demoSettings: demoLimits,
-        })
+        }
 
         const newMembership = {
           campaignId: campaignId,
@@ -1091,64 +1063,57 @@ export const createDemoCampaignAndCandidato = functions.https.onRequest(
           canRegisterSubordinates: true,
         }
 
-        let currentMemberships =
-          (await userRef.get()).data()?.campaignMemberships || []
-        currentMemberships.push(newMembership)
+        let updatedCampaignMemberships =
+          userProfileData.campaignMemberships || []
+        updatedCampaignMemberships.push(newMembership)
 
-        await userRef.update({
-          campaignMemberships: currentMemberships,
+        transaction.set(newCampaignRef, campaignData)
+        transaction.update(userRef, {
+          campaignMemberships: updatedCampaignMemberships,
         })
+      })
 
-        await auth.setCustomUserClaims(userUid, {
-          role: 'candidato',
-          campaignId: campaignId,
-        })
-
-        return res.status(201).json({
-          message: 'Campaña demo y candidato creados exitosamente.',
-          campaignId: campaignId,
-          candidatoId: userUid,
-          electionDate: null,
-        })
-      } catch (error) {
-        functions.logger.error(
-          'Error en createDemoCampaignAndCandidato:',
-          error,
-        ) // Manteniendo console.error
-        if (error.code === 'auth/email-already-exists') {
-          return res.status(409).json({
-            message:
-              'El correo electrónico ya está en uso. Si eres un lead, espera la confirmación.',
-          })
-        }
-        if (error.code === 'already-exists') {
-          return res.status(409).json({ message: error.message })
-        }
-        return res.status(500).json({
-          message:
-            'Ocurrió un error inesperado al procesar tu solicitud: ' +
-            error.message,
-          error: error.message,
-        })
+      const jwtSecretValue = JWT_SECRET_KEY_PARAM.value()
+      if (!jwtSecretValue) {
+        throw new Error('JWT_SECRET no configurado.')
       }
+
+      const payload = {
+        uid: userUid,
+        email: candidateEmail,
+        role: 'candidato',
+        name: candidateName,
+        campaignMemberships: [
+          {
+            campaignId: campaignId,
+            campaignName: campaignName,
+            role: 'candidato',
+            type: 'equipo_de_trabajo',
+            status: 'activo',
+          },
+        ],
+      }
+      const idToken = jwt.sign(payload, jwtSecretValue, {
+        expiresIn: '1h',
+        algorithm: 'HS256',
+      })
+
+      return res.status(201).json({
+        message: 'Campaña demo y candidato creados exitosamente.',
+        campaignId: campaignId,
+        candidatoId: userUid,
+        electionDate: null,
+        idToken: idToken,
+      })
     } catch (error) {
-      // <--- Cierre del try principal
-      functions.logger.error('Error en createDemoCampaignAndCandidato:', error) // Manteniendo console.error
-      if (error.code === 'auth/email-already-exists') {
-        return res.status(409).json({
-          message:
-            'El correo electrónico ya está en uso. Si eres un lead, espera la confirmación.',
-        })
-      }
-      if (error.code === 'already-exists') {
-        return res.status(409).json({ message: error.message })
-      }
+      functions.logger.error(
+        'Error general en createDemoCampaignAndCandidato:',
+        error,
+      )
       return res.status(500).json({
-        message:
-          'Ocurrió un error inesperado al procesar tu solicitud: ' +
-          error.message,
+        message: 'Ocurrió un error inesperado al procesar tu solicitud.',
         error: error.message,
       })
     }
   },
-) // <--- Cierre de functions.https.onRequest(secrets, handler)
+)

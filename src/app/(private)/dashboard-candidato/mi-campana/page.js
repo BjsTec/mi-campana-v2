@@ -1,3 +1,4 @@
+// src/app/(private)/dashboard-candidato/mi-campana/page.js
 'use client'
 import { useState, useEffect, Fragment } from 'react'
 import { useAuth } from '@/context/AuthContext'
