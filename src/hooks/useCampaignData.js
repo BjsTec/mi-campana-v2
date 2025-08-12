@@ -1,63 +1,32 @@
 // src/hooks/useCampaignData.js
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
+// TODO: Importar la librería para peticiones HTTP (Axios o fetch)
+// import axios from 'axios';
 
 const API_BASE_URL = 'https://us-central1-micampanav2.cloudfunctions.net'
 
 const fetchCampaigns = async (token) => {
-  const response = await fetch(`${API_BASE_URL}/getCampaigns`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.message || 'Fallo al obtener las campañas.')
-  }
-
-  const data = await response.json()
-  return data.campaigns
+  // Implementación de la llamada a la API getCampaigns
+  // Debe devolver el ID de la campaña del usuario.
 }
 
 const fetchCampaignById = async (campaignId, token) => {
-  const response = await fetch(
-    `${API_BASE_URL}/getCampaignById?id=${campaignId}`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    },
-  )
+  // Implementación de la llamada a la API getCampaignByld
+  // Debe devolver las métricas de la campaña.
+}
 
-  if (!response.ok) {
-    const errorData = await response.json()
-    if (response.status === 404) {
-      throw new Error('La campaña no fue encontrada.')
-    }
-    throw new Error(
-      errorData.message || 'Fallo al obtener los datos de la campaña.',
-    )
-  }
-
-  const data = await response.json()
-  return data.campaign
+const fetchPyramidData = async (campaignId, parentUid, token) => {
+  // TODO: Implementación de la lógica recursiva para construir la pirámide
+  // a partir de los usuarios subordinados (parentUid).
+  // Esto es un punto crítico para la UX.
+  return [] // Placeholder
 }
 
 export function useCampaignData() {
   const { user, idToken } = useAuth()
-  // Inicializamos el estado con una estructura de datos segura
-  const [campaignData, setCampaignData] = useState({
-    totalConfirmedVotes: 0,
-    totalPotentialVotes: 0,
-    totalPromesas: 0,
-    totalOpinion: { aFavor: 0, enContra: 0, indeciso: 100 },
-    departamentos: [], // Dejamos el array vacío hasta que lo llenemos de la API
-  })
+  const [campaignData, setCampaignData] = useState(null)
+  const [pyramidData, setPyramidData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -69,30 +38,38 @@ export function useCampaignData() {
       }
 
       try {
-        const campaigns = await fetchCampaigns(idToken)
-        const campaignId = campaigns[0]?.id
+        // Simular un retraso de la API para mostrar el estado de carga
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        // Paso 1: Obtener la campaña del usuario actual (candidato)
+        // const campaigns = await fetchCampaigns(idToken);
+        // const campaignId = campaigns[0]?.id; // Asumimos que el candidato solo tiene una campaña
+
+        // Usaremos un ID de campaña fijo por ahora para la demo
+        const campaignId = 'DEMO_CAMPAIGN_ID'
 
         if (!campaignId) {
-          throw new Error(
-            'No se encontró una campaña asociada al usuario. Por favor, crea una o verifica la membresía.',
-          )
+          throw new Error('No se encontró una campaña asociada.')
         }
 
-        const metrics = await fetchCampaignById(campaignId, idToken)
-
-        // Asumimos que la API devuelve los campos totalConfirmedVotes, pyramidVotes, y totalPromesas.
-        setCampaignData({
-          totalConfirmedVotes: metrics.totalConfirmedVotes || 0,
-          totalPotentialVotes: metrics.pyramidVotes || 0,
-          totalPromesas: metrics.totalPromesas || 0,
-          // La métrica de opinión y departamentos aún no viene de la API, así que usamos un valor por defecto.
+        // Paso 2: Obtener las métricas de la campaña
+        // TODO: Reemplazar con la llamada a la API getCampaignByld
+        // const metrics = await fetchCampaignById(campaignId, idToken);
+        const metrics = {
+          totalConfirmedVotes: 0,
+          totalPotentialVotes: 0,
+          totalPromesas: 0,
           totalOpinion: { aFavor: 0, enContra: 0, indeciso: 100 },
-          departamentos: [],
-        })
+        }
+
+        setCampaignData(metrics)
+
+        // Paso 3: Construir la pirámide (opcional para esta iteración, se puede implementar más adelante)
+        // const pyramid = await fetchPyramidData(campaignId, user.uid, idToken);
+        // setPyramidData(pyramid);
 
         setIsLoading(false)
       } catch (err) {
-        console.error('Error al cargar los datos de la campaña:', err)
         setError(err.message)
         setIsLoading(false)
       }
@@ -101,5 +78,5 @@ export function useCampaignData() {
     loadData()
   }, [user, idToken])
 
-  return { campaignData, isLoading, error }
+  return { campaignData, pyramidData, isLoading, error }
 }

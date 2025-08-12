@@ -59,21 +59,21 @@ const navLinksByRole = {
       label: 'Mi Panel',
       icon: <ChartBar />,
     },
-    // {
-    //   href: '/dashboard-candidato/equipo',
-    //   label: 'Mi Equipo',
-    //   icon: <Users />,
-    // },
+    {
+      href: '/dashboard-candidato/equipo',
+      label: 'Mi Equipo',
+      icon: <Users />,
+    },
     // {
     //   href: '/dashboard-candidato/escrutinio',
     //   label: 'Escrutinio',
     //   icon: <ClipboardList />,
     // },
-    // {
-    //   href: '/dashboard-candidato/voto-opinion',
-    //   label: 'Voto de Opinión',
-    //   icon: <User />,
-    // },
+    {
+      href: '/dashboard-candidato/voto-opinion',
+      label: 'Voto de Opinión',
+      icon: <User />,
+    },
     // {
     //   href: '/dashboard-candidato/mi-campana',
     //   label: 'Configuraciones',
