@@ -28,6 +28,11 @@ const navLinksByRole = {
   admin: [
     { href: '/dashboard-admin/home-wm', label: 'Inicio', icon: <Home /> },
     {
+      href: '/dashboard-platform-owner',
+      label: 'Panel Platform Owner',
+      icon: <ChartBar />,
+    },
+    {
       href: '/dashboard-admin/potenciales',
       label: 'Clientes',
       icon: <Users />,
@@ -51,6 +56,18 @@ const navLinksByRole = {
       href: '/dashboard-admin/variables',
       label: 'Variables del Sistema',
       icon: <Settings />,
+    },
+    {
+      href: '/dashboard-admin/global-settings',
+      label: 'Configuración Global',
+      icon: <Settings />,
+    },
+  ],
+  platform_owner: [
+    {
+      href: '/dashboard-platform-owner',
+      label: 'Dashboard',
+      icon: <ChartBar />,
     },
   ],
   candidato: [
