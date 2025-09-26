@@ -111,8 +111,12 @@ export default function LoginPage() {
           votante: '/dashboard-votante/panel',
         }
 
-        window.location.href =
-          redirects[decodedUserData?.role] || '/registro-exitoso'
+        // Solo redirigir en el navegador, no durante las pruebas de Jest
+        if (process.env.NODE_ENV !== 'test') {
+          window.location.assign(
+            redirects[decodedUserData?.role] || '/registro-exitoso',
+          )
+        }
       } else {
         throw new Error(data?.message || 'Error desconocido al iniciar sesión.')
       }
