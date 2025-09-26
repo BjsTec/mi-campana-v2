@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Lottie from 'lottie-react'
 import loginLoadingAnimation from '@/animations/loginOne.json'
-import { supabase } from '@/lib/supabase-client'
-import { createSyntheticEmail } from '@/lib/utils'
+import { signInWithCedulaAndPassword } from '@/lib/auth-service'
 
 // Componentes UI
 import Input from '@/components/ui/Input'
@@ -37,14 +36,13 @@ export default function LoginPage() {
     }
 
     try {
-      const syntheticEmail = createSyntheticEmail(cedula)
+      const { error: signInError } = await signInWithCedulaAndPassword(
+        cedula,
+        password,
+      )
 
-      const signInResponse = await supabase.auth.signInWithPassword({
-        email: syntheticEmail,
-        password: password,
-      })
-
-      if (signInResponse.error) {
+      if (signInError) {
+        // Usamos un mensaje genérico para no dar pistas sobre si el usuario existe o no.
         throw new Error(
           'Credenciales incorrectas. Por favor, verifica tus datos.',
         )
