@@ -1,39 +1,29 @@
 // src/app/(public)/login/page.js
-'use client' // Directiva esencial para un componente de cliente en Next.js App Router
+'use client'
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { jwtDecode } from 'jwt-decode' // Asegúrate de que jwt-decode esté instalado
+import Lottie from 'lottie-react'
+import loginLoadingAnimation from '@/animations/loginOne.json'
+import { supabase } from '@/lib/supabase-client'
+import { createSyntheticEmail } from '@/lib/utils'
 
-import Lottie from 'lottie-react' // Para la animación de carga
-import loginLoadingAnimation from '@/animations/loginOne.json' // Tu archivo de animación Lottie
-import { useAuth } from '@/context/AuthContext' // Tu contexto de autenticación
-
-// Componentes UI reutilizables
+// Componentes UI
 import Input from '@/components/ui/Input'
 import FormGroup from '@/components/ui/FormGroup'
 import Button from '@/components/ui/Button'
 import BackButton from '@/components/ui/BackButton'
-
-// Asumiendo que las imágenes están en la carpeta public/
-// No es necesario importar las imágenes directamente si están en la carpeta public
-// import logoAutoridad from '@/assets/logo-autoridad.png';
-// import iconAutoridad from '@/assets/icon-autoridad.png';
 
 export default function LoginPage() {
   const [cedula, setCedula] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-
   const router = useRouter()
-  const { login } = useAuth()
 
   const handleGoBack = () => {
     router.push('/')
   }
-
-  // En tu componente de login
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -47,81 +37,25 @@ export default function LoginPage() {
     }
 
     try {
-      // ✅ Tomar la URL desde variables de entorno
-      const loginFunctionUrl =
-        process.env.NEXT_PUBLIC_LOGIN_WITH_EMAIL_URL?.trim()
+      const syntheticEmail = createSyntheticEmail(cedula)
 
-      if (!loginFunctionUrl || !/^https?:\/\//.test(loginFunctionUrl)) {
+      const signInResponse = await supabase.auth.signInWithPassword({
+        email: syntheticEmail,
+        password: password,
+      })
+
+      if (signInResponse.error) {
         throw new Error(
-          `La URL de login no está configurada correctamente: "${loginFunctionUrl}". Verifica NEXT_PUBLIC_LOGIN_WITH_EMAIL_URL en Vercel.`,
+          'Credenciales incorrectas. Por favor, verifica tus datos.',
         )
       }
 
-      const response = await fetch(loginFunctionUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cedula, clave: password }),
-      })
-
-      let data = null
-
-      try {
-        // ✅ Intentar parsear JSON solo si hay contenido
-        const text = await response.text()
-        data = text ? JSON.parse(text) : null
-      } catch {
-        if (!response.ok) {
-          throw new Error(
-            `Error ${response.status}: El servidor devolvió una respuesta no válida.`,
-          )
-        }
-        throw new Error('Respuesta del servidor inválida. No es JSON.')
-      }
-
-      if (response.ok) {
-        const { idToken } = data || {}
-        if (!idToken) {
-          throw new Error('El servidor no proporcionó un token de sesión.')
-        }
-
-        // ✅ Establecer cookie en backend Next.js
-        const cookieResponse = await fetch('/api/set-session-cookie', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken }),
-        })
-
-        if (!cookieResponse.ok) {
-          const errorData = await cookieResponse.json().catch(() => ({}))
-          throw new Error(
-            errorData.message ||
-              'Error al establecer la sesión en el servidor.',
-          )
-        }
-
-        // Decodificar token y manejar redirección
-        const decodedUserData = jwtDecode(idToken)
-        login(decodedUserData, idToken)
-
-        const redirects = {
-          admin: '/dashboard-admin/home-wm',
-          candidato: '/dashboard-candidato',
-          manager: '/dashboard-manager/panel',
-          anillo: '/dashboard-anillo/panel',
-          votante: '/dashboard-votante/panel',
-        }
-
-        // Solo redirigir en el navegador, no durante las pruebas de Jest
-        if (process.env.NODE_ENV !== 'test') {
-          window.location.assign(
-            redirects[decodedUserData?.role] || '/registro-exitoso',
-          )
-        }
-      } else {
-        throw new Error(data?.message || 'Error desconocido al iniciar sesión.')
-      }
+      // La redirección se maneja automáticamente por el listener onAuthStateChange
+      // en AuthContext. Navegamos a una página genérica de carga o dashboard
+      // y el listener se encargará del resto.
+      router.push('/dashboard-redirect') // Una página que redirige según el rol
     } catch (err) {
-      console.error('Error durante el proceso de login:', err)
+      console.error('Error durante el inicio de sesión:', err)
       setError(err.message || 'Ocurrió un error inesperado.')
     } finally {
       setLoading(false)
