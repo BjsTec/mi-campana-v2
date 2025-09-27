@@ -73,7 +73,7 @@ const UserCard = ({ userItem, onStatusChange }) => {
         <button
           onClick={handleStatusChange}
           className={`inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md text-white whitespace-nowrap ${
-            userStatus.status === 'activo'
+            userStatus === 'activo'
               ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
               : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
           } focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 transition-colors duration-200`}
@@ -126,45 +126,34 @@ export default function UserListPage() {
     }
   }, [idToken, GET_SECURE_USERS_URL])
 
-  const handleStatusChange = async (userId, newStatus) => {
-    try {
-      const response = await fetch(`${UPDATE_USER_STATUS_URL}/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
-        },
-        body: JSON.stringify({ status: newStatus }),
-      })
+  const handleStatusChange = useCallback(
+    async (userId, newStatus) => {
+      try {
+        const response = await fetch(`${UPDATE_USER_STATUS_URL}/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(
-          errorData.message || 'Error al cambiar el estado del usuario.',
-        )
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(
+            errorData.message || 'Error al cambiar el estado del usuario.',
+          )
+        }
+
+        // Vuelve a cargar la lista de usuarios para reflejar el cambio
+        await fetchUsers()
+      } catch (err) {
+        console.error('Error al actualizar el estado del usuario:', err)
+        setError(err.message)
       }
-
-      // Vuelve a cargar la lista de usuarios para reflejar el cambio
-      fetchUsers()
-      // O, para un cambio más rápido, actualiza el estado localmente
-      // setUsers((prevUsers) =>
-      //   prevUsers.map((user) =>
-      //     user.id === userId
-      //       ? {
-      //           ...user,
-      //           campaignMemberships: user.campaignMemberships.map((membership) => ({
-      //             ...membership,
-      //             status: newStatus,
-      //           })),
-      //         }
-      //       : user
-      //   )
-      // )
-    } catch (err) {
-      console.error('Error al actualizar el estado del usuario:', err)
-      setError(err.message)
-    }
-  }
+    },
+    [idToken, UPDATE_USER_STATUS_URL, fetchUsers],
+  )
 
   useEffect(() => {
     if (!authLoading && user && user.role === 'admin') {
