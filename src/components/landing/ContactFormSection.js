@@ -1,250 +1,144 @@
 // src/components/landing/ContactFormSection.js
-'use client'
+'use client'; // Necesario para manejo de estado del formulario
 
-import React, { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react';
+// Importar la Server Action (a crear en Tarea 1.6)
+// import { submitCommercialLead } from '@/app/actions/commercialLeads';
 
 export default function ContactFormSection() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    interestedIn: '',
-    message: '',
-  })
-  const [status, setStatus] = useState('') // 'success', 'error', 'loading', ''
-  const [interestedInOptions, setInterestedInOptions] = useState([])
-  const [loadingOptions, setLoadingOptions] = useState(true)
-
-  const SUBMIT_CONTACT_FORM_URL =
-    process.env.NEXT_PUBLIC_SUBMIT_CONTACT_FORM_URL
-  const GET_PUBLIC_CAMPAIGN_TYPES_URL =
-    process.env.NEXT_PUBLIC_GET_PUBLIC_CAMPAIGN_TYPES_URL
-
-  const fetchCampaignTypes = useCallback(async () => {
-    try {
-      const response = await fetch(GET_PUBLIC_CAMPAIGN_TYPES_URL)
-      const data = await response.json()
-      if (response.ok) {
-        // Mapea los datos del backend para usarlos en el select
-        const options = data.map((item) => ({
-          value: item.id,
-          label: item.name,
-        }))
-        setInterestedInOptions([
-          { value: '', label: 'Selecciona una opción' },
-          ...options,
-        ])
-      } else {
-        console.error('Error al cargar los tipos de campaña:', data.message)
-        // Usar opciones estáticas en caso de fallo
-        setInterestedInOptions([
-          { value: '', label: 'Selecciona una opción' },
-          { value: 'consulta_general', label: 'Consulta General' },
-        ])
-      }
-    } catch (error) {
-      console.error('Error de red al cargar opciones:', error)
-      setInterestedInOptions([
-        { value: '', label: 'Selecciona una opción' },
-        { value: 'consulta_general', label: 'Consulta General' },
-      ])
-    } finally {
-      setLoadingOptions(false)
-    }
-  }, [GET_PUBLIC_CAMPAIGN_TYPES_URL])
-
-  useEffect(() => {
-    fetchCampaignTypes()
-  }, [fetchCampaignTypes])
+  const [status, setStatus] = useState({ loading: false, success: false, error: null });
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '', message: '' });
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }))
-  }
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setStatus('loading')
-
+    e.preventDefault();
+    setStatus({ loading: true, success: false, error: null });
     try {
-      const response = await fetch(SUBMIT_CONTACT_FORM_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...formData, source: 'Web' }),
-      })
+      // --- Lógica de Server Action (Descomentar cuando se cree) ---
+      // const result = await submitCommercialLead(formData);
+      // if (result.error) {
+      //   throw new Error(result.error.message || 'Ocurrió un error al enviar.');
+      // }
+      // setStatus({ loading: false, success: true, error: null });
+      // setFormData({ name: '', email: '', phone: '', message: '' }); // Limpiar formulario
 
-      const result = await response.json()
+      // --- Placeholder mientras se crea la Action ---
+      console.log("Formulario enviado (simulado):", formData);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simular espera
+      setStatus({ loading: false, success: true, error: null });
+      setFormData({ name: '', email: '', phone: '', message: '' });
+      // --- Fin Placeholder ---
 
-      if (response.ok) {
-        setStatus('success')
-        setFormData({
-          name: '',
-          email: '',
-          phone: '',
-          interestedIn: '',
-          message: '',
-        })
-      } else {
-        setStatus('error')
-        console.error(
-          'Error al enviar el formulario:',
-          result.message || 'Error desconocido',
-        )
-      }
     } catch (error) {
-      console.error('Error de red o inesperado al enviar el formulario:', error)
-      setStatus('error')
+      console.error("Error submitting form:", error);
+      setStatus({ loading: false, success: false, error: error.message || 'Error desconocido.' });
     }
-  }
+  };
 
   return (
-    <section id="contacto" className="py-20 bg-neutral-100">
-      <div className="container mx-auto px-6 max-w-3xl">
-        <h2 className="text-4xl font-extrabold text-primary-dark text-center mb-6">
-          ¿Listo para Impulsar tu Campaña?
+    <div id="contact" className="bg-primary-dark isolate px-6 py-24 sm:py-32 lg:px-8"> {/* Fondo azul muy oscuro */}
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="text-3xl font-bold tracking-tight text-neutral-lightest sm:text-4xl"> {/* Texto blanco */}
+          Contáctanos
         </h2>
-        <p className="text-xl text-neutral-600 text-center mb-12">
-          Contáctanos hoy mismo para una asesoría personalizada y descubre cómo
-          Autoridad Política puede ayudarte a alcanzar tus objetivos.
+        <p className="mt-2 text-lg leading-8 text-neutral-light"> {/* Texto gris claro */}
+          ¿Tienes preguntas o quieres una demostración personalizada? Déjanos tus datos.
         </p>
-
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white p-8 rounded-lg shadow-xl border border-neutral-200"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-neutral-800 text-sm font-bold mb-2"
-              >
-                Nombre Completo
-              </label>
+      </div>
+      <form onSubmit={handleSubmit} className="mx-auto mt-16 max-w-xl sm:mt-20">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+          {/* Nombre Completo */}
+          <div className="sm:col-span-2">
+            <label htmlFor="name" className="block text-sm font-semibold leading-6 text-neutral-lightest"> {/* Texto blanco */}
+              Nombre Completo
+            </label>
+            <div className="mt-2.5">
               <input
                 type="text"
-                id="name"
                 name="name"
+                id="name"
+                autoComplete="name"
+                required
                 value={formData.name}
                 onChange={handleChange}
-                required
-                className="shadow appearance-none border rounded w-full py-3 px-4 text-neutral-800 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent transition-all duration-200"
+                className="block w-full rounded-md border-0 bg-white/5 px-3.5 py-2 text-neutral-lightest shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-secondary sm:text-sm sm:leading-6" /* Estilo input oscuro */
               />
             </div>
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-neutral-800 text-sm font-bold mb-2"
-              >
-                Correo Electrónico
-              </label>
+          </div>
+          {/* Email */}
+          <div className="sm:col-span-2">
+            <label htmlFor="email" className="block text-sm font-semibold leading-6 text-neutral-lightest">
+              Correo Electrónico
+            </label>
+            <div className="mt-2.5">
               <input
                 type="email"
-                id="email"
                 name="email"
+                id="email"
+                autoComplete="email"
+                required
                 value={formData.email}
                 onChange={handleChange}
-                required
-                className="shadow appearance-none border rounded w-full py-3 px-4 text-neutral-800 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent transition-all duration-200"
+                className="block w-full rounded-md border-0 bg-white/5 px-3.5 py-2 text-neutral-lightest shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-secondary sm:text-sm sm:leading-6"
               />
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label
-                htmlFor="phone"
-                className="block text-neutral-800 text-sm font-bold mb-2"
-              >
-                Número de Teléfono (Opcional)
-              </label>
+          {/* Teléfono (Opcional) */}
+          <div className="sm:col-span-2">
+            <label htmlFor="phone" className="block text-sm font-semibold leading-6 text-neutral-lightest">
+              Teléfono <span className="text-neutral-medium">(Opcional)</span>
+            </label>
+            <div className="mt-2.5">
               <input
                 type="tel"
-                id="phone"
                 name="phone"
+                id="phone"
+                autoComplete="tel"
                 value={formData.phone}
                 onChange={handleChange}
-                className="shadow appearance-none border rounded w-full py-3 px-4 text-neutral-800 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent transition-all duration-200"
+                className="block w-full rounded-md border-0 bg-white/5 px-3.5 py-2 text-neutral-lightest shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-secondary sm:text-sm sm:leading-6"
               />
             </div>
-            <div>
-              <label
-                htmlFor="interestedIn"
-                className="block text-neutral-800 text-sm font-bold mb-2"
-              >
-                Interesado en
-              </label>
-              <select
-                id="interestedIn"
-                name="interestedIn"
-                value={formData.interestedIn}
-                onChange={handleChange}
+          </div>
+          {/* Mensaje */}
+          <div className="sm:col-span-2">
+            <label htmlFor="message" className="block text-sm font-semibold leading-6 text-neutral-lightest">
+              Mensaje
+            </label>
+            <div className="mt-2.5">
+              <textarea
+                name="message"
+                id="message"
+                rows={4}
                 required
-                disabled={loadingOptions}
-                className="shadow border rounded w-full py-3 px-4 text-neutral-800 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent bg-white appearance-none transition-all duration-200"
-              >
-                {loadingOptions ? (
-                  <option>Cargando opciones...</option>
-                ) : (
-                  interestedInOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))
-                )}
-              </select>
+                value={formData.message}
+                onChange={handleChange}
+                className="block w-full rounded-md border-0 bg-white/5 px-3.5 py-2 text-neutral-lightest shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-secondary sm:text-sm sm:leading-6"
+              />
             </div>
           </div>
-
-          <div className="mb-6">
-            <label
-              htmlFor="message"
-              className="block text-neutral-800 text-sm font-bold mb-2"
-            >
-              Tu Mensaje
-            </label>
-            <textarea
-              id="message"
-              name="message"
-              value={formData.message}
-              onChange={handleChange}
-              rows="5"
-              required
-              className="shadow appearance-none border rounded w-full py-3 px-4 text-neutral-800 leading-tight focus:outline-none focus:ring-2 focus:ring-primary-DEFAULT focus:border-transparent transition-all duration-200"
-            ></textarea>
-          </div>
-
-          <div className="flex items-center justify-center">
-            <button
-              type="submit"
-              disabled={status === 'loading'}
-              className={`
-                bg-secondary-DEFAULT text-primary-dark px-12 py-4 rounded-full font-bold text-lg 
-                shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105
-                ${status === 'loading' ? 'opacity-70 cursor-not-allowed' : ''}
-              `}
-            >
-              {status === 'loading' ? 'Enviando...' : 'Enviar Mensaje'}
-            </button>
-          </div>
-
-          {status === 'success' && (
-            <p className="text-success text-center mt-4 font-semibold">
-              ¡Mensaje enviado con éxito! Nos pondremos en contacto contigo
-              pronto.
-            </p>
-          )}
-          {status === 'error' && (
-            <p className="text-error text-center mt-4 font-semibold">
-              Hubo un error al enviar tu mensaje. Por favor, inténtalo de nuevo.
-            </p>
-          )}
-        </form>
-      </div>
-    </section>
-  )
+        </div>
+        <div className="mt-10">
+          <button
+            type="submit"
+            disabled={status.loading}
+            className="block w-full rounded-md bg-secondary px-3.5 py-2.5 text-center text-sm font-semibold text-primary shadow-sm hover:bg-secondary-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary disabled:opacity-50" // Botón dorado
+          >
+            {status.loading ? 'Enviando...' : 'Enviar Mensaje'}
+          </button>
+        </div>
+        {/* Mensajes de estado */}
+        {status.success && (
+          <p className="mt-4 text-center text-sm text-success">¡Mensaje enviado con éxito!</p>
+        )}
+        {status.error && (
+          <p className="mt-4 text-center text-sm text-error">{status.error}</p>
+        )}
+      </form>
+    </div>
+  );
 }

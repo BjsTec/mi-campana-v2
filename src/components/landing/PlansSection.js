@@ -1,322 +1,122 @@
 // src/components/landing/PlansSection.js
-'use client' // Este componente usará useState y useEffect para cargar datos
+import { CheckIcon } from '@heroicons/react/20/solid'; // Icono sólido
+import Link from 'next/link';
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-
-// Componente para una tarjeta de plan individual
-const PlanCard = ({ plan }) => {
-  const isFree = plan.price === 0 // El plan gratuito tiene precio 0
-  const isHighPrice = plan.price >= 1000000 // Umbral para "Contactar Asesor" (1,000,000 COP)
-
-  // Determinar el texto y el href del botón
-  let buttonText = 'Elegir Plan'
-  let buttonHref = '/login' // Por ahora, todos van a login/registro
-  let buttonClasses = 'bg-primary-DEFAULT text-neutral-50 hover:bg-primary-dark'
-
-  if (isFree) {
-    buttonText = 'Regístrate Gratis'
-    buttonClasses =
-      'bg-secondary-DEFAULT text-primary-dark hover:bg-secondary-dark'
-  } else if (isHighPrice) {
-    buttonText = 'Contactar Asesor'
-    buttonHref = '/contacto' // Podríamos crear una sección de contacto o modal específico para chat
-    buttonClasses =
-      'bg-primary-dark text-secondary-DEFAULT hover:bg-secondary-dark hover:text-neutral-50' // Invertir colores para destacar
-  }
-
-  return (
-    <div
-      className={`
-      bg-neutral-50 p-8 rounded-lg shadow-xl text-center flex flex-col justify-between
-      transform hover:scale-105 transition-transform duration-300 border-2
-      ${isFree ? 'border-secondary-DEFAULT' : 'border-neutral-100'}
-    `}
-    >
-      <div>
-        <h3 className="text-3xl font-bold text-primary-dark mb-4">
-          {plan.name}
-        </h3>
-        <p className="text-neutral-600 mb-6 min-h-[4rem]">
-          {' '}
-          {/* Altura mínima para descripciones */}
-          {plan.description}
-        </p>
-        <div className="text-5xl font-extrabold text-primary-DEFAULT mb-6">
-          {isFree ? (
-            'Gratis'
-          ) : (
-            <>
-              $
-              {new Intl.NumberFormat('es-CO', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0,
-              }).format(plan.price)}
-              <span className="text-lg font-normal text-neutral-600">/mes</span>
-            </>
-          )}
-        </div>
-        {/* Lista de características del plan (ahora con marketingFeatures) */}
-        <ul className="text-neutral-800 text-left mb-8 space-y-2">
-          {plan.marketingFeatures &&
-            plan.marketingFeatures.map((feature, index) => (
-              <li key={index} className="flex items-center">
-                <svg
-                  className="w-5 h-5 text-secondary-DEFAULT mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 13l4 4L19 7"
-                  ></path>
-                </svg>
-                {feature}
-              </li>
-            ))}
-        </ul>
-      </div>
-      <Link
-        href={buttonHref}
-        className={`
-          block w-full px-8 py-3 rounded-full font-bold text-lg transition-colors duration-300 shadow-md
-          ${buttonClasses}
-        `}
-      >
-        {buttonText}
-      </Link>
-    </div>
-  )
-}
+// Definir los planes aquí o importarlos desde una fuente de datos
+const tiers = [
+  {
+    name: 'Demo Limitado',
+    id: 'demo_limitado',
+    href: '/registro-publico?plan=demo', // Ajustar ruta
+    priceMonthly: '$0',
+    description: 'Prueba las funciones básicas por tiempo limitado.',
+    features: [
+      '1 Campaña (Demo)',
+      '1 Gerente, 1 Anillo',
+      'Profundidad Pirámide: 3 Niveles',
+      'Reclutamiento Directo: 3 por Usuario',
+      'Duración: 30 Días',
+      'Soporte Básico',
+    ],
+    mostPopular: false,
+  },
+  {
+    name: 'Equipo de Trabajo',
+    id: 'equipo_trabajo',
+    href: '/registro-publico?plan=gratis', // Ajustar ruta
+    priceMonthly: '$0',
+    description: 'Ideal para iniciar y organizar tu núcleo cercano.',
+    features: [
+      '1 Campaña (Equipo Trabajo)',
+      'Miembros Limitados (ej. 10)', // O basado en DB
+      'Profundidad Pirámide: 5 Niveles',
+      'Reclutamiento Directo: 4 por Usuario',
+      'Sin Límite de Tiempo',
+      'Soporte Comunitario',
+    ],
+    mostPopular: true, // Marcar el plan gratuito como popular
+  },
+  {
+    name: 'Plan Local (Edil/Concejo)',
+    id: 'local',
+    href: '/registro-publico?plan=local', // Ajustar ruta
+    priceMonthly: '$XX', // Reemplazar con precio real
+    description: 'Completo para campañas municipales o locales.',
+    features: [
+      'Campañas Locales (Edil, Concejo)',
+      'Mayor Límite de Miembros',
+      'Mayor Profundidad Pirámide',
+      'Funciones IA Básicas',
+      'Formulario Público Básico',
+      'Soporte Prioritario',
+    ],
+    mostPopular: false,
+  },
+  // Añadir más planes (Alcaldía, Gobernación, Nacional, etc.)
+];
 
 export default function PlansSection() {
-  const [allPricingPlans, setAllPricingPlans] = useState([]) // Almacena todos los planes
-  const [filteredPlans, setFilteredPlans] = useState([]) // Planes mostrados
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [selectedScope, setSelectedScope] = useState('featured') // 'featured' por defecto, ahora usamos 'scope'
-
-  useEffect(() => {
-    const fetchPricingPlans = async () => {
-      try {
-        setLoading(true)
-        // Asegúrate de que esta URL sea correcta para tu función desplegada
-        const response = await fetch(
-          'https://us-central1-micampanav2.cloudfunctions.net/getPublicPricingPlans',
-        )
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        const data = await response.json()
-
-        const processedData = data.map((plan) => ({
-          ...plan,
-          price:
-            typeof plan.price === 'string'
-              ? parseFloat(plan.price)
-              : plan.price,
-        }))
-
-        // Añadir 'scope' basado en 'typeId' y 'marketingFeatures'
-        const processedDataWithScopeAndFeatures = processedData.map((plan) => {
-          let scope = ''
-          switch (plan.typeId) {
-            case 'presidencia':
-            case 'senado':
-              scope = 'nacional'
-              break
-            case 'gobernacin_':
-            case 'asamblea':
-            case 'cmara': // Asumiendo camara es más regional/departamental
-              scope = 'departamental'
-              break
-            case 'alcalda':
-            case 'concejo':
-            case 'edil_':
-              scope = 'municipal'
-              break
-            case 'equipo_de_trabajo':
-              scope = 'general' // Para el plan gratuito, no tiene un scope geográfico directo
-              break
-            default:
-              scope = 'otro' // Fallback
-          }
-
-          let marketingFeatures = []
-          if (plan.price === 0) {
-            marketingFeatures = [
-              'Gestión básica de equipo',
-              'Acceso a herramientas esenciales',
-              'Soporte comunitario',
-              'Dashboard de seguimiento simple',
-              'Ideal para equipos pequeños',
-            ]
-          } else if (plan.price >= 1000000) {
-            // Nivel de precio alto
-            marketingFeatures = [
-              'Asesoría estratégica personalizada',
-              'Análisis de datos avanzado y predictivo',
-              'Gestión de grandes equipos y redes de apoyo',
-              'Soporte VIP 24/7 y gestor de cuenta',
-              'Integraciones personalizadas y API',
-              'Reportes ejecutivos detallados',
-            ]
-          } else {
-            // Planes de rango medio
-            marketingFeatures = [
-              'Gestión de equipo avanzada',
-              'Acceso completo a funciones premium',
-              'Soporte prioritario por email y chat',
-              'Reportes de campaña y métricas clave',
-              'Módulos de comunicación integrados',
-              'Capacitación para el equipo',
-            ]
-          }
-          return { ...plan, scope, marketingFeatures }
-        })
-
-        setAllPricingPlans(processedDataWithScopeAndFeatures)
-
-        // Inicialmente, mostrar solo los planes destacados
-        const initialFeaturedPlans = processedDataWithScopeAndFeatures
-          .filter(
-            (plan) =>
-              plan.price === 0 || // El plan gratuito
-              (plan.scope === 'municipal' &&
-                plan.name.includes('Alcaldía para el Futuro')) || // Un plan de alcaldía de ejemplo
-              (plan.scope === 'nacional' &&
-                plan.name.includes('Ruta Senatorial Élite')), // Un plan de senado de ejemplo
-          )
-          .sort((a, b) => a.price - b.price) // Ordenar por precio para una mejor presentación
-
-        setFilteredPlans(initialFeaturedPlans)
-      } catch (err) {
-        console.error('Error fetching pricing plans:', err)
-        setError('No se pudieron cargar los planes de precios.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchPricingPlans()
-  }, [])
-
-  // Efecto para filtrar planes cuando cambia el scope seleccionado
-  useEffect(() => {
-    let plansToShow = []
-    if (selectedScope === 'featured') {
-      // Re-filtrar planes destacados si allPricingPlans cambia (ej. después de la carga inicial)
-      plansToShow = allPricingPlans
-        .filter(
-          (plan) =>
-            plan.price === 0 ||
-            (plan.scope === 'municipal' &&
-              plan.name.includes('Alcaldía para el Futuro')) ||
-            (plan.scope === 'nacional' &&
-              plan.name.includes('Ruta Senatorial Élite')),
-        )
-        .sort((a, b) => a.price - b.price)
-    } else if (selectedScope === 'all') {
-      // Si decidimos reintroducir 'all'
-      plansToShow = allPricingPlans
-    } else {
-      plansToShow = allPricingPlans.filter(
-        (plan) => plan.scope === selectedScope,
-      )
-    }
-    setFilteredPlans(plansToShow)
-  }, [selectedScope, allPricingPlans])
-
-  // Obtener scopes únicos para las pestañas
-  const uniqueScopes = [
-    'featured',
-    ...new Set(allPricingPlans.map((plan) => plan.scope)),
-  ]
-  // Filtrar 'otro' y 'general' si no queremos que aparezcan como pestañas separadas
-  const displayScopes = uniqueScopes.filter(
-    (s) => s !== 'otro' && s !== 'general',
-  )
-  // Ordenar las pestañas para una mejor presentación
-  const orderedScopes = [
-    'featured',
-    'nacional',
-    'departamental',
-    'municipal',
-  ].filter((s) => displayScopes.includes(s))
-  // Añadir cualquier otro scope único que no esté en la lista ordenada
-  displayScopes.forEach((s) => {
-    if (!orderedScopes.includes(s)) {
-      orderedScopes.push(s)
-    }
-  })
-
-  // Función para formatear el nombre del scope para la UI
-  const formatScopeName = (scopeId) => {
-    if (scopeId === 'featured') return 'Planes Destacados'
-    if (scopeId === 'nacional') return 'Nivel Nacional'
-    if (scopeId === 'departamental') return 'Nivel Departamental'
-    if (scopeId === 'municipal') return 'Nivel Local'
-    if (scopeId === 'general') return 'Equipo de Trabajo (Gratis)' // Si queremos una pestaña solo para este
-    return scopeId
-      .replace(/_/g, ' ')
-      .replace(/\b\w/g, (char) => char.toUpperCase())
-  }
-
   return (
-    <section id="planes" className="py-20 bg-neutral-100">
-      <div className="container mx-auto px-6">
-        <h2 className="text-4xl font-extrabold text-primary-dark text-center mb-6">
-          Encuentra el Plan Perfecto para tu Objetivo Político
-        </h2>
-        <p className="text-xl text-neutral-600 text-center mb-12 max-w-3xl mx-auto">
-          Ofrecemos planes flexibles adaptados a las necesidades de cada
-          campaña, desde equipos pequeños hasta grandes movimientos.
+    <div id="plans" className="bg-neutral-lightest py-24 sm:py-32"> {/* Fondo gris casi blanco */}
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="text-base font-semibold leading-7 text-secondary-dark"> {/* Dorado oscuro */}
+            Precios
+          </h2>
+          <p className="mt-2 text-4xl font-bold tracking-tight text-primary-dark sm:text-5xl"> {/* Azul muy oscuro */}
+            Elige el plan perfecto para tu campaña
+          </p>
+        </div>
+        <p className="mx-auto mt-6 max-w-2xl text-center text-lg leading-8 text-neutral-dark"> {/* Gris oscuro azulado */}
+          Desde equipos pequeños hasta campañas nacionales, tenemos una opción para ti. Empieza gratis hoy mismo.
         </p>
-
-        {/* Navegación por Pestañas de Scopes */}
-        <div className="flex flex-wrap justify-center gap-2 mb-12">
-          {orderedScopes.map((scope) => (
-            <button
-              key={scope}
-              onClick={() => setSelectedScope(scope)}
-              className={`
-                px-6 py-2 rounded-full font-semibold text-lg transition-colors duration-300
-                ${
-                  selectedScope === scope
-                    ? 'bg-primary-dark text-secondary-DEFAULT shadow-md' // Fondo azul oscuro, texto amarillo/dorado
-                    : 'bg-neutral-200 text-neutral-800 hover:bg-neutral-300'
-                }
-              `}
+        <div className="isolate mx-auto mt-16 grid max-w-md grid-cols-1 gap-y-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+          {tiers.map((tier, tierIdx) => (
+            <div
+              key={tier.id}
+              className={`flex flex-col justify-between rounded-3xl p-8 ring-1 xl:p-10 ${
+                tier.mostPopular ? 'bg-white ring-2 ring-secondary' : 'bg-white ring-neutral-medium' // Resaltar popular con borde dorado
+              } ${tierIdx === 1 ? 'lg:z-10 lg:scale-105' : ''}`} // Hacer popular un poco más grande
             >
-              {formatScopeName(scope)}
-            </button>
+              <div>
+                <h3 className={`text-lg font-semibold leading-8 ${tier.mostPopular ? 'text-secondary' : 'text-primary-dark'}`}> {/* Título dorado si es popular */}
+                  {tier.name}
+                </h3>
+                <p className="mt-4 text-sm leading-6 text-neutral-dark"> {/* Gris oscuro azulado */}
+                  {tier.description}
+                </p>
+                <p className="mt-6 flex items-baseline gap-x-1">
+                  <span className="text-4xl font-bold tracking-tight text-primary-dark"> {/* Azul muy oscuro */}
+                    {tier.priceMonthly}
+                  </span>
+                   { tier.priceMonthly !== '$0' && (
+                     <span className="text-sm font-semibold leading-6 text-neutral-dark">/mes</span>
+                   )}
+                </p>
+                <ul role="list" className="mt-8 space-y-3 text-sm leading-6 text-neutral-dark xl:mt-10"> {/* Gris oscuro azulado */}
+                  {tier.features.map((feature) => (
+                    <li key={feature} className="flex gap-x-3">
+                      <CheckIcon className="h-6 w-5 flex-none text-secondary" aria-hidden="true" /> {/* Icono check dorado */}
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <Link
+                href={tier.href}
+                aria-describedby={tier.id}
+                className={`mt-8 block rounded-md px-3.5 py-2.5 text-center text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${
+                  tier.mostPopular
+                    ? 'bg-secondary text-primary hover:bg-secondary-light focus-visible:outline-secondary' // Botón popular dorado
+                    : 'bg-primary text-neutral-lightest hover:bg-primary-light focus-visible:outline-primary' // Botón normal azul oscuro
+                }`}
+              >
+                {tier.priceMonthly === '$0' ? 'Empezar Gratis' : 'Seleccionar Plan'}
+              </Link>
+            </div>
           ))}
         </div>
-
-        {loading && (
-          <p className="text-center text-primary-dark text-lg">
-            Cargando planes...
-          </p>
-        )}
-        {error && <p className="text-center text-error text-lg">{error}</p>}
-
-        {!loading && !error && filteredPlans.length === 0 && (
-          <p className="text-center text-neutral-600 text-lg">
-            No hay planes de precios disponibles para esta categoría.
-          </p>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {!loading &&
-            !error &&
-            filteredPlans.map((plan) => <PlanCard key={plan.id} plan={plan} />)}
-        </div>
       </div>
-    </section>
-  )
+    </div>
+  );
 }

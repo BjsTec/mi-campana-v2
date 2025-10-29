@@ -1,83 +1,43 @@
-// src/app/middleware.js
-import { verify } from 'jsonwebtoken' // Import 'verify' directamente
+// src/middleware.js (o src/proxy.js)
+import { updateSession } from '@/lib/supabase/middleware'
 import { NextResponse } from 'next/server'
 
-// Las rutas que NO requieren autenticación (públicas)
-const PUBLIC_FILE = /\.(.*)$/ // Archivos estáticos
-const PUBLIC_ROUTES = [
-  '/', // Tu home comercial
-  '/login', // Página de login
-  '/forgot-password', // Página de olvido de contraseña
-  '/registro-publico', // ¡AÑADIDO! Formulario de registro público de leads (Votantes de Opinión)
-  '/auto-registro-qr', // ¡AÑADIDO! Formulario de auto-registro vía QR
-  '/planes', // ¡AÑADIDO! Página de planes y precios
-  '/contacto', // ¡AÑADIDO! Página de contacto
-  '/dashboard-test', // ¡AÑADIDO! Permite que esta página sea cargada después del login exitoso.
-
-  // Aquí puedes añadir cualquier otra ruta pública de tu frontend que no requiera login.
-]
-
-// Middleware se ejecuta para cada solicitud que coincida con el matcher
 export async function middleware(request) {
-  const { pathname } = request.nextUrl
-  const response = NextResponse.next()
+  // Actualiza la sesión (maneja cookies)
+  const response = await updateSession(request)
 
-  // 1. Manejar rutas públicas y archivos estáticos:
-  // Si la ruta es pública, un archivo estático, o un archivo interno de Next.js, permite el acceso.
-  if (
-    PUBLIC_ROUTES.includes(pathname) ||
-    PUBLIC_FILE.test(pathname) ||
-    pathname.startsWith('/_next')
-  ) {
-    return response
+  // Lógica de protección de rutas (Ejemplo básico)
+  const supabase = createServerClient(/* ... tu config middleware ... */); // Necesitas crear el cliente aquí también
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Si el usuario no está autenticado y trata de acceder a rutas privadas
+  if (!user && request.nextUrl.pathname.startsWith('/dashboard-')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login' // Redirigir a login
+    return NextResponse.redirect(url)
   }
 
-  // 2. Verificar la cookie de sesión para rutas protegidas
-  const sessionCookie = request.cookies.get('__session')?.value
-
-  if (!sessionCookie) {
-    console.log(
-      'Middleware: No se encontró cookie de sesión. Redirigiendo a /login',
-    )
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
+  // Si el usuario está autenticado y trata de acceder a login/registro
+  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/registro-publico')) {
+     const url = request.nextUrl.clone()
+     url.pathname = '/dashboard-redirect' // Redirigir al dashboard adecuado
+     return NextResponse.redirect(url)
   }
 
-  // 3. Acceder a la clave secreta y verificar el token
-  // JWT_SECRET debe estar configurado como variable de entorno en Vercel para el despliegue.
-  const jwtSecret = process.env.JWT_SECRET
+  // Añadir aquí lógica más granular basada en roles si es necesario
 
-  if (!jwtSecret) {
-    console.error(
-      'Middleware: La clave secreta JWT_SECRET no está configurada en las variables de entorno de Vercel.',
-    )
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
-  }
-
-  try {
-    // Verificar el token JWT usando el secreto.
-    // El 'verify' de jsonwebtoken funciona directamente con la cadena del secreto.
-    verify(sessionCookie, jwtSecret, { algorithms: ['HS256'] })
-
-    console.log('Middleware: Token JWT válido. Permitiendo acceso a:', pathname)
-    return response // Permite el acceso a la ruta solicitada
-  } catch (error) {
-    console.error('Middleware: Token JWT inválido o expirado:', error.message)
-    const loginUrl = new URL('/login', request.url)
-    const redirectResponse = NextResponse.redirect(loginUrl)
-    redirectResponse.cookies.delete('__session') // Limpia la cookie inválida
-    return redirectResponse
-  }
+  return response // Continuar con la respuesta (puede tener cookies actualizadas)
 }
 
-// Configuración del matcher: Define para qué rutas se ejecutará el middleware.
-// Este matcher excluye:
-// - Rutas que comienzan con /api (tus API Routes de Next.js, que manejan su propia autenticación)
-// - Archivos estáticos internos de Next.js
-// - Imágenes de Next.js
-// - favicon.ico y archivos .png (ya cubiertos por PUBLIC_FILE, pero explícito para más seguridad)
-// Debería ejecutarse para todas las demás rutas que no están en PUBLIC_ROUTES.
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$).*)'],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * Feel free to modify this pattern to include more paths.
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

@@ -1,171 +1,109 @@
 // src/components/landing/Header.js
-// Este es un Client Component ya que usa Link de Next.js y podría necesitar estado para un menú móvil.
-'use client'
+'use client';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useState } from 'react';
+import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'; // Asegúrate de tener heroicons instalado
 
-import Link from 'next/link'
-import { useState } from 'react' // Importar useState para el menú móvil
+const navigation = [
+  { name: 'Inicio', href: '/' },
+  { name: 'Características', href: '#features' },
+  { name: 'Planes', href: '#plans' },
+  { name: 'Contacto', href: '#contact' },
+];
 
 export default function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-50 p-6 md:p-8">
-      <nav className="container mx-auto flex justify-between items-center">
-        {/* Logotipo */}
-        <div className="text-2xl font-bold text-neutral-50">
-          {' '}
-          {/* Mantenemos blanco para el logo */}
-          <Link href="/">Autoridad Política</Link>
-        </div>
-
-        {/* Navegación para escritorio */}
-        <ul className="hidden md:flex space-x-8 text-neutral-50">
-          {' '}
-          {/* Cambiado a blanco para máxima visibilidad */}
-          <li>
-            <Link
-              href="#inicio"
-              className="hover:text-secondary-DEFAULT transition-colors duration-200"
-            >
-              Inicio
-            </Link>
-          </li>{' '}
-          {/* Hover a amarillo/dorado */}
-          <li>
-            <Link
-              href="#caracteristicas"
-              className="hover:text-secondary-DEFAULT transition-colors duration-200"
-            >
-              Características
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="#planes"
-              className="hover:text-secondary-DEFAULT transition-colors duration-200"
-            >
-              Planes
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="#app-movil"
-              className="hover:text-secondary-DEFAULT transition-colors duration-200"
-            >
-              App Móvil
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="#contacto"
-              className="hover:text-secondary-DEFAULT transition-colors duration-200"
-            >
-              Contacto
-            </Link>
-          </li>
-        </ul>
-
-        {/* Botón de Acción */}
-        <div className="hidden md:block">
-          {' '}
-          {/* Solo visible en escritorio */}
-          <Link
-            href="/login"
-            className="bg-secondary-DEFAULT text-neutral-50 px-6 py-2 rounded-full font-semibold hover:bg-secondary-light transition-colors duration-200 shadow-lg" // Cambiado a blanco para el texto del botón
-          >
-            Registrarse / Acceder
+    <header className="bg-primary sticky top-0 z-50 shadow-md"> {/* Fondo azul oscuro */}
+      <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
+        <div className="flex lg:flex-1">
+          <Link href="/" className="-m-1.5 p-1.5">
+            <span className="sr-only">Mi Campaña V2</span>
+            <Image
+              className="h-8 w-auto"
+              src="/logo.png" // Asegúrate que el logo exista en public/
+              alt="Logo Mi Campaña V2"
+              width={32}
+              height={32}
+            />
           </Link>
         </div>
-
-        {/* Menú hamburguesa para móviles */}
-        <div className="md:hidden">
+        <div className="flex lg:hidden">
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="text-neutral-50 focus:outline-none"
+            type="button"
+            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-neutral-light hover:text-white" // Icono gris claro
+            onClick={() => setMobileMenuOpen(true)}
           >
-            <svg
-              className="w-8 h-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d={
-                  isMobileMenuOpen
-                    ? 'M6 18L18 6M6 6l12 12'
-                    : 'M4 6h16M4 12h16M4 18h16'
-                }
-              ></path>
-            </svg>
+            <span className="sr-only">Abrir menú principal</span>
+            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
           </button>
         </div>
-      </nav>
-
-      {/* Menú móvil desplegable */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden bg-primary-dark p-6 mt-4 rounded-lg shadow-xl">
-          <ul className="flex flex-col space-y-4 text-neutral-50">
-            <li>
-              <Link
-                href="#inicio"
-                className="block py-2 hover:text-secondary-DEFAULT transition-colors duration-200"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Inicio
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#caracteristicas"
-                className="block py-2 hover:text-secondary-DEFAULT transition-colors duration-200"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Características
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#planes"
-                className="block py-2 hover:text-secondary-DEFAULT transition-colors duration-200"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Planes
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#app-movil"
-                className="block py-2 hover:text-secondary-DEFAULT transition-colors duration-200"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                App Móvil
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#contacto"
-                className="block py-2 hover:text-secondary-DEFAULT transition-colors duration-200"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Contacto
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="/login"
-                className="block w-full text-center bg-secondary-DEFAULT text-neutral-50 px-6 py-2 rounded-full font-semibold hover:bg-secondary-light transition-colors duration-200 shadow-lg mt-4" // Cambiado a blanco para el texto del botón
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Registrarse / Acceder
-              </Link>
-            </li>
-          </ul>
+        <div className="hidden lg:flex lg:gap-x-12">
+          {navigation.map((item) => (
+            <Link key={item.name} href={item.href} className="text-sm font-semibold leading-6 text-neutral-lightest hover:text-secondary-light"> {/* Texto blanco, hover dorado claro */}
+              {item.name}
+            </Link>
+          ))}
         </div>
-      )}
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end">
+          <Link href="/login" className="text-sm font-semibold leading-6 text-neutral-lightest hover:text-secondary-light"> {/* Texto blanco, hover dorado claro */}
+            Iniciar Sesión <span aria-hidden="true">&rarr;</span>
+          </Link>
+        </div>
+      </nav>
+      {/* Mobile menu */}
+      <div className={`lg:hidden ${mobileMenuOpen ? 'block' : 'hidden'}`} role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50" />
+        <div className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-primary px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-neutral-dark/10"> {/* Fondo menú móvil azul oscuro */}
+          <div className="flex items-center justify-between">
+            <Link href="/" className="-m-1.5 p-1.5">
+              <span className="sr-only">Mi Campaña V2</span>
+              <Image
+                className="h-8 w-auto"
+                src="/logo.png"
+                alt=""
+                width={32}
+                height={32}
+              />
+            </Link>
+            <button
+              type="button"
+              className="-m-2.5 rounded-md p-2.5 text-neutral-light hover:text-white"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <span className="sr-only">Cerrar menú</span>
+              <XMarkIcon className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </div>
+          <div className="mt-6 flow-root">
+            <div className="-my-6 divide-y divide-neutral-dark/20"> {/* Divisor gris oscuro azulado */}
+              <div className="space-y-2 py-6">
+                {navigation.map((item) => (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-neutral-lightest hover:bg-primary-light hover:text-white" /* Texto blanco, hover azul claro */
+                    onClick={() => setMobileMenuOpen(false)} // Cerrar menú al hacer clic
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+              <div className="py-6">
+                <Link
+                  href="/login"
+                  className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-neutral-lightest hover:bg-primary-light hover:text-white" /* Texto blanco, hover azul claro */
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Iniciar Sesión
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
-  )
+  );
 }
