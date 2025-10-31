@@ -1,50 +1,31 @@
-@import "tailwindcss";
+/* src/styles/globals.css */
 
-/* Variables CSS para modo claro/oscuro */
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* CORRECCIÓN: Se reemplaza @import "tailwindcss"; 
+  con las directivas @tailwind correctas según la documentación oficial
+  de Tailwind para Next.js.
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-/* Aplicación de las tipografías globales usando las variables CSS de Next.js/Google Fonts */
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family:
-    var(--font-open-sans), sans-serif; /* <-- ¡CORREGIDO: Open Sans para el cuerpo! */
-}
-
-/* Aplica Montserrat a los elementos de título para jerarquía */
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family:
-    var(--font-montserrat), sans-serif; /* <-- ¡AÑADIDO: Montserrat para títulos! */
-}
+/* LIMPIEZA: Se eliminan :root y body. 
+  Tailwind se encargará de los estilos base ('base') 
+  y la configuración de fuentes y colores se centralizará en layout.js 
+  y tailwind.config.mjs.
+*/
 
 /* --- Estilos para ocultar los botones de aumentar/reducir en input type="number" --- */
+/* (Esto estaba bien, lo mantenemos) */
 
 /* Para Chrome, Safari, Edge, Opera */
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
-  -webkit-appearance: none; /* Elimina la apariencia por defecto */
-  margin: 0; /* Asegura que no haya margen residual */
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 /* Para Firefox */
 input[type='number'] {
-  -moz-appearance: textfield; /* Restaura la apariencia de campo de texto normal */
-  appearance: textfield; /* Para navegadores modernos que usan la propiedad estándar */
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
-
-/* ---------------------------------------------------------------------------------- */
