@@ -1,18 +1,18 @@
 // src/app/layout.js
 import { Montserrat, Open_Sans } from 'next/font/google'
-import './../styles/globals.css' // Ruta a su globals.css corregido
-import { Toaster } from 'sonner' 
+import './../styles/globals.css'
+import { Toaster } from 'sonner' // Esto está en su package.json, está bien.
 
-// Configuración de fuentes para que coincidan con su intención
+// Configuración de fuentes
 const montserrat = Montserrat({
   subsets: ['latin'],
-  variable: '--font-montserrat', // Variable CSS para títulos
+  variable: '--font-montserrat',
   display: 'swap',
 })
 
 const openSans = Open_Sans({
   subsets: ['latin'],
-  variable: '--font-open-sans', // Variable CSS para el cuerpo
+  variable: '--font-open-sans',
   display: 'swap',
 })
 
@@ -24,13 +24,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      {/* Se aplican las variables de fuente y las clases de Tailwind base.
-        - bg-neutral-lightest: (Casi blanco) para el fondo.
-        - text-neutral-darkest: (Casi negro) para el texto por defecto.
-        - font-sans: Usa Open Sans por defecto.
+      {/*
+        ORDEN EJECUTADA:
+        1. Se cambia el fondo de 'bg-neutral-lightest' (blanco) a 'bg-primary-dark' (su azul más oscuro).
+        2. Se cambia el texto por defecto de 'text-neutral-darkest' (negro) a 'text-neutral-lightest' (blanco).
+        Esto implementa su visión de "fondo oscuro".
       */}
       <body
-        className={`${montserrat.variable} ${openSans.variable} font-sans bg-neutral-lightest text-neutral-darkest`}
+        className={`${montserrat.variable} ${openSans.variable} font-sans bg-primary-dark text-neutral-lightest`}
       >
         {children}
         <Toaster position="top-right" richColors />

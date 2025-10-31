@@ -1,32 +1,24 @@
 /* src/styles/globals.css */
 
 /*
-  CORRECCIÓN:
-  Se reemplaza el @import obsoleto por las 3 directivas 
-  correctas que exige la documentación de Tailwind y su 
-  propio linter de VS Code.
+  Mantenemos la importación de v4 (Correcto)
 */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /*
-  LIMPIEZA:
-  Se eliminan las definiciones de :root y body que 
-  estaban en conflicto con la paleta de Tailwind.
+  LIMPIEZA (CRÍTICA):
+  Eliminamos las reglas :root y body que estaban 
+  en conflicto y forzaban el texto a ser negro.
 */
 
 /* --- Estilos para ocultar los botones de aumentar/reducir en input type="number" --- */
-/* (Esto estaba bien, lo mantenemos) */
+/* (Mantenemos esto) */
 
-/* Para Chrome, Safari, Edge, Opera */
 input[type='number']::-webkit-outer-spin-button,
 input[type='number']::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
-/* Para Firefox */
 input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
