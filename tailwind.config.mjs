@@ -40,6 +40,12 @@ const config = {
         warning: {
           DEFAULT: '#F59E0B',
         },
+        // --- Fin Nueva Paleta ---
+
+        /* LIMPIEZA: Se eliminan las claves de color antiguas 
+          ('color-text-primary', 'background', 'text', 'hover').
+          Ya no son necesarias, pues usaremos la paleta 'neutral' directamente.
+        */
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

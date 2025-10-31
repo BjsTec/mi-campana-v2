@@ -1,17 +1,19 @@
 /* src/styles/globals.css */
 
-/* CORRECCIÓN: Se reemplaza @import "tailwindcss"; 
-  con las directivas @tailwind correctas según la documentación oficial
-  de Tailwind para Next.js.
+/*
+  CORRECCIÓN:
+  Se reemplaza el @import obsoleto por las 3 directivas 
+  correctas que exige la documentación de Tailwind y su 
+  propio linter de VS Code.
 */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* LIMPIEZA: Se eliminan :root y body. 
-  Tailwind se encargará de los estilos base ('base') 
-  y la configuración de fuentes y colores se centralizará en layout.js 
-  y tailwind.config.mjs.
+/*
+  LIMPIEZA:
+  Se eliminan las definiciones de :root y body que 
+  estaban en conflicto con la paleta de Tailwind.
 */
 
 /* --- Estilos para ocultar los botones de aumentar/reducir en input type="number" --- */
